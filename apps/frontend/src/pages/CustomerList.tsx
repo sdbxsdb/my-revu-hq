@@ -1,13 +1,29 @@
 import { useEffect, useState, useRef } from 'react';
-import { Paper, Title, Table, Button, Select, Pagination, Badge, Loader, Modal, TextInput, Textarea, Stack } from '@mantine/core';
+import {
+  Paper,
+  Title,
+  Table,
+  Button,
+  Select,
+  Pagination,
+  Badge,
+  Loader,
+  Modal,
+  TextInput,
+  Textarea,
+  Stack,
+} from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useForm } from '@mantine/form';
-import { IconEdit } from '@tabler/icons-react';
 import { CountryCode } from 'libphonenumber-js';
 import { apiClient } from '@/lib/api';
 import type { Customer } from '@/types';
 import { PhoneNumber } from '@/components/PhoneNumber';
-import { validatePhoneNumber, formatPhoneNumberForApi, detectCountryFromPhoneNumber } from '@/lib/phone-validation';
+import {
+  validatePhoneNumber,
+  formatPhoneNumberForApi,
+  detectCountryFromPhoneNumber,
+} from '@/lib/phone-validation';
 import { parsePhoneNumberFromString, isValidPhoneNumber } from 'libphonenumber-js';
 
 export const CustomerList = () => {
@@ -15,6 +31,7 @@ export const CustomerList = () => {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [total, setTotal] = useState(0);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -35,7 +52,10 @@ export const CustomerList = () => {
       name: (value) => (value.trim().length < 2 ? 'Name must be at least 2 characters' : null),
       phoneNumber: (value) => {
         // Use the current country from ref to avoid stale closure
-        const validation = validatePhoneNumber(value, countryRef.current as CountryCode | undefined);
+        const validation = validatePhoneNumber(
+          value,
+          countryRef.current as CountryCode | undefined
+        );
         if (!validation.isValid) {
           return validation.error || 'Invalid phone number';
         }
@@ -46,13 +66,14 @@ export const CustomerList = () => {
 
   useEffect(() => {
     loadCustomers();
-  }, [page, statusFilter]);
+  }, [page, statusFilter, searchQuery]);
 
   const loadCustomers = async () => {
     setLoading(true);
 
     // Development mode: show dummy data immediately
-    const isDevMode = !import.meta.env.VITE_SUPABASE_URL ||
+    const isDevMode =
+      !import.meta.env.VITE_SUPABASE_URL ||
       import.meta.env.VITE_SUPABASE_URL?.includes('placeholder') ||
       !import.meta.env.VITE_SUPABASE_ANON_KEY ||
       import.meta.env.VITE_SUPABASE_ANON_KEY === 'placeholder_key';
@@ -75,7 +96,7 @@ export const CustomerList = () => {
         {
           id: '2',
           user_id: 'dev-user',
-          name: 'Sarah O\'Connor',
+          name: "Sarah O'Connor",
           phone: { countryCode: '353', number: '0851234567' }, // Ireland local format
           job_description: 'Bathroom remodel - tile work and plumbing',
           sms_status: 'sent',
@@ -153,7 +174,17 @@ export const CustomerList = () => {
       // Apply status filter
       let filtered = dummyCustomers;
       if (statusFilter) {
-        filtered = dummyCustomers.filter(c => c.sms_status === statusFilter);
+        filtered = dummyCustomers.filter((c) => c.sms_status === statusFilter);
+      }
+
+      // Apply search filter
+      if (searchQuery.trim()) {
+        const query = searchQuery.trim().toLowerCase();
+        filtered = filtered.filter(
+          (c) =>
+            c.name.toLowerCase().includes(query) ||
+            (c.job_description && c.job_description.toLowerCase().includes(query))
+        );
       }
 
       // Apply pagination
@@ -171,8 +202,20 @@ export const CustomerList = () => {
         limit,
         status: statusFilter as 'sent' | 'pending' | undefined,
       });
-      setCustomers(data.customers);
-      setTotal(data.total);
+
+      // Apply search filter on client side
+      let filtered = data.customers;
+      if (searchQuery.trim()) {
+        const query = searchQuery.trim().toLowerCase();
+        filtered = data.customers.filter(
+          (c) =>
+            c.name.toLowerCase().includes(query) ||
+            (c.job_description && c.job_description.toLowerCase().includes(query))
+        );
+      }
+
+      setCustomers(filtered);
+      setTotal(filtered.length);
     } catch (error: any) {
       notifications.show({
         title: 'Error',
@@ -199,7 +242,10 @@ export const CustomerList = () => {
     // Country is auto-detected from the number (not stored in DB)
 
     // Auto-detect country from phone number (consistent with card display)
-    const detectedCountry = detectCountryFromPhoneNumber(customer.phone.number, customer.phone.countryCode);
+    const detectedCountry = detectCountryFromPhoneNumber(
+      customer.phone.number,
+      customer.phone.countryCode
+    );
     const countryToUse = detectedCountry || 'GB'; // Default fallback
     console.log('Auto-detected country:', countryToUse);
     console.log('Setting selectedCountry to:', countryToUse);
@@ -230,7 +276,10 @@ export const CustomerList = () => {
 
     try {
       // Validate phone number with country context
-      const validation = validatePhoneNumber(values.phoneNumber, selectedCountry as CountryCode | undefined);
+      const validation = validatePhoneNumber(
+        values.phoneNumber,
+        selectedCountry as CountryCode | undefined
+      );
       if (!validation.isValid) {
         setPhoneError(validation.error || 'Invalid phone number');
         setSaving(false);
@@ -238,7 +287,10 @@ export const CustomerList = () => {
       }
 
       // Format phone for API - get country code and E.164 for Twilio
-      const phoneForApi = formatPhoneNumberForApi(values.phoneNumber, selectedCountry as CountryCode | undefined);
+      const phoneForApi = formatPhoneNumberForApi(
+        values.phoneNumber,
+        selectedCountry as CountryCode | undefined
+      );
       if (!phoneForApi) {
         setPhoneError('Invalid phone number format');
         setSaving(false);
@@ -249,25 +301,26 @@ export const CustomerList = () => {
       // The number in values.phoneNumber is already in local format
       const localNumber = values.phoneNumber || '';
 
-      const isDevMode = !import.meta.env.VITE_SUPABASE_URL ||
+      const isDevMode =
+        !import.meta.env.VITE_SUPABASE_URL ||
         import.meta.env.VITE_SUPABASE_URL?.includes('placeholder') ||
         !import.meta.env.VITE_SUPABASE_ANON_KEY ||
         import.meta.env.VITE_SUPABASE_ANON_KEY === 'placeholder_key';
 
       if (isDevMode) {
         // Update local state in dev mode
-        const updatedCustomers = customers.map(c =>
+        const updatedCustomers = customers.map((c) =>
           c.id === editingCustomer.id
             ? {
-              ...c,
-              name: values.name,
-              phone: {
-                countryCode: phoneForApi.countryCode, // e.g., "44"
-                number: localNumber, // LOCAL format: "07780586444" (as user entered)
-                // Country is auto-detected from the number (not stored in DB)
-              },
-              job_description: values.jobDescription || undefined,
-            }
+                ...c,
+                name: values.name,
+                phone: {
+                  countryCode: phoneForApi.countryCode, // e.g., "44"
+                  number: localNumber, // LOCAL format: "07780586444" (as user entered)
+                  // Country is auto-detected from the number (not stored in DB)
+                },
+                job_description: values.jobDescription || undefined,
+              }
             : c
         );
         setCustomers(updatedCustomers);
@@ -312,7 +365,8 @@ export const CustomerList = () => {
   };
 
   const handleSendAgain = async (customerId: string) => {
-    const isDevMode = import.meta.env.VITE_SUPABASE_URL?.includes('placeholder') ||
+    const isDevMode =
+      import.meta.env.VITE_SUPABASE_URL?.includes('placeholder') ||
       import.meta.env.VITE_SUPABASE_ANON_KEY === 'placeholder_key';
 
     if (isDevMode) {
@@ -341,14 +395,13 @@ export const CustomerList = () => {
     }
   };
 
-
   // Get flag emoji from country code
   const getFlagEmoji = (country: CountryCode): string => {
     // Convert country code to flag emoji (e.g., "GB" -> 🇬🇧)
     const codePoints = country
       .toUpperCase()
       .split('')
-      .map(char => 127397 + char.charCodeAt(0));
+      .map((char) => 127397 + char.charCodeAt(0));
     return String.fromCodePoint(...codePoints);
   };
 
@@ -432,29 +485,72 @@ export const CustomerList = () => {
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString();
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const monthNames = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    const month = monthNames[date.getMonth()];
+    const year = date.getFullYear();
+
+    // Add ordinal suffix (st, nd, rd, th)
+    const getOrdinalSuffix = (n: number) => {
+      const s = ['th', 'st', 'nd', 'rd'];
+      const v = n % 100;
+      return s[(v - 20) % 10] || s[v] || s[0];
+    };
+
+    return `${day}${getOrdinalSuffix(day)} ${month} ${year}`;
   };
 
   return (
     <Paper shadow="md" p="md" className="w-full sm:p-xl">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8 pb-6 border-b border-[#2a2a2a]">
-        <div>
-          <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
-            Customer List
-          </Title>
-          <p className="text-sm text-gray-400 hidden sm:block">Manage your customers and review requests</p>
+      <div className="flex flex-col gap-6 mb-8 pb-6 border-b border-[#2a2a2a]">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+          <div>
+            <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
+              Customer List
+            </Title>
+            <p className="text-sm text-gray-400 hidden sm:block">
+              Manage your customers and review requests
+            </p>
+          </div>
+          <Select
+            placeholder="Filter by status"
+            data={[
+              { value: '', label: 'All' },
+              { value: 'sent', label: 'Sent' },
+              { value: 'pending', label: 'Not Sent' },
+            ]}
+            value={statusFilter || ''}
+            onChange={(value) => {
+              setStatusFilter(value || null);
+              setPage(1);
+            }}
+            clearable
+            className="w-full sm:w-48"
+            size="md"
+          />
         </div>
-        <Select
-          placeholder="Filter by status"
-          data={[
-            { value: '', label: 'All' },
-            { value: 'sent', label: 'Sent' },
-            { value: 'pending', label: 'Not Sent' },
-          ]}
-          value={statusFilter || ''}
-          onChange={(value) => setStatusFilter(value || null)}
-          clearable
-          className="w-full sm:w-48"
+        <TextInput
+          placeholder="Search by name or job description..."
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setPage(1);
+          }}
+          className="w-full sm:w-96"
           size="md"
         />
       </div>
@@ -464,9 +560,7 @@ export const CustomerList = () => {
           <Loader color="teal" />
         </div>
       ) : customers.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
-          No customers found
-        </div>
+        <div className="text-center py-16 text-gray-400">No customers found</div>
       ) : (
         <>
           {/* Desktop table view */}
@@ -498,7 +592,9 @@ export const CustomerList = () => {
                         const phoneDisplay = formatPhone(customer.phone);
                         return (
                           <div className="flex items-center gap-1.5">
-                            <span className="flex items-center justify-center text-base leading-none">{phoneDisplay.flag}</span>
+                            <span className="flex items-center justify-center text-base leading-none">
+                              {phoneDisplay.flag}
+                            </span>
                             <span>{phoneDisplay.number}</span>
                           </div>
                         );
@@ -512,15 +608,15 @@ export const CustomerList = () => {
                     </Table.Td>
                     <Table.Td className="text-gray-400">{formatDate(customer.sent_at)}</Table.Td>
                     <Table.Td>
-                      <div className="flex gap-2">
+                      <div className="flex items-center gap-2">
                         <Button
                           size="xs"
                           variant="subtle"
                           onClick={() => handleEdit(customer)}
                           radius="md"
-                          className="font-medium"
+                          className="font-medium flex items-center justify-center"
                         >
-                          <IconEdit size={16} />
+                          Edit
                         </Button>
                         <Button
                           size="sm"
@@ -529,9 +625,15 @@ export const CustomerList = () => {
                           radius="md"
                           className="font-medium"
                           disabled={!isPhoneValid(customer.phone)}
-                          title={!isPhoneValid(customer.phone) ? getPhoneError(customer.phone) || 'Invalid phone number' : ''}
+                          title={
+                            !isPhoneValid(customer.phone)
+                              ? getPhoneError(customer.phone) || 'Invalid phone number'
+                              : ''
+                          }
                         >
-                          {customer.sms_status === 'sent' ? 'Send Again' : 'Send'}
+                          {customer.sms_status === 'sent'
+                            ? 'Request Review Again'
+                            : 'Request Review'}
                         </Button>
                       </div>
                     </Table.Td>
@@ -549,26 +651,39 @@ export const CustomerList = () => {
               const phoneDisplay = formatPhone(customer.phone);
 
               return (
-                <Paper key={customer.id} p="md" shadow="sm" className={`bg-[#141414] border transition-colors sm:p-lg ${phoneValid ? 'border-[#2a2a2a] hover:border-[#333333]' : 'border-red-800/50'}`}>
+                <Paper
+                  key={customer.id}
+                  p="md"
+                  shadow="sm"
+                  className={`bg-[#141414] border transition-colors sm:p-lg ${phoneValid ? 'border-[#2a2a2a] hover:border-[#333333]' : 'border-red-800/50'}`}
+                >
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex-1">
                       <div className="font-semibold text-lg text-white mb-1">{customer.name}</div>
                       <div className="text-sm text-gray-400 font-medium flex items-center gap-1.5">
-                        <span className="flex items-center justify-center text-base leading-none">{phoneDisplay.flag}</span>
+                        <span className="flex items-center justify-center text-base leading-none">
+                          {phoneDisplay.flag}
+                        </span>
                         <span>{phoneDisplay.number}</span>
                       </div>
                       {!phoneValid && phoneError && (
                         <div className="text-xs text-red-400 mt-1 font-medium">{phoneError}</div>
                       )}
                     </div>
-                    <Badge
-                      color={customer.sms_status === 'sent' ? 'green' : 'orange'}
-                      size="md"
-                      radius="md"
-                      className="ml-2"
-                    >
-                      {customer.sms_status === 'sent' ? 'Sent' : 'Not Sent'}
-                    </Badge>
+                    <div className="flex flex-col items-end gap-1.5 ml-2">
+                      <Badge
+                        color={customer.sms_status === 'sent' ? 'green' : 'orange'}
+                        size="md"
+                        radius="md"
+                      >
+                        {customer.sms_status === 'sent' ? 'Sent' : 'Not Sent'}
+                      </Badge>
+                      {customer.sent_at && (
+                        <div className="text-xs text-gray-500 font-medium">
+                          {formatDate(customer.sent_at)}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   {customer.job_description && (
                     <div className="text-sm text-gray-300 mb-4 p-4 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
@@ -576,31 +691,26 @@ export const CustomerList = () => {
                     </div>
                   )}
                   <div className="flex justify-between items-center pt-4 border-t border-[#2a2a2a]">
-                    <div className="text-xs text-gray-500 font-medium">
-                      {customer.sent_at ? `Sent: ${formatDate(customer.sent_at)}` : 'Not sent yet'}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="xs"
-                        variant="subtle"
-                        onClick={() => handleEdit(customer)}
-                        radius="md"
-                        className="font-medium"
-                      >
-                        <IconEdit size={16} />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={customer.sms_status === 'sent' ? 'light' : 'filled'}
-                        onClick={() => handleSendAgain(customer.id)}
-                        radius="md"
-                        className="font-medium"
-                        disabled={!phoneValid}
-                        title={!phoneValid ? phoneError || 'Invalid phone number' : ''}
-                      >
-                        {customer.sms_status === 'sent' ? 'Send Again' : 'Send'}
-                      </Button>
-                    </div>
+                    <Button
+                      size="xs"
+                      variant="subtle"
+                      onClick={() => handleEdit(customer)}
+                      radius="md"
+                      className="font-medium flex items-center justify-center"
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={customer.sms_status === 'sent' ? 'light' : 'filled'}
+                      onClick={() => handleSendAgain(customer.id)}
+                      radius="md"
+                      className="font-medium"
+                      disabled={!phoneValid}
+                      title={!phoneValid ? phoneError || 'Invalid phone number' : ''}
+                    >
+                      {customer.sms_status === 'sent' ? 'Request Review Again' : 'Request Review'}
+                    </Button>
                   </div>
                 </Paper>
               );
@@ -611,11 +721,7 @@ export const CustomerList = () => {
 
       {total > limit && (
         <div className="mt-6 flex justify-center">
-          <Pagination
-            value={page}
-            onChange={setPage}
-            total={Math.ceil(total / limit)}
-          />
+          <Pagination value={page} onChange={setPage} total={Math.ceil(total / limit)} />
         </div>
       )}
 
@@ -631,21 +737,7 @@ export const CustomerList = () => {
         }}
         title="Edit Customer"
         size="md"
-        styles={{
-          content: {
-            '@media (max-width: 47.99em)': {
-              height: '100%',
-              maxHeight: '100%',
-              borderRadius: 0,
-              margin: 0,
-            },
-          },
-          inner: {
-            '@media (max-width: 47.99em)': {
-              padding: '0',
-            },
-          },
-        }}
+        className="modal-mobile-fullscreen"
       >
         <form onSubmit={editForm.onSubmit(handleSaveEdit)}>
           <Stack gap="md">
@@ -666,10 +758,16 @@ export const CustomerList = () => {
                   editForm.setFieldValue('phoneNumber', value || '');
                   // NO auto-detection - country is only changed by user via dropdown
                   // Validate immediately when typing - use current country from ref
-                  const validation = validatePhoneNumber(value, countryRef.current as CountryCode | undefined);
+                  const validation = validatePhoneNumber(
+                    value,
+                    countryRef.current as CountryCode | undefined
+                  );
                   if (!validation.isValid) {
                     setPhoneError(validation.error || 'Invalid phone number');
-                    editForm.setFieldError('phoneNumber', validation.error || 'Invalid phone number');
+                    editForm.setFieldError(
+                      'phoneNumber',
+                      validation.error || 'Invalid phone number'
+                    );
                   } else {
                     setPhoneError(null);
                     editForm.setFieldError('phoneNumber', null);
@@ -684,11 +782,17 @@ export const CustomerList = () => {
                   // Always validate when country changes if there's a phone number
                   if (country && editForm.values.phoneNumber) {
                     // Re-validate the existing number with the new country immediately
-                    const validation = validatePhoneNumber(editForm.values.phoneNumber, country as CountryCode | undefined);
+                    const validation = validatePhoneNumber(
+                      editForm.values.phoneNumber,
+                      country as CountryCode | undefined
+                    );
                     if (!validation.isValid) {
                       setPhoneError(validation.error || 'Invalid phone number');
                       // Also set form error
-                      editForm.setFieldError('phoneNumber', validation.error || 'Invalid phone number');
+                      editForm.setFieldError(
+                        'phoneNumber',
+                        validation.error || 'Invalid phone number'
+                      );
                     } else {
                       // Clear error if number is valid for the new country
                       setPhoneError(null);
@@ -714,7 +818,12 @@ export const CustomerList = () => {
               />
               {/* Debug log */}
               {(() => {
-                console.log('[EditModal] Rendering PhoneNumber with defaultCountry:', selectedCountry || 'GB', 'selectedCountry state:', selectedCountry);
+                console.log(
+                  '[EditModal] Rendering PhoneNumber with defaultCountry:',
+                  selectedCountry || 'GB',
+                  'selectedCountry state:',
+                  selectedCountry
+                );
                 return null;
               })()}
             </div>
@@ -739,11 +848,7 @@ export const CustomerList = () => {
               >
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                loading={saving}
-                className="flex-1 font-semibold"
-              >
+              <Button type="submit" loading={saving} className="flex-1 font-semibold">
                 Save
               </Button>
             </div>
@@ -753,4 +858,3 @@ export const CustomerList = () => {
     </Paper>
   );
 };
-

@@ -35,7 +35,19 @@ interface PhoneNumberProps extends Omit<TextInputProps, 'onChange' | 'value'> {
 }
 
 export const PhoneNumber = forwardRef<HTMLInputElement, PhoneNumberProps>(
-  ({ value, onChange, onCountryChange, defaultCountry = 'GB', error, label, description, ...props }, ref) => {
+  (
+    {
+      value,
+      onChange,
+      onCountryChange,
+      defaultCountry = 'GB',
+      error,
+      label,
+      description,
+      ...props
+    },
+    ref
+  ) => {
     const [country, setCountry] = useState<CountryCode>(defaultCountry);
     const [phoneValue, setPhoneValue] = useState<string>(value || '');
 
@@ -75,12 +87,12 @@ export const PhoneNumber = forwardRef<HTMLInputElement, PhoneNumberProps>(
       onChange?.(newValue || undefined);
     };
 
-    const selectedCountry = COUNTRIES.find(c => c.value === country);
+    const selectedCountry = COUNTRIES.find((c) => c.value === country);
 
     return (
       <Stack gap="xs">
         <Select
-          data={COUNTRIES.map(c => ({
+          data={COUNTRIES.map((c) => ({
             value: c.value,
             label: `${c.flag} ${c.label}`,
           }))}
@@ -98,12 +110,11 @@ export const PhoneNumber = forwardRef<HTMLInputElement, PhoneNumberProps>(
           error={error}
           {...props}
         />
-        {description && (
-          <div className="text-xs text-gray-400">{description}</div>
-        )}
+        {description && <div className="text-xs text-gray-400">{description}</div>}
         {selectedCountry && !phoneValue && !error && (
           <div className="text-xs text-gray-400">
-            Enter the local phone number (e.g., 07780586444 for UK). The country code (+{getCountryCallingCode(country)}) will be added automatically.
+            Enter the local phone number (e.g., 07782385414 for UK). The country code (+
+            {getCountryCallingCode(country)}) will be added automatically.
           </div>
         )}
       </Stack>

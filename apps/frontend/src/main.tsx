@@ -12,9 +12,11 @@ const theme = createTheme({
   defaultRadius: 'md',
   primaryColor: 'teal',
   colorScheme: 'dark',
-  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+  fontFamily:
+    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
   headings: {
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    fontFamily:
+      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     sizes: {
       h1: { fontSize: '2rem', lineHeight: '1.2', fontWeight: '700' },
       h2: { fontSize: '1.75rem', lineHeight: '1.3', fontWeight: '700' },
@@ -22,11 +24,11 @@ const theme = createTheme({
     },
   },
   breakpoints: {
-    xs: '30em',  // 480px
-    sm: '36em',  // 576px
-    md: '48em',  // 768px
-    lg: '62em',  // 992px
-    xl: '75em',  // 1200px
+    xs: '30em', // 480px
+    sm: '36em', // 576px
+    md: '48em', // 768px
+    lg: '62em', // 992px
+    xl: '75em', // 1200px
   },
   shadows: {
     xs: '0 1px 2px 0 rgb(0 0 0 / 0.5)',
@@ -73,9 +75,6 @@ const theme = createTheme({
         root: {
           backgroundColor: 'rgb(30 30 30)',
           border: '1px solid rgb(55 55 55)',
-          '@media (min-width: 48em)': {
-            padding: 'var(--mantine-spacing-xl)',
-          },
         },
       },
     },
@@ -214,40 +213,20 @@ const theme = createTheme({
       },
       styles: {
         root: {
-          // Mobile-first: full screen on small devices
-          '@media (max-width: 47.99em)': {
-            '& .mantine-Modal-inner': {
-              padding: '0',
-            },
-            '& .mantine-Modal-content': {
-              height: '100%',
-              maxHeight: '100%',
-              borderRadius: 0,
-              margin: 0,
-            },
-          },
+          // Mobile styles handled in CSS
         },
         header: {
           backgroundColor: 'rgb(30 30 30)',
           borderBottom: '1px solid rgb(55 55 55)',
           padding: '0.75rem 1rem',
-          '@media (min-width: 48em)': {
-            padding: '1rem 1.25rem',
-          },
         },
         title: {
           color: 'rgb(255 255 255)',
           fontWeight: 600,
           fontSize: '1rem',
-          '@media (min-width: 48em)': {
-            fontSize: '1.125rem',
-          },
         },
         body: {
           padding: '0.75rem',
-          '@media (min-width: 48em)': {
-            padding: '1rem',
-          },
         },
         content: {
           backgroundColor: 'rgb(30 30 30)',
@@ -273,4 +252,3 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </MantineProvider>
   </React.StrictMode>
 );
-

@@ -23,3 +23,54 @@
     text-wrap: balance;
   }
 }
+
+@layer components {
+  /* Modal mobile-first styles */
+  @media (max-width: 47.99em) {
+    .mantine-Modal-root .mantine-Modal-inner {
+      padding: 0 !important;
+    }
+
+    .mantine-Modal-root .mantine-Modal-content {
+      height: 100% !important;
+      max-height: 100% !important;
+      border-radius: 0 !important;
+      margin: 0 !important;
+    }
+  }
+
+  @media (min-width: 48em) {
+    .mantine-Modal-header {
+      padding: 1rem 1.25rem !important;
+    }
+
+    .mantine-Modal-title {
+      font-size: 1.125rem !important;
+    }
+
+    .mantine-Modal-body {
+      padding: 1rem !important;
+    }
+  }
+
+  /* Paper responsive padding */
+  @media (min-width: 48em) {
+    .mantine-Paper-root {
+      padding: var(--mantine-spacing-xl) !important;
+    }
+  }
+
+  /* Modal mobile fullscreen */
+  @media (max-width: 47.99em) {
+    .modal-mobile-fullscreen .mantine-Modal-content {
+      height: 100% !important;
+      max-height: 100% !important;
+      border-radius: 0 !important;
+      margin: 0 !important;
+    }
+
+    .modal-mobile-fullscreen .mantine-Modal-inner {
+      padding: 0 !important;
+    }
+  }
+}
