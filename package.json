@@ -1,0 +1,19 @@
+{
+  "name": "rate-my-work-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "yarn workspace frontend dev & yarn workspace backend dev",
+    "build": "yarn workspace frontend build && yarn workspace backend build",
+    "lint": "yarn workspace frontend lint && yarn workspace backend lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.2.5"
+  },
+  "packageManager": "yarn@1.22.19"
+}
+
