@@ -55,4 +55,25 @@ export const apiClient = {
   sendSMS: async (customerId: string): Promise<void> => {
     await api.post('/api/send-sms', { customerId });
   },
+
+  // Billing
+  getSubscription: async (): Promise<{
+    status: 'active' | 'inactive' | 'past_due' | 'canceled';
+    paymentMethod: 'card' | 'direct_debit' | null;
+    nextBillingDate?: string;
+    cardLast4?: string;
+    cardBrand?: string;
+  }> => {
+    const { data } = await api.get('/api/billing/subscription');
+    return data;
+  },
+
+  createCheckoutSession: async (): Promise<{ url: string }> => {
+    const { data } = await api.post('/api/billing/create-checkout-session');
+    return data;
+  },
+
+  requestInvoiceSetup: async (): Promise<void> => {
+    await api.post('/api/billing/request-invoice');
+  },
 };

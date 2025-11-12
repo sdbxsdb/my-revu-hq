@@ -5,6 +5,7 @@ import { Notifications } from '@mantine/notifications';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import App from './App';
+import { PaymentProvider } from './contexts/PaymentContext';
 import './index.css';
 
 // Configure Mantine theme for dark, modern design
@@ -247,8 +248,10 @@ const theme = createTheme({
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <MantineProvider theme={theme}>
-      <Notifications position="top-center" />
-      <App />
+      <PaymentProvider>
+        <Notifications position="top-center" />
+        <App />
+      </PaymentProvider>
     </MantineProvider>
   </React.StrictMode>
 );

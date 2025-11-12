@@ -12,6 +12,8 @@ import {
   TextInput,
   Textarea,
   Stack,
+  Alert,
+  Text,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useForm } from '@mantine/form';
@@ -25,8 +27,11 @@ import {
   detectCountryFromPhoneNumber,
 } from '@/lib/phone-validation';
 import { parsePhoneNumberFromString, isValidPhoneNumber } from 'libphonenumber-js';
+import { usePayment } from '@/contexts/PaymentContext';
+import { IconAlertCircle } from '@tabler/icons-react';
 
 export const CustomerList = () => {
+  const { hasPaid } = usePayment();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -365,6 +370,15 @@ export const CustomerList = () => {
   };
 
   const handleSendAgain = async (customerId: string) => {
+    if (!hasPaid) {
+      notifications.show({
+        title: 'Payment Required',
+        message: 'Please set up your payment method to send SMS messages.',
+        color: 'yellow',
+      });
+      return;
+    }
+
     const isDevMode =
       import.meta.env.VITE_SUPABASE_URL?.includes('placeholder') ||
       import.meta.env.VITE_SUPABASE_ANON_KEY === 'placeholder_key';
@@ -526,6 +540,29 @@ export const CustomerList = () => {
               Manage your customers and review requests
             </p>
           </div>
+          {!hasPaid && (
+            <Alert
+              icon={<IconAlertCircle size={16} />}
+              title="Payment Required"
+              color="yellow"
+              className="sm:col-span-2"
+            >
+              <Text size="sm" className="text-gray-300">
+                You can add and manage customers, but you need to set up payment to send SMS
+                messages.
+                <Button
+                  component="a"
+                  href="/billing"
+                  variant="subtle"
+                  size="xs"
+                  color="teal"
+                  className="ml-2"
+                >
+                  Set up payment
+                </Button>
+              </Text>
+            </Alert>
+          )}
           <Select
             placeholder="Filter by status"
             data={[

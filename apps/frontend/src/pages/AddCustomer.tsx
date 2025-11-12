@@ -1,14 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
 import { useForm } from '@mantine/form';
 import { useNavigate } from 'react-router-dom';
-import { Button, TextInput, Textarea, Paper, Title, Stack } from '@mantine/core';
+import { Button, TextInput, Textarea, Paper, Title, Stack, Alert, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { CountryCode } from 'libphonenumber-js';
 import { apiClient } from '@/lib/api';
 import { PhoneNumber } from '@/components/PhoneNumber';
 import { validatePhoneNumber, formatPhoneNumberForApi } from '@/lib/phone-validation';
+import { usePayment } from '@/contexts/PaymentContext';
+import { IconAlertCircle } from '@tabler/icons-react';
 
 export const AddCustomer = () => {
+  const { hasPaid } = usePayment();
   const [loading, setLoading] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<CountryCode | undefined>('GB'); // Default to GB, can be updated from account
@@ -40,7 +43,10 @@ export const AddCustomer = () => {
       name: (value) => (value.trim().length < 2 ? 'Name must be at least 2 characters' : null),
       phoneNumber: (value) => {
         // Use the current country from ref to avoid stale closure
-        const validation = validatePhoneNumber(value, countryRef.current as CountryCode | undefined);
+        const validation = validatePhoneNumber(
+          value,
+          countryRef.current as CountryCode | undefined
+        );
         if (!validation.isValid) {
           return validation.error || 'Invalid phone number';
         }
@@ -49,14 +55,25 @@ export const AddCustomer = () => {
     },
   });
 
-
   const handleSendNow = async (values: typeof form.values) => {
+    if (!hasPaid) {
+      notifications.show({
+        title: 'Payment Required',
+        message: 'Please set up your payment method to send SMS messages.',
+        color: 'yellow',
+      });
+      return;
+    }
+
     setLoading(true);
     setPhoneError(null);
 
     try {
       // Validate phone number with country context
-      const validation = validatePhoneNumber(values.phoneNumber, selectedCountry as CountryCode | undefined);
+      const validation = validatePhoneNumber(
+        values.phoneNumber,
+        selectedCountry as CountryCode | undefined
+      );
       if (!validation.isValid) {
         setPhoneError(validation.error || 'Invalid phone number');
         setLoading(false);
@@ -64,7 +81,10 @@ export const AddCustomer = () => {
       }
 
       // Format phone for API (E.164 format for Twilio)
-      const phoneForApi = formatPhoneNumberForApi(values.phoneNumber, selectedCountry as CountryCode | undefined);
+      const phoneForApi = formatPhoneNumberForApi(
+        values.phoneNumber,
+        selectedCountry as CountryCode | undefined
+      );
       if (!phoneForApi) {
         setPhoneError('Invalid phone number format');
         setLoading(false);
@@ -108,7 +128,10 @@ export const AddCustomer = () => {
 
     try {
       // Validate phone number with country context
-      const validation = validatePhoneNumber(values.phoneNumber, selectedCountry as CountryCode | undefined);
+      const validation = validatePhoneNumber(
+        values.phoneNumber,
+        selectedCountry as CountryCode | undefined
+      );
       if (!validation.isValid) {
         setPhoneError(validation.error || 'Invalid phone number');
         setLoading(false);
@@ -116,7 +139,10 @@ export const AddCustomer = () => {
       }
 
       // Format phone for API (E.164 format for Twilio)
-      const phoneForApi = formatPhoneNumberForApi(values.phoneNumber, selectedCountry as CountryCode | undefined);
+      const phoneForApi = formatPhoneNumberForApi(
+        values.phoneNumber,
+        selectedCountry as CountryCode | undefined
+      );
       if (!phoneForApi) {
         setPhoneError('Invalid phone number format');
         setLoading(false);
@@ -160,7 +186,30 @@ export const AddCustomer = () => {
         <p className="text-sm text-gray-400">Add a new customer and send them a review request</p>
       </div>
 
-      <form onSubmit={form.onSubmit(() => { })}>
+      {!hasPaid && (
+        <Alert
+          icon={<IconAlertCircle size={16} />}
+          title="Payment Required to Send Messages"
+          color="yellow"
+          className="mb-6"
+        >
+          <Text size="sm" className="text-gray-300">
+            You can add customers, but you need to set up payment to send SMS messages.
+            <Button
+              component="a"
+              href="/billing"
+              variant="subtle"
+              size="xs"
+              color="teal"
+              className="ml-2"
+            >
+              Set up payment
+            </Button>
+          </Text>
+        </Alert>
+      )}
+
+      <form onSubmit={form.onSubmit(() => {})}>
         <Stack gap="lg">
           <TextInput
             label="Name"
@@ -178,7 +227,10 @@ export const AddCustomer = () => {
               onChange={(value) => {
                 form.setFieldValue('phoneNumber', value);
                 // Validate immediately when typing - use current country from ref
-                const validation = validatePhoneNumber(value, countryRef.current as CountryCode | undefined);
+                const validation = validatePhoneNumber(
+                  value,
+                  countryRef.current as CountryCode | undefined
+                );
                 if (!validation.isValid) {
                   setPhoneError(validation.error || 'Invalid phone number');
                   form.setFieldError('phoneNumber', validation.error || 'Invalid phone number');
@@ -196,7 +248,10 @@ export const AddCustomer = () => {
                 // Always validate when country changes if there's a phone number
                 if (country && form.values.phoneNumber) {
                   // Re-validate the existing number with the new country immediately
-                  const validation = validatePhoneNumber(form.values.phoneNumber, country as CountryCode | undefined);
+                  const validation = validatePhoneNumber(
+                    form.values.phoneNumber,
+                    country as CountryCode | undefined
+                  );
                   if (!validation.isValid) {
                     setPhoneError(validation.error || 'Invalid phone number');
                     // Also set form error
@@ -260,4 +315,3 @@ export const AddCustomer = () => {
     </Paper>
   );
 };
-

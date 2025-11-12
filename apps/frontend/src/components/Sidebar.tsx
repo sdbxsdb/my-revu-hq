@@ -3,7 +3,8 @@ import {
   IconSettings,
   IconUserPlus,
   IconList,
-  IconLogout
+  IconLogout,
+  IconCreditCard,
 } from '@tabler/icons-react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -16,6 +17,7 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
 
   const navItems = [
     { to: '/account', label: 'Account Settings', icon: IconSettings },
+    { to: '/billing', label: 'Billing', icon: IconCreditCard },
     { to: '/customers/add', label: 'Add Customer', icon: IconUserPlus },
     { to: '/customers', label: 'Customer List', icon: IconList },
   ];
@@ -44,9 +46,10 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
               end={item.to === '/customers'}
               onClick={handleNavClick}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium ${isActive
-                  ? 'bg-teal-600 text-white shadow-lg shadow-teal-500/30'
-                  : 'text-gray-400 hover:bg-[#2a2a2a] hover:text-white'
+                `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium ${
+                  isActive
+                    ? 'bg-teal-600 text-white shadow-lg shadow-teal-500/30'
+                    : 'text-gray-400 hover:bg-[#2a2a2a] hover:text-white'
                 }`
               }
             >
@@ -74,4 +77,3 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
     </div>
   );
 };
-
