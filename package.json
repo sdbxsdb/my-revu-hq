@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "yarn workspace frontend dev & yarn workspace backend dev",
     "build": "yarn workspace frontend build && yarn workspace backend build",
+    "build:frontend": "yarn workspace frontend build",
     "lint": "yarn workspace frontend lint && yarn workspace backend lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
   },

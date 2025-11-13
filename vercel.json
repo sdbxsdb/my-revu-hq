@@ -1,0 +1,6 @@
+{
+  "buildCommand": "yarn workspace frontend build",
+  "outputDirectory": "apps/frontend/dist",
+  "installCommand": "yarn install",
+  "framework": "vite"
+}

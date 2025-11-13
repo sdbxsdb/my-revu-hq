@@ -3,10 +3,13 @@
 ## Frontend (Vercel)
 
 1. Connect your GitHub repository to Vercel
-2. Set root directory to `apps/frontend`
-3. Configure build settings:
-   - Build Command: `yarn build`
-   - Output Directory: `dist`
+2. **Important:** The `vercel.json` file is already configured for the monorepo
+3. In Vercel dashboard, make sure:
+   - Root Directory: Leave empty (root of repo) - vercel.json handles it
+   - Framework Preset: Vite (or auto-detect)
+   - Build Command: Will use `yarn install && yarn workspace frontend build` from vercel.json
+   - Output Directory: Will use `apps/frontend/dist` from vercel.json
+   - Install Command: Will use `yarn install` from vercel.json
 4. Add environment variables:
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
