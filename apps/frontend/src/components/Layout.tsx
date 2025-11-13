@@ -32,7 +32,7 @@ export const Layout = () => {
       <main className="flex-1 w-full lg:ml-0 bg-gray-950 min-h-screen">
         {/* Mobile header */}
         <div className="lg:hidden bg-[#141414] border-b border-[#2a2a2a] sticky top-0 z-30 p-4 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-white">Rate My Work</h1>
+          <h1 className="text-xl font-bold text-white">MyRevuHQ</h1>
           <div className="flex items-center gap-3">
             <Tooltip label={hasPaid ? 'Payment Active' : 'Payment Required'}>
               <div className="flex items-center gap-2">

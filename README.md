@@ -1,6 +1,8 @@
-# Rate My Work
+# MyRevuHQ
 
 A full-stack TypeScript web application for managing customer reviews and sending SMS review requests.
+
+**Website:** https://myrevuhq.com
 
 ## Tech Stack
 
@@ -45,7 +47,7 @@ yarn install
 3. **Set up Twilio:**
    - Create a Twilio account
    - Get your Account SID and Auth Token
-   - Register an alphanumeric sender ID "RateMyWork" (or use a phone number)
+   - Register an alphanumeric sender ID "myrevuhq" (or use a phone number)
    - Note: Alphanumeric sender IDs may not be available in all countries
 
 4. **Configure environment variables:**
@@ -67,7 +69,7 @@ yarn install
    TWILIO_ACCOUNT_SID=your_twilio_account_sid
    TWILIO_AUTH_TOKEN=your_twilio_auth_token
    TWILIO_PHONE_NUMBER=your_twilio_phone_number
-   TWILIO_ALPHANUMERIC_SENDER_ID=RateMyWork
+   TWILIO_ALPHANUMERIC_SENDER_ID=myrevuhq
    NODE_ENV=development
    FRONTEND_URL=http://localhost:5173
    ```

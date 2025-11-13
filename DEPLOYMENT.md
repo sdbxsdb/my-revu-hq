@@ -47,7 +47,6 @@
 
 ## Twilio Setup
 
-1. Register an alphanumeric sender ID "RateMyWork" in your Twilio account
+1. Register an alphanumeric sender ID "myrevuhq" in your Twilio account
 2. Note: Alphanumeric sender IDs may have restrictions depending on your country
 3. For production, consider using a Twilio phone number instead if alphanumeric IDs aren't supported
-

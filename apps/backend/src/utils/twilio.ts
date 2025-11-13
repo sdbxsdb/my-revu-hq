@@ -15,8 +15,9 @@ export const sendSMS = async (
 ): Promise<{ sid: string; status: string }> => {
   try {
     // Use alphanumeric sender ID if available, otherwise fall back to phone number
-    const from = process.env.TWILIO_ALPHANUMERIC_SENDER_ID || process.env.TWILIO_PHONE_NUMBER || 'RateMyWork';
-    
+    const from =
+      process.env.TWILIO_ALPHANUMERIC_SENDER_ID || process.env.TWILIO_PHONE_NUMBER || 'myrevuhq';
+
     const message = await twilioClient.messages.create({
       body,
       to,
@@ -31,4 +32,3 @@ export const sendSMS = async (
     throw new Error(`Failed to send SMS: ${error.message}`);
   }
 };
-

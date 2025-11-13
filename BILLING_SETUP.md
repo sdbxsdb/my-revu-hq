@@ -100,7 +100,7 @@ This adds the following fields to the `users` table:
 In Stripe Dashboard:
 
 1. Go to Products → Create Product
-2. Name: "Rate My Work Monthly Subscription"
+2. Name: "MyRevuHQ Monthly Subscription"
 3. Pricing: £10.00/month, recurring
 4. Copy the Price ID (starts with `price_`)
 
@@ -461,7 +461,7 @@ When a customer requests invoice setup:
 2. **Admin creates invoice in Stripe Dashboard:**
    - Go to Stripe Dashboard → Customers → Find customer
    - Click "Create invoice" or use Stripe Billing for recurring invoices
-   - Add line item: "Rate My Work Monthly Subscription - £10.00"
+   - Add line item: "MyRevuHQ Monthly Subscription - £10.00"
    - Send invoice to customer
 
 3. **Customer pays invoice** → Stripe sends `invoice.payment_succeeded` webhook

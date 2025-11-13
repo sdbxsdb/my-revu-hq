@@ -75,7 +75,7 @@ export const Login = () => {
       <Paper shadow="xl" p="md" className="w-full max-w-md sm:p-xl">
         <div className="text-center mb-8">
           <Title order={2} mb="xs" className="text-3xl font-bold text-white">
-            Rate My Work
+            MyRevuHQ
           </Title>
           <Text c="dimmed" size="sm" ta="center" className="text-gray-400">
             Sign in to your account
@@ -160,4 +160,3 @@ export const Login = () => {
     </div>
   );
 };
-

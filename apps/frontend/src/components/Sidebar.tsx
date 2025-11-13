@@ -32,7 +32,7 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
   return (
     <div className="w-64 bg-[#141414] border-r border-[#2a2a2a] text-white min-h-screen p-6 flex flex-col">
       <div className="mb-10 hidden lg:block">
-        <h1 className="text-2xl font-bold text-white mb-1">Rate My Work</h1>
+        <h1 className="text-2xl font-bold text-white mb-1">MyRevuHQ</h1>
         <p className="text-xs text-gray-400">Review Management</p>
       </div>
 

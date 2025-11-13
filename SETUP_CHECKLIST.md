@@ -20,17 +20,19 @@
 - [ ] Create Twilio account
 - [ ] Get Account SID from dashboard
 - [ ] Get Auth Token from dashboard
-- [ ] Register alphanumeric sender ID "RateMyWork" (or use phone number)
+- [ ] Register alphanumeric sender ID "myrevuhq" (or use phone number)
 - [ ] Note: Alphanumeric IDs may require approval in some countries
 
 ## Environment Variables
 
 ### Frontend (`apps/frontend/.env.local`)
+
 - [ ] `VITE_SUPABASE_URL`
 - [ ] `VITE_SUPABASE_ANON_KEY`
 - [ ] `VITE_API_URL`
 
 ### Backend (`apps/backend/.env`)
+
 - [ ] `SUPABASE_URL`
 - [ ] `SUPABASE_SERVICE_ROLE_KEY`
 - [ ] `TWILIO_ACCOUNT_SID`
@@ -55,4 +57,3 @@
 - [ ] Set production environment variables
 - [ ] Test production deployment
 - [ ] Set up monthly SMS reset (optional cron job)
-
