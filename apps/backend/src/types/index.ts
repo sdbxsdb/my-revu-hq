@@ -2,12 +2,17 @@ export interface User {
   id: string;
   email: string;
   business_name?: string;
-  google_review_link?: string;
-  facebook_review_link?: string;
-  other_review_link?: string;
+  review_links?: Array<{ name: string; url: string }>; // Array of review links
   sms_template?: string;
   sms_sent_this_month?: number;
-  created_at?: string;
+  // Billing & Subscription fields
+  stripe_customer_id?: string;
+  stripe_subscription_id?: string;
+  access_status?: 'active' | 'inactive' | 'past_due' | 'canceled'; // Our app's access status, not Stripe's
+  payment_method?: 'card' | 'direct_debit';
+  current_period_end?: Date | string;
+  created_at?: Date | string;
+  updated_at?: Date | string;
 }
 
 export interface Customer {
@@ -30,4 +35,3 @@ export interface Message {
   body: string;
   sent_at: string;
 }
-

@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import {
-  IconSettings,
+  IconDeviceMobile,
   IconUserPlus,
   IconList,
   IconLogout,
@@ -16,10 +16,10 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
   const { signOut } = useAuth();
 
   const navItems = [
-    { to: '/account', label: 'Account Settings', icon: IconSettings },
-    { to: '/billing', label: 'Billing', icon: IconCreditCard },
     { to: '/customers/add', label: 'Add Customer', icon: IconUserPlus },
     { to: '/customers', label: 'Customer List', icon: IconList },
+    { to: '/account', label: 'SMS Setup', icon: IconDeviceMobile },
+    { to: '/billing', label: 'Billing', icon: IconCreditCard },
   ];
 
   const handleNavClick = () => {

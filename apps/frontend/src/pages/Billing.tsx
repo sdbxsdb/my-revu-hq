@@ -11,9 +11,9 @@ export const Billing = () => {
   const [activeTab, setActiveTab] = useState<string | null>('subscription');
   const [loading, setLoading] = useState(false);
   const [loadingSubscription, setLoadingSubscription] = useState(true);
-  const [subscriptionStatus, setSubscriptionStatus] = useState<
-    'active' | 'inactive' | 'past_due' | 'canceled'
-  >(hasPaid ? 'active' : 'inactive');
+  const [accessStatus, setAccessStatus] = useState<'active' | 'inactive' | 'past_due' | 'canceled'>(
+    hasPaid ? 'active' : 'inactive'
+  );
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'direct_debit' | null>(
     hasPaid ? 'card' : null
   );
@@ -25,6 +25,84 @@ export const Billing = () => {
 
   useEffect(() => {
     const loadData = async () => {
+      // Development mode: use dummy data if backend is not available
+      const isDevMode =
+        import.meta.env.VITE_SUPABASE_URL?.includes('placeholder') ||
+        import.meta.env.VITE_SUPABASE_ANON_KEY === 'placeholder_key';
+
+      console.log('Billing page loading - isDevMode:', isDevMode);
+
+      // Load and log user account data
+      let userAccount;
+      try {
+        if (isDevMode) {
+          // Dummy user data - what a complete user row looks like in the DB
+          userAccount = {
+            id: 'dev-user-id-123',
+            email: 'user@example.com',
+            business_name: 'Example Business Ltd',
+            review_links: [
+              { name: 'Google', url: 'https://g.page/r/example' },
+              { name: 'Facebook', url: 'https://www.facebook.com/example' },
+            ],
+            sms_template:
+              "You recently had Example Business Ltd for work. We'd greatly appreciate a review on one or all of the following links:",
+            sms_sent_this_month: 15,
+            // Billing & Subscription fields
+            stripe_customer_id: hasPaid ? 'cus_1234567890abcdef' : null,
+            stripe_subscription_id: hasPaid ? 'sub_1234567890abcdef' : null,
+            access_status: hasPaid ? 'active' : 'inactive',
+            payment_method: hasPaid ? 'card' : null,
+            current_period_end: hasPaid
+              ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+              : null,
+            created_at: '2024-01-15T10:00:00Z',
+            updated_at: new Date().toISOString(),
+          };
+        } else {
+          userAccount = await apiClient.getAccount();
+        }
+      } catch (error) {
+        console.error('Failed to load user account:', error);
+        // Use dummy data as fallback if API fails
+        userAccount = {
+          id: 'error-user-id',
+          email: 'error@example.com',
+          business_name: null,
+          review_links: [],
+          sms_template: null,
+          sms_sent_this_month: 0,
+          stripe_customer_id: null,
+          stripe_subscription_id: null,
+          access_status: 'inactive',
+          payment_method: null,
+          current_period_end: null,
+          created_at: null,
+          updated_at: null,
+        };
+      }
+
+      // Always log the user account data
+      console.log('=== USER ACCOUNT DATA (Full Object) ===');
+      console.log('Complete User Object (as stored in DB):', {
+        id: userAccount.id,
+        email: userAccount.email,
+        business_name: userAccount.business_name,
+        review_links: userAccount.review_links, // Array: [{name: "Google", url: "https://..."}, ...]
+        sms_template: userAccount.sms_template,
+        sms_sent_this_month: userAccount.sms_sent_this_month,
+        // Billing & Subscription fields
+        stripe_customer_id: userAccount.stripe_customer_id,
+        stripe_subscription_id: userAccount.stripe_subscription_id,
+        access_status: userAccount.access_status,
+        payment_method: userAccount.payment_method,
+        current_period_end: userAccount.current_period_end,
+        created_at: userAccount.created_at,
+        updated_at: userAccount.updated_at,
+      });
+      console.log('Raw user account object:', userAccount);
+      console.log('=== END USER ACCOUNT DATA ===');
+
       await loadSubscription();
 
       // Handle Stripe Checkout redirect
@@ -56,20 +134,29 @@ export const Billing = () => {
     try {
       setLoadingSubscription(true);
       // Use payment context for now (temp toggle)
-      // TODO: When backend is ready, replace this with real Stripe API call
-      // Stripe's API returns payment method details (last4, brand) even though
-      // we don't store full card details on our servers. The backend should:
-      // 1. Get subscription from Stripe
-      // 2. Get payment method from subscription.default_payment_method
-      // 3. Return last4 and brand from Stripe's PaymentMethod object
+      // TODO: When backend is ready, replace this with real data
+      //
+      // SUBSCRIPTION DATA SOURCE:
+      // We store subscription data in our DB (access_status, payment_method, etc.)
+      // and sync it from Stripe via webhooks. This means:
+      // - Our DB is the source of truth for our app (fast queries, no Stripe API calls on every page load)
+      // - Stripe webhooks update our DB when subscriptions change (payment succeeded, canceled, etc.)
+      // - The backend should query our DB first, then optionally verify with Stripe if needed
+      // - Card details (last4, brand) come from Stripe's API when needed (we don't store them)
+      //
+      // Backend flow:
+      // 1. Query user's access_status, payment_method from our DB
+      // 2. If subscription is active, optionally verify with Stripe API
+      // 3. Get payment method details (last4, brand) from Stripe PaymentMethod API
+      // 4. Return combined data to frontend
       if (hasPaid) {
-        setSubscriptionStatus('active');
+        setAccessStatus('active');
         setPaymentMethod('card');
         setNextBillingDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString());
         setCardLast4('4242'); // Demo card last 4 - will come from Stripe API
         setCardBrand('visa'); // Demo card brand - will come from Stripe API
       } else {
-        setSubscriptionStatus('inactive');
+        setAccessStatus('inactive');
         setPaymentMethod(null);
         setNextBillingDate(undefined);
         setCardLast4(undefined);
@@ -78,7 +165,7 @@ export const Billing = () => {
 
       // TODO: When backend is ready, uncomment and use real Stripe data:
       // const subscription = await apiClient.getSubscription();
-      // setSubscriptionStatus(subscription.status);
+      // setAccessStatus(subscription.accessStatus);
       // setPaymentMethod(subscription.paymentMethod);
       // setNextBillingDate(subscription.nextBillingDate);
       // setCardLast4(subscription.cardLast4); // From Stripe PaymentMethod.card.last4
@@ -102,6 +189,17 @@ export const Billing = () => {
   }, [hasPaid]);
 
   const handleSubscribe = async () => {
+    // Prevent setting up card if invoice/direct debit is already active
+    if (accessStatus === 'active' && paymentMethod === 'direct_debit') {
+      notifications.show({
+        title: 'Payment Method Already Active',
+        message:
+          'You already have invoice/direct debit set up. Please cancel your current payment method before switching to card payment.',
+        color: 'yellow',
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await apiClient.createCheckoutSession();
@@ -119,6 +217,17 @@ export const Billing = () => {
   };
 
   const handleRequestInvoice = async () => {
+    // Prevent setting up invoice if card payment is already active
+    if (accessStatus === 'active' && paymentMethod === 'card') {
+      notifications.show({
+        title: 'Payment Method Already Active',
+        message:
+          'You already have card payment set up. Please cancel your card subscription before switching to invoice payment.',
+        color: 'yellow',
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       await apiClient.requestInvoiceSetup();
@@ -127,6 +236,7 @@ export const Billing = () => {
         message: 'Invoice setup requested. Our team will contact you within 1-2 business days.',
         color: 'teal',
       });
+      await loadSubscription(); // Reload to update status
     } catch (error: any) {
       console.error('Failed to request invoice setup:', error);
       notifications.show({
@@ -155,7 +265,7 @@ export const Billing = () => {
       ) : (
         <>
           {/* Current Subscription Status */}
-          {subscriptionStatus === 'active' && (
+          {accessStatus === 'active' && (
             <Alert
               icon={<IconCheck size={16} />}
               title="Active Subscription"
@@ -211,7 +321,7 @@ export const Billing = () => {
                   </Text>
                 </div>
 
-                {subscriptionStatus === 'active' && paymentMethod === 'card' ? (
+                {accessStatus === 'active' && paymentMethod === 'card' ? (
                   <div className="p-6 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
                     <div className="flex items-center gap-4 mb-6">
                       <div className="flex-shrink-0">
@@ -237,6 +347,23 @@ export const Billing = () => {
                       Cancel Subscription
                     </Button>
                   </div>
+                ) : paymentMethod === 'direct_debit' && accessStatus === 'active' ? (
+                  <Alert
+                    icon={<IconAlertCircle size={16} />}
+                    title="Invoice Payment Active"
+                    color="blue"
+                    className="mb-4"
+                  >
+                    <Text size="sm" className="text-gray-300 mb-3">
+                      Your account is active and you're paying by invoice. To switch to card
+                      payment, please contact support to cancel your current payment method first.
+                    </Text>
+                    {nextBillingDate && (
+                      <Text size="xs" className="text-gray-400 mt-2">
+                        Next billing date: {new Date(nextBillingDate).toLocaleDateString()}
+                      </Text>
+                    )}
+                  </Alert>
                 ) : (
                   <div className="p-6 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
                     <div className="mb-4">
@@ -268,6 +395,7 @@ export const Billing = () => {
                       size="lg"
                       onClick={handleSubscribe}
                       loading={loading}
+                      disabled={accessStatus === 'active' && paymentMethod === 'direct_debit'}
                       className="font-semibold"
                     >
                       Subscribe with Card
@@ -296,19 +424,36 @@ export const Billing = () => {
                 </div>
 
                 {paymentMethod === 'direct_debit' ? (
-                  <div className="p-4 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
-                    <div className="flex items-center justify-between mb-4">
+                  <div className="p-6 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
+                    <div className="flex items-center gap-4 mb-6">
                       <div>
-                        <Text className="font-semibold text-white mb-1">Direct Debit Active</Text>
+                        <Text className="font-semibold text-white mb-1">Payment Method</Text>
                         <Text size="sm" className="text-gray-400">
-                          Account ending in •••• 1234
+                          Invoice / Direct Debit
                         </Text>
                       </div>
-                      <Button variant="light" size="sm">
+                    </div>
+                    <div className="mb-4">
+                      <Button variant="light" size="md" fullWidth>
                         Update Details
                       </Button>
                     </div>
+                    <Button variant="subtle" color="red" size="sm" fullWidth>
+                      Cancel Payment Method
+                    </Button>
                   </div>
+                ) : paymentMethod === 'card' ? (
+                  <Alert
+                    icon={<IconAlertCircle size={16} />}
+                    title="Card Payment Active"
+                    color="blue"
+                    className="mb-4"
+                  >
+                    <Text size="sm" className="text-gray-300 mb-3">
+                      You currently have card payment set up. To switch to invoice payment, please
+                      cancel your card subscription first.
+                    </Text>
+                  </Alert>
                 ) : (
                   <div className="p-6 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
                     <Alert
@@ -351,6 +496,7 @@ export const Billing = () => {
                       variant="light"
                       onClick={handleRequestInvoice}
                       loading={loading}
+                      disabled={accessStatus === 'active' && paymentMethod === 'card'}
                       className="font-semibold"
                     >
                       Request Invoice Setup

@@ -73,9 +73,11 @@ export const AccountSetup = () => {
         id: 'dev-user',
         email: 'dev@example.com',
         business_name: 'Smith Construction Co.',
-        google_review_link: 'https://g.page/r/ABC123XYZ/review',
-        facebook_review_link: 'https://www.facebook.com/smithconstruction/reviews',
-        other_review_link: 'https://www.yelp.com/biz/smith-construction',
+        review_links: [
+          { name: 'Google', url: 'https://g.page/r/ABC123XYZ/review' },
+          { name: 'Facebook', url: 'https://www.facebook.com/smithconstruction/reviews' },
+          { name: 'Yelp', url: 'https://www.yelp.com/biz/smith-construction' },
+        ],
         sms_template: form.values.smsTemplate,
         sms_sent_this_month: 45,
       };
@@ -87,17 +89,8 @@ export const AccountSetup = () => {
         `You recently had _________________ for work. We'd greatly appreciate a review on one or all of the following links: `;
       const templateWithName = template.replace(/{businessName}/g, '_________________');
 
-      // Convert old format to new array format
-      const reviewLinks: Array<{ name: string; url: string }> = [];
-      if (dummyAccount.google_review_link) {
-        reviewLinks.push({ name: 'Google', url: dummyAccount.google_review_link });
-      }
-      if (dummyAccount.facebook_review_link) {
-        reviewLinks.push({ name: 'Facebook', url: dummyAccount.facebook_review_link });
-      }
-      if (dummyAccount.other_review_link) {
-        reviewLinks.push({ name: 'Other', url: dummyAccount.other_review_link });
-      }
+      // Use review_links array directly
+      const reviewLinks = dummyAccount.review_links || [];
       // Ensure at least one empty field
       if (reviewLinks.length === 0) reviewLinks.push({ name: '', url: '' });
 
@@ -119,17 +112,8 @@ export const AccountSetup = () => {
         `You recently had _________________ for work. We'd greatly appreciate a review on one or all of the following links: `;
       const templateWithName = template.replace(/{businessName}/g, '_________________');
 
-      // Convert old format to new array format
-      const reviewLinks: Array<{ name: string; url: string }> = [];
-      if (data.google_review_link) {
-        reviewLinks.push({ name: 'Google', url: data.google_review_link });
-      }
-      if (data.facebook_review_link) {
-        reviewLinks.push({ name: 'Facebook', url: data.facebook_review_link });
-      }
-      if (data.other_review_link) {
-        reviewLinks.push({ name: 'Other', url: data.other_review_link });
-      }
+      // Use review_links array directly
+      const reviewLinks = data.review_links || [];
       // Ensure at least one empty field
       if (reviewLinks.length === 0) reviewLinks.push({ name: '', url: '' });
 
@@ -172,14 +156,14 @@ export const AccountSetup = () => {
         );
       }
 
-      // Convert array format back to old format for backend compatibility
-      const filteredLinks = values.reviewLinks.filter((link) => link.url.trim() !== '');
+      // Filter out empty links
+      const filteredLinks = values.reviewLinks.filter(
+        (link) => link.name.trim() !== '' && link.url.trim() !== ''
+      );
       const updatedAccount: User = {
         ...account!,
         business_name: values.businessName,
-        google_review_link: filteredLinks[0]?.url || '',
-        facebook_review_link: filteredLinks[1]?.url || '',
-        other_review_link: filteredLinks[2]?.url || '',
+        review_links: filteredLinks,
         sms_template: templateForSave,
       };
       setAccount(updatedAccount);
@@ -203,13 +187,13 @@ export const AccountSetup = () => {
         );
       }
 
-      // Convert array format back to old format for backend compatibility
-      const filteredLinks = values.reviewLinks.filter((link) => link.url.trim() !== '');
+      // Filter out empty links
+      const filteredLinks = values.reviewLinks.filter(
+        (link) => link.name.trim() !== '' && link.url.trim() !== ''
+      );
       await apiClient.updateAccount({
         business_name: values.businessName,
-        google_review_link: filteredLinks[0]?.url || '',
-        facebook_review_link: filteredLinks[1]?.url || '',
-        other_review_link: filteredLinks[2]?.url || '',
+        review_links: filteredLinks,
         sms_template: templateForSave,
       });
       notifications.show({
@@ -232,7 +216,7 @@ export const AccountSetup = () => {
     <Paper shadow="md" p="md" className="w-full max-w-2xl mx-auto sm:p-xl">
       <div className="mb-8">
         <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
-          Account Settings
+          SMS Setup
         </Title>
         <p className="text-sm text-gray-400">Manage your business information and SMS template</p>
       </div>

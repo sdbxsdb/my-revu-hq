@@ -7,19 +7,20 @@ const router = Router();
 
 const accountSchema = z.object({
   business_name: z.string().optional(),
-  google_review_link: z.string().url().optional().or(z.literal('')),
-  facebook_review_link: z.string().url().optional().or(z.literal('')),
-  other_review_link: z.string().url().optional().or(z.literal('')),
+  review_links: z
+    .array(
+      z.object({
+        name: z.string(),
+        url: z.string().url(),
+      })
+    )
+    .optional(),
   sms_template: z.string().optional(),
 });
 
 router.get('/', authenticate, async (req: AuthRequest, res) => {
   try {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', req.userId!)
-      .single();
+    const { data, error } = await supabase.from('users').select('*').eq('id', req.userId!).single();
 
     if (error) throw error;
 
@@ -67,4 +68,3 @@ router.put('/', authenticate, async (req: AuthRequest, res) => {
 });
 
 export default router;
-

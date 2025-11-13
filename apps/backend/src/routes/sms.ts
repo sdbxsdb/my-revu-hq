@@ -19,7 +19,7 @@ router.post('/send-sms', authenticate, async (req: AuthRequest, res) => {
     // Get user to check limit
     const { data: user, error: userError } = await supabase
       .from('users')
-      .select('sms_sent_this_month, business_name, google_review_link, facebook_review_link, other_review_link, sms_template')
+      .select('sms_sent_this_month, business_name, review_links, sms_template')
       .eq('id', req.userId!)
       .single();
 
@@ -48,7 +48,8 @@ router.post('/send-sms', authenticate, async (req: AuthRequest, res) => {
     }
 
     // Build SMS message
-    let messageBody = user.sms_template || 
+    let messageBody =
+      user.sms_template ||
       `You recently had ${user.business_name || 'us'} for work. We'd greatly appreciate a review on one or all of the following links:`;
 
     // Replace placeholders
@@ -59,14 +60,14 @@ router.post('/send-sms', authenticate, async (req: AuthRequest, res) => {
       messageBody += `\n\nJob: ${customer.job_description}`;
     }
 
-    // Add review links
-    const links: string[] = [];
-    if (user.google_review_link) links.push(`Google: ${user.google_review_link}`);
-    if (user.facebook_review_link) links.push(`Facebook: ${user.facebook_review_link}`);
-    if (user.other_review_link) links.push(`Other: ${user.other_review_link}`);
-
-    if (links.length > 0) {
-      messageBody += '\n\n' + links.join('\n');
+    // Add review links from array
+    if (user.review_links && Array.isArray(user.review_links) && user.review_links.length > 0) {
+      const links = user.review_links
+        .filter((link: any) => link.name && link.url)
+        .map((link: any) => `${link.name}: ${link.url}`);
+      if (links.length > 0) {
+        messageBody += '\n\n' + links.join('\n');
+      }
     }
 
     // Send SMS - phone.number should already be in E.164 format
@@ -108,4 +109,3 @@ router.post('/send-sms', authenticate, async (req: AuthRequest, res) => {
 });
 
 export default router;
-

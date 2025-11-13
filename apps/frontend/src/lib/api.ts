@@ -15,7 +15,11 @@ export const apiClient = {
     return data;
   },
 
-  updateAccount: async (account: Partial<User>): Promise<User> => {
+  updateAccount: async (account: {
+    business_name?: string;
+    review_links?: Array<{ name: string; url: string }>;
+    sms_template?: string;
+  }): Promise<User> => {
     const { data } = await api.put('/api/account', account);
     return data;
   },
@@ -58,7 +62,7 @@ export const apiClient = {
 
   // Billing
   getSubscription: async (): Promise<{
-    status: 'active' | 'inactive' | 'past_due' | 'canceled';
+    accessStatus: 'active' | 'inactive' | 'past_due' | 'canceled';
     paymentMethod: 'card' | 'direct_debit' | null;
     nextBillingDate?: string;
     cardLast4?: string;

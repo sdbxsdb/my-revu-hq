@@ -65,7 +65,37 @@ STRIPE_WEBHOOK_SECRET=whsec_... # For webhook verification
 STRIPE_PRICE_ID=price_... # Create a price in Stripe Dashboard for £10/month
 ```
 
-#### 3. Create Stripe Price
+#### 3. Run Database Migration
+
+Run the migration to add billing fields to the users table:
+
+```bash
+# If using Supabase CLI
+supabase migration up
+
+# Or run the SQL directly in Supabase Dashboard SQL Editor
+# File: apps/backend/supabase/migrations/002_add_billing_fields.sql
+```
+
+This adds the following fields to the `users` table:
+
+- `stripe_customer_id` - Links user to Stripe customer
+- `stripe_subscription_id` - Tracks Stripe subscription (for card payments)
+- `access_status` - User access status to our service: active (has access), inactive (no access), past_due (payment overdue), canceled (subscription canceled). This is our app's status, not Stripe's subscription status.
+- `payment_method` - Payment type: card or direct_debit
+- `current_period_end` - End date of current billing period
+
+**Important: Subscription Data Source**
+
+- **Our DB is the source of truth** - We store subscription status in our database
+- **Stripe webhooks keep it in sync** - When subscriptions change in Stripe, webhooks update our DB
+- **Why this approach?**
+  - Fast queries (no Stripe API calls on every page load)
+  - Works even if Stripe API is temporarily down
+  - Provides audit trail and backup
+  - Card details (last4, brand) are fetched from Stripe API when needed (not stored)
+
+#### 4. Create Stripe Price
 
 In Stripe Dashboard:
 
@@ -92,63 +122,58 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 // Get subscription status
 router.get('/subscription', authenticate, async (req: AuthRequest, res) => {
   try {
-    // Get user's Stripe customer ID from database
+    // Get user's subscription data from our database (source of truth)
     const { data: user } = await supabase
       .from('users')
-      .select('stripe_customer_id')
+      .select(
+        'stripe_customer_id, stripe_subscription_id, access_status, payment_method, current_period_end'
+      )
       .eq('id', req.userId!)
       .single();
 
-    if (!user?.stripe_customer_id) {
+    if (!user) {
       return res.json({
         status: 'inactive',
         paymentMethod: null,
       });
     }
 
-    // Get subscriptions from Stripe
-    const subscriptions = await stripe.subscriptions.list({
-      customer: user.stripe_customer_id,
-      limit: 1,
-    });
-
-    const subscription = subscriptions.data[0];
-
-    if (!subscription) {
+    // If no access status, return inactive
+    if (!user.access_status || user.access_status === 'inactive') {
       return res.json({
-        status: 'inactive',
+        accessStatus: 'inactive',
         paymentMethod: null,
       });
     }
 
-    // Get payment method details from Stripe
-    // Stripe returns safe-to-display card information (last4, brand) even though
-    // we don't store full card details on our servers
+    // Determine payment type based on subscription_id
+    // UI Logic:
+    // - If stripe_subscription_id exists → Card payment → Show card details
+    // - If no subscription_id but access_status = 'active' and payment_method = 'direct_debit' → Invoice payment → Show invoice message
+    // - Otherwise → No payment → Show subscription form
     let cardLast4: string | undefined;
     let cardBrand: string | undefined;
 
-    const paymentMethod = subscription.default_payment_method
-      ? await stripe.paymentMethods.retrieve(subscription.default_payment_method as string)
-      : null;
+    if (user.stripe_subscription_id) {
+      // Card payment: Get card details from Stripe to display
+      const subscription = await stripe.subscriptions.retrieve(user.stripe_subscription_id);
+      const paymentMethod = subscription.default_payment_method
+        ? await stripe.paymentMethods.retrieve(subscription.default_payment_method as string)
+        : null;
 
-    if (paymentMethod?.type === 'card' && paymentMethod.card) {
-      cardLast4 = paymentMethod.card.last4; // e.g., "4242"
-      cardBrand = paymentMethod.card.brand; // e.g., "visa", "mastercard", "amex"
+      if (paymentMethod?.type === 'card' && paymentMethod.card) {
+        cardLast4 = paymentMethod.card.last4; // e.g., "4242"
+        cardBrand = paymentMethod.card.brand; // e.g., "visa", "mastercard", "amex"
+      }
     }
+    // For invoice payments (no subscription_id), we don't have card details to show
 
     res.json({
-      status: subscription.status,
-      paymentMethod:
-        paymentMethod?.type === 'card'
-          ? 'card'
-          : paymentMethod?.type === 'us_bank_account'
-            ? 'direct_debit'
-            : null,
-      nextBillingDate: subscription.current_period_end
-        ? new Date(subscription.current_period_end * 1000).toISOString()
-        : undefined,
-      cardLast4, // Safe to display - from Stripe's PaymentMethod.card.last4
-      cardBrand, // Safe to display - from Stripe's PaymentMethod.card.brand
+      accessStatus: user.access_status, // Our app's access status, not Stripe's
+      paymentMethod: user.payment_method as 'card' | 'direct_debit' | null,
+      nextBillingDate: user.current_period_end || undefined,
+      cardLast4, // Only populated for card payments
+      cardBrand, // Only populated for card payments
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -204,16 +229,34 @@ router.post('/create-checkout-session', authenticate, async (req: AuthRequest, r
 // Request invoice setup (manual process)
 router.post('/request-invoice', authenticate, async (req: AuthRequest, res) => {
   try {
-    // Get user details
-    const { data: user } = await supabase
+    // Get or create Stripe customer (needed for invoices)
+    let { data: user } = await supabase
       .from('users')
-      .select('email, business_name')
+      .select('stripe_customer_id, email, business_name')
       .eq('id', req.userId!)
       .single();
 
-    // TODO: Send email to admin/support team
+    let customerId = user?.stripe_customer_id;
+
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: user?.email || req.userEmail!,
+        metadata: {
+          userId: req.userId!,
+        },
+      });
+      customerId = customer.id;
+      await supabase.from('users').update({ stripe_customer_id: customerId }).eq('id', req.userId!);
+    }
+
+    // TODO: Send email to admin/support team with customer details
     // Or create a ticket in your support system
     // Or store in a database table for manual processing
+    //
+    // Admin will then:
+    // 1. Go to Stripe Dashboard → Customers → Find customer
+    // 2. Create invoice manually OR use Stripe Billing to set up recurring invoices
+    // 3. When invoice is paid, invoice.payment_succeeded webhook will update our DB
 
     res.json({ message: 'Invoice setup requested' });
   } catch (error: any) {
@@ -238,21 +281,101 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
   switch (event.type) {
     case 'customer.subscription.created':
     case 'customer.subscription.updated':
-      // Update subscription status in database
+      // Card-based subscription: Update subscription status in database
       const subscription = event.data.object as Stripe.Subscription;
-      // Find user by Stripe customer ID and update subscription status
+      const { data: subUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('stripe_customer_id', subscription.customer as string)
+        .single();
+
+      if (subUser) {
+        await supabase
+          .from('users')
+          .update({
+            stripe_subscription_id: subscription.id,
+            access_status:
+              subscription.status === 'active'
+                ? 'active'
+                : subscription.status === 'past_due'
+                  ? 'past_due'
+                  : subscription.status === 'canceled'
+                    ? 'canceled'
+                    : 'inactive',
+            payment_method: 'card', // Card subscriptions always use 'card'
+            current_period_end: subscription.current_period_end
+              ? new Date(subscription.current_period_end * 1000).toISOString()
+              : null,
+          })
+          .eq('id', subUser.id);
+      }
       break;
 
     case 'customer.subscription.deleted':
-      // Handle cancellation
+      // Card subscription canceled: Set status to canceled, keep subscription_id for history
+      const deletedSub = event.data.object as Stripe.Subscription;
+      const { data: deletedUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('stripe_customer_id', deletedSub.customer as string)
+        .single();
+
+      if (deletedUser) {
+        await supabase
+          .from('users')
+          .update({
+            access_status: 'canceled',
+            current_period_end: null,
+          })
+          .eq('id', deletedUser.id);
+      }
       break;
 
     case 'invoice.payment_succeeded':
-      // Handle successful payment
+      // Handle successful invoice payment (for invoice-based customers)
+      const invoice = event.data.object as Stripe.Invoice;
+      const { data: invoiceUser } = await supabase
+        .from('users')
+        .select('id, stripe_subscription_id')
+        .eq('stripe_customer_id', invoice.customer as string)
+        .single();
+
+      if (invoiceUser) {
+        // Only update if this is an invoice payment (no subscription_id)
+        // If subscription_id exists, subscription webhooks handle it
+        if (!invoiceUser.stripe_subscription_id && invoice.subscription === null) {
+          await supabase
+            .from('users')
+            .update({
+              access_status: 'active',
+              payment_method: 'direct_debit',
+              current_period_end: invoice.period_end
+                ? new Date(invoice.period_end * 1000).toISOString()
+                : null,
+            })
+            .eq('id', invoiceUser.id);
+        }
+      }
       break;
 
     case 'invoice.payment_failed':
-      // Handle failed payment
+      // Handle failed invoice payment
+      const failedInvoice = event.data.object as Stripe.Invoice;
+      const { data: failedUser } = await supabase
+        .from('users')
+        .select('id, stripe_subscription_id')
+        .eq('stripe_customer_id', failedInvoice.customer as string)
+        .single();
+
+      if (failedUser && !failedUser.stripe_subscription_id) {
+        // For invoice-based payments, mark as past_due on failure
+        await supabase
+          .from('users')
+          .update({
+            access_status: 'past_due',
+          })
+          .eq('id', failedUser.id);
+      }
       break;
   }
 
@@ -296,14 +419,62 @@ The frontend is already set up. Update `Billing.tsx` to use the API:
 const { data: subscription } = await apiClient.getSubscription();
 ```
 
-## Alternative: Manual Invoice Processing
+## Invoice vs Card Payment: How to Distinguish
 
-For the invoice/direct debit option, you can:
+**Card Payments (Automatic Subscription):**
 
-1. **Store requests in database** - Create a `billing_requests` table
-2. **Email notifications** - Send email to your team when requested
-3. **Manual processing** - Your team sets up invoices manually
-4. **Stripe Invoicing** - Use Stripe's invoicing feature for automated invoices
+- User goes through Stripe Checkout → Creates subscription
+- `stripe_subscription_id` is populated (NOT NULL)
+- `payment_method = 'card'`
+- Payments are automatic via Stripe
+- Webhooks: `customer.subscription.*` events update our DB
+
+**Invoice Payments (Manual):**
+
+- User requests invoice setup → Creates Stripe customer (if needed)
+- `stripe_subscription_id` is NULL (no subscription)
+- `stripe_customer_id` is populated (customer exists in Stripe)
+- `payment_method = 'direct_debit'`
+- Admin manually creates invoice in Stripe Dashboard
+- Webhooks: `invoice.payment_succeeded` updates our DB
+
+**Key Logic:**
+
+```typescript
+// Check if card-based subscription
+if (user.stripe_subscription_id) {
+  // Card payment - automatic subscription
+} else if (user.payment_method === 'direct_debit' && user.access_status === 'active') {
+  // Invoice payment - manual invoicing
+}
+```
+
+## Manual Invoice Processing Workflow
+
+When a customer requests invoice setup:
+
+1. **Customer requests invoice** → `POST /api/billing/request-invoice`
+   - Creates Stripe customer (if doesn't exist)
+   - Stores `stripe_customer_id` in our DB
+   - Sends notification to admin team
+
+2. **Admin creates invoice in Stripe Dashboard:**
+   - Go to Stripe Dashboard → Customers → Find customer
+   - Click "Create invoice" or use Stripe Billing for recurring invoices
+   - Add line item: "Rate My Work Monthly Subscription - £10.00"
+   - Send invoice to customer
+
+3. **Customer pays invoice** → Stripe sends `invoice.payment_succeeded` webhook
+   - Webhook handler updates our DB:
+     - `access_status = 'active'` (user has access because invoice was paid)
+     - `payment_method = 'direct_debit'`
+     - `current_period_end = invoice.period_end`
+     - `stripe_subscription_id` stays NULL
+
+4. **For recurring invoices:**
+   - Use Stripe Billing to set up recurring invoices
+   - Stripe automatically creates invoices each month
+   - Each payment triggers `invoice.payment_succeeded` webhook
 
 ## Testing
 

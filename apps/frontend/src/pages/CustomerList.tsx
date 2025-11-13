@@ -234,10 +234,22 @@ export const CustomerList = () => {
 
   const handleEdit = (customer: Customer) => {
     // Log the complete customer object as it comes from/goes to the DB
-    console.log('=== EDIT MODAL DEBUG ===');
-    console.log('Customer object (DB format):', customer);
-    console.log('Customer phone:', customer.phone);
-    console.log('Stored country:', customer.phone.country);
+    console.log('=== CUSTOMER DATA (Full Object) ===');
+    console.log('Complete Customer Object:', {
+      id: customer.id,
+      user_id: customer.user_id,
+      name: customer.name,
+      phone: {
+        countryCode: customer.phone.countryCode,
+        country: customer.phone.country,
+        number: customer.phone.number,
+      },
+      job_description: customer.job_description,
+      sms_status: customer.sms_status,
+      sent_at: customer.sent_at,
+    });
+    console.log('Raw customer object:', customer);
+    console.log('=== END CUSTOMER DATA ===');
     console.log('Country code:', customer.phone.countryCode);
     console.log('Phone number:', customer.phone.number);
 
