@@ -6,7 +6,7 @@ import { authenticate, AuthRequest } from '../middleware/auth';
 const router = Router();
 
 const accountSchema = z.object({
-  business_name: z.string().optional(),
+  business_name: z.string().min(1, 'Business name is required'),
   review_links: z
     .array(
       z.object({

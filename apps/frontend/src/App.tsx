@@ -7,6 +7,9 @@ import { AccountSetup } from '@/pages/AccountSetup';
 import { Billing } from '@/pages/Billing';
 import { AddCustomer } from '@/pages/AddCustomer';
 import { CustomerList } from '@/pages/CustomerList';
+import { Terms } from '@/pages/Terms';
+import { Privacy } from '@/pages/Privacy';
+import { RefundPolicy } from '@/pages/RefundPolicy';
 import { Paper, Title, Text, Button } from '@mantine/core';
 import { IconLock } from '@tabler/icons-react';
 
@@ -55,6 +58,13 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route element={<Layout />}>
+          {/* Public legal pages with navigation */}
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/refund-policy" element={<RefundPolicy />} />
+        </Route>
+        {/* Protected routes with navigation */}
         <Route
           element={
             <ProtectedRoute>

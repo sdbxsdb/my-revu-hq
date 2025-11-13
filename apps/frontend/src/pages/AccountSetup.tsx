@@ -16,6 +16,9 @@ export const AccountSetup = () => {
       reviewLinks: [{ name: '', url: '' }] as Array<{ name: string; url: string }>,
       smsTemplate: '',
     },
+    validate: {
+      businessName: (value) => (value.trim().length === 0 ? 'Business name is required' : null),
+    },
   });
 
   // Checklist validation
@@ -226,6 +229,7 @@ export const AccountSetup = () => {
           <TextInput
             label="Business Name"
             placeholder="Your Business Name"
+            required
             {...form.getInputProps('businessName')}
           />
 

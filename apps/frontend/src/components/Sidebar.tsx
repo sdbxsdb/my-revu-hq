@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import {
   IconDeviceMobile,
   IconUserPlus,
@@ -13,7 +13,7 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ onClose }: SidebarProps) => {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
 
   const navItems = [
     { to: '/customers/add', label: 'Add Customer', icon: IconUserPlus },
@@ -36,44 +36,87 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
         <p className="text-xs text-gray-400">Review Management</p>
       </div>
 
-      <nav className="flex-1 space-y-2">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === '/customers'}
-              onClick={handleNavClick}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium ${
-                  isActive
-                    ? 'bg-teal-600 text-white shadow-lg shadow-teal-500/30'
-                    : 'text-gray-400 hover:bg-[#2a2a2a] hover:text-white'
-                }`
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-                  <span>{item.label}</span>
-                </>
-              )}
-            </NavLink>
-          );
-        })}
-      </nav>
+      {user && (
+        <nav className="flex-1 space-y-2">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.to === '/customers'}
+                onClick={handleNavClick}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium ${
+                    isActive
+                      ? 'bg-teal-600 text-white shadow-lg shadow-teal-500/30'
+                      : 'text-gray-400 hover:bg-[#2a2a2a] hover:text-white'
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                    <span>{item.label}</span>
+                  </>
+                )}
+              </NavLink>
+            );
+          })}
+        </nav>
+      )}
 
-      <button
-        onClick={() => {
-          signOut();
-          handleNavClick();
-        }}
-        className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-[#2a2a2a] hover:text-red-400 transition-all duration-200 font-medium border-t border-[#2a2a2a] mt-auto pt-4"
-      >
-        <IconLogout size={20} />
-        <span>Logout</span>
-      </button>
+      {/* Legal links footer */}
+      <div className="mt-auto pt-4 border-t border-[#2a2a2a]">
+        <div className="flex flex-wrap gap-x-3 gap-y-1 justify-center text-xs text-gray-500 mb-4">
+          <Link
+            to="/terms"
+            onClick={handleNavClick}
+            className="hover:text-gray-400 transition-colors"
+          >
+            Terms
+          </Link>
+          <span className="text-gray-600">•</span>
+          <Link
+            to="/privacy"
+            onClick={handleNavClick}
+            className="hover:text-gray-400 transition-colors"
+          >
+            Privacy
+          </Link>
+          <span className="text-gray-600">•</span>
+          <Link
+            to="/refund-policy"
+            onClick={handleNavClick}
+            className="hover:text-gray-400 transition-colors"
+          >
+            Refunds
+          </Link>
+        </div>
+      </div>
+
+      {user && (
+        <button
+          onClick={() => {
+            signOut();
+            handleNavClick();
+          }}
+          className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-[#2a2a2a] hover:text-red-400 transition-all duration-200 font-medium"
+        >
+          <IconLogout size={20} />
+          <span>Logout</span>
+        </button>
+      )}
+
+      {!user && (
+        <Link
+          to="/login"
+          onClick={handleNavClick}
+          className="flex items-center justify-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-[#2a2a2a] hover:text-teal-400 transition-all duration-200 font-medium"
+        >
+          <span>Login</span>
+        </Link>
+      )}
     </div>
   );
 };
