@@ -12,7 +12,6 @@ import './index.css';
 const theme = createTheme({
   defaultRadius: 'md',
   primaryColor: 'teal',
-  colorScheme: 'dark',
   fontFamily:
     '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
   headings: {
@@ -247,7 +246,7 @@ const theme = createTheme({
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <MantineProvider theme={theme}>
+    <MantineProvider theme={theme} defaultColorScheme="dark">
       <PaymentProvider>
         <Notifications position="top-center" />
         <App />

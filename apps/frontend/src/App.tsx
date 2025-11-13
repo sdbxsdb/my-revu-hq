@@ -32,20 +32,18 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   if (!hasPaid && !allowedUnpaidPaths.includes(location.pathname)) {
     return (
       <Layout>
-        <div className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
-          <Paper shadow="md" p="xl" className="max-w-2xl mx-auto text-center">
-            <IconLock size={48} className="mx-auto mb-4 text-gray-400" />
-            <Title order={2} className="text-2xl font-bold mb-2 text-white">
-              Payment Required
-            </Title>
-            <Text size="sm" className="text-gray-400 mb-6">
-              Please set up your payment method to access this feature.
-            </Text>
-            <Button component={Link} to="/billing" variant="filled" color="teal" size="md">
-              Go to Billing
-            </Button>
-          </Paper>
-        </div>
+        <Paper shadow="md" p="xl" className="max-w-2xl mx-auto text-center">
+          <IconLock size={48} className="mx-auto mb-4 text-gray-400" />
+          <Title order={2} className="text-2xl font-bold mb-2 text-white">
+            Payment Required
+          </Title>
+          <Text size="sm" className="text-gray-400 mb-6">
+            Please set up your payment method to access this feature.
+          </Text>
+          <Button component={Link} to="/billing" variant="filled" color="teal" size="md">
+            Go to Billing
+          </Button>
+        </Paper>
       </Layout>
     );
   }

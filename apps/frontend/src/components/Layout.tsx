@@ -5,7 +5,11 @@ import { IconMenu2, IconX, IconCreditCard, IconCreditCardOff } from '@tabler/ico
 import { usePayment } from '@/contexts/PaymentContext';
 import { Switch, Tooltip } from '@mantine/core';
 
-export const Layout = () => {
+interface LayoutProps {
+  children?: React.ReactNode;
+}
+
+export const Layout = ({ children }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { hasPaid, togglePayment } = usePayment();
 
@@ -82,9 +86,7 @@ export const Layout = () => {
         </div>
 
         {/* Page content */}
-        <div className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
-          <Outlet />
-        </div>
+        <div className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">{children || <Outlet />}</div>
       </main>
     </div>
   );

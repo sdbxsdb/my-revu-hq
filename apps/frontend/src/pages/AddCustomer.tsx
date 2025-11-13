@@ -22,7 +22,7 @@ export const AddCustomer = () => {
   useEffect(() => {
     const loadAccount = async () => {
       try {
-        const account = await apiClient.getAccount();
+        await apiClient.getAccount();
         // TODO: When account has a region/country field, use it here
         // For now, default to GB
         // setSelectedCountry(account.region || 'GB');
@@ -290,7 +290,10 @@ export const AddCustomer = () => {
           <div className="flex flex-col gap-3 mt-8 pt-6 border-t border-[#2a2a2a]">
             <Button
               type="button"
-              onClick={form.onSubmit(handleSendNow)}
+              onClick={(e) => {
+                e.preventDefault();
+                form.onSubmit(handleSendNow)();
+              }}
               loading={loading}
               size="md"
               className="w-full font-semibold"
@@ -300,7 +303,10 @@ export const AddCustomer = () => {
             </Button>
             <Button
               type="button"
-              onClick={form.onSubmit(handleSendLater)}
+              onClick={(e) => {
+                e.preventDefault();
+                form.onSubmit(handleSendLater)();
+              }}
               loading={loading}
               variant="light"
               size="md"
