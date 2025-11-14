@@ -559,22 +559,25 @@ export const CustomerList = () => {
                 icon={<IconAlertCircle size={16} />}
                 title="Payment Required"
                 color="yellow"
-                className="w-full sm:w-auto"
+                className="w-full sm:w-auto relative"
               >
-                <Text size="sm" className="text-gray-300">
-                  You can add and manage customers, but you need to set up payment to send SMS
-                  messages.
+                <div className="flex flex-col gap-3 pb-10">
+                  <Text size="sm" className="text-gray-300">
+                    You can add and manage customers, but you need to set up payment to send SMS
+                    messages.
+                  </Text>
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-4">
                   <Button
                     component={Link}
                     to="/billing"
-                    variant="subtle"
-                    size="xs"
+                    size="sm"
                     color="teal"
-                    className="ml-2"
+                    className="font-semibold !px-3 !py-1 !h-auto !text-xs"
                   >
                     Set up payment
                   </Button>
-                </Text>
+                </div>
               </Alert>
             )}
           </div>
