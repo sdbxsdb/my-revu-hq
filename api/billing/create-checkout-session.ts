@@ -24,8 +24,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method !== 'POST') {
+    setCorsHeaders(res);
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  setCorsHeaders(res);
 
   try {
     const auth = await authenticate(req as any);
@@ -84,6 +87,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.json({ url: session.url });
   } catch (error: any) {
+    setCorsHeaders(res);
     if (error.message === 'Unauthorized') {
       return res.status(401).json({ error: 'Unauthorized' });
     }
