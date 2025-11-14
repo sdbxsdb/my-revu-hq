@@ -22,7 +22,8 @@ import { IconAlertCircle } from '@tabler/icons-react';
 
 export const AddCustomer = () => {
   const { hasPaid } = usePayment();
-  const [loading, setLoading] = useState(false);
+  const [loadingSendNow, setLoadingSendNow] = useState(false);
+  const [loadingSendLater, setLoadingSendLater] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<CountryCode | undefined>('GB'); // Default to GB, can be updated from account
   const countryRef = useRef<CountryCode | undefined>('GB');
@@ -63,7 +64,7 @@ export const AddCustomer = () => {
       return;
     }
 
-    setLoading(true);
+    setLoadingSendNow(true);
     setPhoneError(null);
 
     try {
@@ -74,7 +75,7 @@ export const AddCustomer = () => {
       );
       if (!validation.isValid) {
         setPhoneError(validation.error || 'Invalid phone number');
-        setLoading(false);
+        setLoadingSendNow(false);
         return;
       }
 
@@ -85,7 +86,7 @@ export const AddCustomer = () => {
       );
       if (!phoneForApi) {
         setPhoneError('Invalid phone number format');
-        setLoading(false);
+        setLoadingSendNow(false);
         return;
       }
 
@@ -118,12 +119,12 @@ export const AddCustomer = () => {
         color: 'red',
       });
     } finally {
-      setLoading(false);
+      setLoadingSendNow(false);
     }
   };
 
   const handleSendLater = async (values: typeof form.values) => {
-    setLoading(true);
+    setLoadingSendLater(true);
     setPhoneError(null);
 
     try {
@@ -134,7 +135,7 @@ export const AddCustomer = () => {
       );
       if (!validation.isValid) {
         setPhoneError(validation.error || 'Invalid phone number');
-        setLoading(false);
+        setLoadingSendLater(false);
         return;
       }
 
@@ -145,7 +146,7 @@ export const AddCustomer = () => {
       );
       if (!phoneForApi) {
         setPhoneError('Invalid phone number format');
-        setLoading(false);
+        setLoadingSendLater(false);
         return;
       }
 
@@ -177,7 +178,7 @@ export const AddCustomer = () => {
         color: 'red',
       });
     } finally {
-      setLoading(false);
+      setLoadingSendLater(false);
     }
   };
 
@@ -304,11 +305,11 @@ export const AddCustomer = () => {
                   e.preventDefault();
                   form.onSubmit(handleSendNow)();
                 }}
-                loading={loading}
+                loading={loadingSendNow}
                 size="md"
                 className="w-full font-semibold !py-4 !h-auto min-h-[3.5rem]"
                 fullWidth
-                disabled={!hasPaid}
+                disabled={!hasPaid || loadingSendLater}
               >
                 <div className="flex flex-col items-center gap-0.5">
                   <span>Add Customer</span>
@@ -322,11 +323,12 @@ export const AddCustomer = () => {
                 e.preventDefault();
                 form.onSubmit(handleSendLater)();
               }}
-              loading={loading}
+              loading={loadingSendLater}
               variant="light"
               size="md"
               className="w-full font-semibold !py-4 !h-auto min-h-[3.5rem]"
               fullWidth
+              disabled={loadingSendNow}
             >
               <div className="flex flex-col items-center gap-0.5">
                 <span>Add Customer</span>

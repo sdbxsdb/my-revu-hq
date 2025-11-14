@@ -23,7 +23,6 @@ const isDevMode = () => {
 
 // Global flag to prevent multiple session checks
 let globalSessionCheckInProgress = false;
-let globalSessionCheckPromise: Promise<void> | null = null;
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
