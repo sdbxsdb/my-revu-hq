@@ -1,7 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
 import { useForm } from '@mantine/form';
 import { useNavigate } from 'react-router-dom';
-import { Button, TextInput, Textarea, Paper, Title, Stack, Alert, Text } from '@mantine/core';
+import {
+  Button,
+  TextInput,
+  Textarea,
+  Paper,
+  Title,
+  Stack,
+  Alert,
+  Text,
+  Tooltip,
+} from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { CountryCode } from 'libphonenumber-js';
 import { apiClient } from '@/lib/api';
@@ -80,7 +90,7 @@ export const AddCustomer = () => {
         return;
       }
 
-      // Format phone for API (E.164 format for Twilio)
+      // Format phone for API - store in LOCAL format (as user entered it)
       const phoneForApi = formatPhoneNumberForApi(
         values.phoneNumber,
         selectedCountry as CountryCode | undefined
@@ -91,12 +101,14 @@ export const AddCustomer = () => {
         return;
       }
 
+      // The number in values.phoneNumber is already in local format (as user entered)
+      const localNumber = values.phoneNumber || '';
+
       const customer = await apiClient.createCustomer({
         name: values.name,
         phone: {
           countryCode: phoneForApi.countryCode,
-          // Country is auto-detected from the number (not stored in DB)
-          number: phoneForApi.number, // E.164 format: +447780587666
+          number: localNumber, // LOCAL format: "07780586444" (as user entered)
         },
         jobDescription: values.jobDescription || undefined,
       });
@@ -138,7 +150,7 @@ export const AddCustomer = () => {
         return;
       }
 
-      // Format phone for API (E.164 format for Twilio)
+      // Format phone for API - store in LOCAL format (as user entered it)
       const phoneForApi = formatPhoneNumberForApi(
         values.phoneNumber,
         selectedCountry as CountryCode | undefined
@@ -149,11 +161,15 @@ export const AddCustomer = () => {
         return;
       }
 
+      // Convert E.164 to local format for storage
+      // The number in values.phoneNumber is already in local format (as user entered)
+      const localNumber = values.phoneNumber || '';
+
       await apiClient.createCustomer({
         name: values.name,
         phone: {
           countryCode: phoneForApi.countryCode,
-          number: phoneForApi.number, // E.164 format: +447780587666
+          number: localNumber, // LOCAL format: "07780586444" (as user entered)
         },
         jobDescription: values.jobDescription || undefined,
       });
@@ -288,19 +304,30 @@ export const AddCustomer = () => {
           />
 
           <div className="flex flex-col gap-3 mt-8 pt-6 border-t border-[#2a2a2a]">
-            <Button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                form.onSubmit(handleSendNow)();
-              }}
-              loading={loading}
-              size="md"
-              className="w-full font-semibold"
-              fullWidth
+            <Tooltip
+              label="Payment required to send SMS messages"
+              disabled={hasPaid}
+              position="top"
+              withArrow
             >
-              Send Review Now
-            </Button>
+              <Button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  form.onSubmit(handleSendNow)();
+                }}
+                loading={loading}
+                size="md"
+                className="w-full font-semibold !py-4 !h-auto min-h-[3.5rem]"
+                fullWidth
+                disabled={!hasPaid}
+              >
+                <div className="flex flex-col items-center gap-0.5">
+                  <span>Add Customer</span>
+                  <span>Request Review</span>
+                </div>
+              </Button>
+            </Tooltip>
             <Button
               type="button"
               onClick={(e) => {
@@ -310,10 +337,13 @@ export const AddCustomer = () => {
               loading={loading}
               variant="light"
               size="md"
-              className="w-full font-semibold"
+              className="w-full font-semibold !py-4 !h-auto min-h-[3.5rem]"
               fullWidth
             >
-              Send Later
+              <div className="flex flex-col items-center gap-0.5">
+                <span>Add Customer</span>
+                <span>Request Later</span>
+              </div>
             </Button>
           </div>
         </Stack>

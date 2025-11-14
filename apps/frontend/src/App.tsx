@@ -1,6 +1,7 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { usePayment } from '@/contexts/PaymentContext';
+import { PaymentProvider } from '@/contexts/PaymentContext';
 import { Layout } from '@/components/Layout';
 import { Login } from '@/pages/Login';
 import { AccountSetup } from '@/pages/AccountSetup';
@@ -10,73 +11,85 @@ import { CustomerList } from '@/pages/CustomerList';
 import { Terms } from '@/pages/Terms';
 import { Privacy } from '@/pages/Privacy';
 import { RefundPolicy } from '@/pages/RefundPolicy';
-import { Paper, Title, Text, Button } from '@mantine/core';
-import { IconLock } from '@tabler/icons-react';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
-  const { hasPaid } = usePayment();
-  const location = useLocation();
+  const [showTimeoutError, setShowTimeoutError] = React.useState(false);
+
+  React.useEffect(() => {
+    if (loading) {
+      const timeout = setTimeout(() => {
+        setShowTimeoutError(true);
+      }, 10000);
+      return () => clearTimeout(timeout);
+    } else {
+      setShowTimeoutError(false);
+    }
+  }, [loading]);
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading...</p>
+          {showTimeoutError ? (
+            <div className="mt-4">
+              <p className="text-red-400 text-sm mb-2">Loading is taking longer than expected</p>
+              <button
+                onClick={() => (window.location.href = '/login')}
+                className="text-teal-400 hover:text-teal-300 text-sm underline"
+              >
+                Go to login page
+              </button>
+            </div>
+          ) : (
+            <p className="text-xs text-gray-500 mt-2">
+              If this takes too long, check your connection
+            </p>
+          )}
+        </div>
+      </div>
+    );
   }
 
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  // Allow access to billing page and customer pages even if unpaid
-  // But block other pages (like account setup)
-  const allowedUnpaidPaths = ['/billing', '/customers', '/customers/add'];
-  if (!hasPaid && !allowedUnpaidPaths.includes(location.pathname)) {
-    return (
-      <Layout>
-        <Paper shadow="md" p="xl" className="max-w-2xl mx-auto text-center">
-          <IconLock size={48} className="mx-auto mb-4 text-gray-400" />
-          <Title order={2} className="text-2xl font-bold mb-2 text-white">
-            Payment Required
-          </Title>
-          <Text size="sm" className="text-gray-400 mb-6">
-            Please set up your payment method to access this feature.
-          </Text>
-          <Button component={Link} to="/billing" variant="filled" color="teal" size="md">
-            Go to Billing
-          </Button>
-        </Paper>
-      </Layout>
-    );
-  }
-
+  // Always allow access - payment warnings are shown on individual pages
   return <>{children}</>;
 };
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route element={<Layout />}>
-          {/* Public legal pages with navigation */}
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/refund-policy" element={<RefundPolicy />} />
-        </Route>
-        {/* Protected routes with navigation */}
-        <Route
-          element={
-            <ProtectedRoute>
-              <Layout />
-            </ProtectedRoute>
-          }
-        >
-          <Route path="/" element={<Navigate to="/account" replace />} />
-          <Route path="/account" element={<AccountSetup />} />
-          <Route path="/billing" element={<Billing />} />
-          <Route path="/customers/add" element={<AddCustomer />} />
-          <Route path="/customers" element={<CustomerList />} />
-        </Route>
-      </Routes>
+      <PaymentProvider>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route element={<Layout />}>
+            {/* Public legal pages with navigation */}
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/refund-policy" element={<RefundPolicy />} />
+          </Route>
+          {/* Protected routes with navigation */}
+          <Route
+            element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/" element={<Navigate to="/account" replace />} />
+            <Route path="/home" element={<Navigate to="/account" replace />} />
+            <Route path="/account" element={<AccountSetup />} />
+            <Route path="/billing" element={<Billing />} />
+            <Route path="/customers/add" element={<AddCustomer />} />
+            <Route path="/customers" element={<CustomerList />} />
+          </Route>
+        </Routes>
+      </PaymentProvider>
     </BrowserRouter>
   );
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Paper,
   Title,
@@ -543,38 +544,43 @@ export const CustomerList = () => {
   return (
     <Paper shadow="md" p="md" className="w-full sm:p-xl">
       <div className="flex flex-col gap-6 mb-8 pb-6 border-b border-[#2a2a2a]">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-          <div>
-            <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
-              Customer List
-            </Title>
-            <p className="text-sm text-gray-400 hidden sm:block">
-              Manage your customers and review requests
-            </p>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
+                Customer List
+              </Title>
+              <p className="text-sm text-gray-400 hidden sm:block">
+                Manage your customers and review requests
+              </p>
+            </div>
+            {!hasPaid && (
+              <Alert
+                icon={<IconAlertCircle size={16} />}
+                title="Payment Required"
+                color="yellow"
+                className="w-full sm:w-auto"
+              >
+                <Text size="sm" className="text-gray-300">
+                  You can add and manage customers, but you need to set up payment to send SMS
+                  messages.
+                  <Button
+                    component="a"
+                    href="/billing"
+                    variant="subtle"
+                    size="xs"
+                    color="teal"
+                    className="ml-2"
+                  >
+                    Set up payment
+                  </Button>
+                </Text>
+              </Alert>
+            )}
           </div>
-          {!hasPaid && (
-            <Alert
-              icon={<IconAlertCircle size={16} />}
-              title="Payment Required"
-              color="yellow"
-              className="sm:col-span-2"
-            >
-              <Text size="sm" className="text-gray-300">
-                You can add and manage customers, but you need to set up payment to send SMS
-                messages.
-                <Button
-                  component="a"
-                  href="/billing"
-                  variant="subtle"
-                  size="xs"
-                  color="teal"
-                  className="ml-2"
-                >
-                  Set up payment
-                </Button>
-              </Text>
-            </Alert>
-          )}
+          <Button component={Link} to="/customers/add" size="md" className="font-medium w-full">
+            {customers.length === 0 && !loading ? 'Add First Customer' : 'Add Customer'}
+          </Button>
           <Select
             placeholder="Filter by status"
             data={[
@@ -673,11 +679,13 @@ export const CustomerList = () => {
                           onClick={() => handleSendAgain(customer.id)}
                           radius="md"
                           className="font-medium"
-                          disabled={!isPhoneValid(customer.phone)}
+                          disabled={!hasPaid || !isPhoneValid(customer.phone)}
                           title={
-                            !isPhoneValid(customer.phone)
-                              ? getPhoneError(customer.phone) || 'Invalid phone number'
-                              : ''
+                            !hasPaid
+                              ? 'Payment required to send SMS messages'
+                              : !isPhoneValid(customer.phone)
+                                ? getPhoneError(customer.phone) || 'Invalid phone number'
+                                : ''
                           }
                         >
                           {customer.sms_status === 'sent'
@@ -755,8 +763,14 @@ export const CustomerList = () => {
                       onClick={() => handleSendAgain(customer.id)}
                       radius="md"
                       className="font-medium"
-                      disabled={!phoneValid}
-                      title={!phoneValid ? phoneError || 'Invalid phone number' : ''}
+                      disabled={!hasPaid || !phoneValid}
+                      title={
+                        !hasPaid
+                          ? 'Payment required to send SMS messages'
+                          : !phoneValid
+                            ? phoneError || 'Invalid phone number'
+                            : ''
+                      }
                     >
                       {customer.sms_status === 'sent' ? 'Request Review Again' : 'Request Review'}
                     </Button>

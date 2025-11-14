@@ -38,22 +38,63 @@ export const useAuth = () => {
 
     let subscription: { unsubscribe: () => void } | null = null;
 
-    // Check initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session) {
-        await syncSession();
-      }
-      setLoading(false);
-    });
+    // Check initial session with timeout
+    const sessionPromise = supabase.auth.getSession();
+    const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000));
+
+    Promise.race([sessionPromise, timeoutPromise])
+      .then(async (result) => {
+        if (result === null) {
+          // Timeout occurred
+          console.warn('Session check timed out, proceeding without session');
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+        const {
+          data: { session },
+        } = result;
+        setUser(session?.user ?? null);
+        if (session) {
+          try {
+            const syncTimeout = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Sync timeout')), 3000)
+            );
+            await Promise.race([syncSession(), syncTimeout]);
+          } catch (error) {
+            console.error('Session sync failed:', error);
+          }
+        }
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error('Auth initialization error:', error);
+        setUser(null);
+        setLoading(false);
+      });
 
     // Listen for auth changes
     const {
       data: { subscription: authSubscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user ?? null);
       if (session) {
         await syncSession();
+        // Ensure user profile exists in our database
+        // The database trigger should create it, but we'll also ensure it via API
+        try {
+          await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/account`, {
+            method: 'GET',
+            credentials: 'include',
+          });
+        } catch (error) {
+          // Silently fail - the database trigger should handle it
+          console.log('User profile sync:', error);
+        }
+        // Navigate to home after successful auth
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          navigate('/');
+        }
       } else {
         navigate('/login');
       }

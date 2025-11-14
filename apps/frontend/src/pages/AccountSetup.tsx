@@ -1,12 +1,47 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useForm } from '@mantine/form';
-import { Button, TextInput, Textarea, Paper, Title, Stack, Group } from '@mantine/core';
+import {
+  Button,
+  TextInput,
+  Textarea,
+  Paper,
+  Title,
+  Stack,
+  Group,
+  Alert,
+  Text,
+} from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconPlus, IconX, IconCheck, IconX as IconXCircle } from '@tabler/icons-react';
+import {
+  IconPlus,
+  IconX,
+  IconCheck,
+  IconX as IconXCircle,
+  IconAlertCircle,
+} from '@tabler/icons-react';
 import { apiClient } from '@/lib/api';
 import type { User } from '@/types';
+import { usePayment } from '@/contexts/PaymentContext';
+
+// Helper function to validate URL
+const isValidUrl = (url: string): boolean => {
+  if (!url || url.trim() === '') return false;
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    // Try with https:// prefix
+    try {
+      new URL(`https://${url}`);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+};
 
 export const AccountSetup = () => {
+  const { hasPaid } = usePayment();
   const [loading, setLoading] = useState(false);
   const [account, setAccount] = useState<User | null>(null);
 
@@ -18,6 +53,28 @@ export const AccountSetup = () => {
     },
     validate: {
       businessName: (value) => (value.trim().length === 0 ? 'Business name is required' : null),
+      reviewLinks: {
+        name: (value, values, path) => {
+          const index = parseInt(path.split('.')[1]);
+          const link = values.reviewLinks[index];
+          // Only validate if URL is filled (meaning user is trying to complete this link)
+          if (link.url.trim() && !value.trim()) {
+            return 'Link name is required when URL is provided';
+          }
+          return null;
+        },
+        url: (value, values, path) => {
+          const index = parseInt(path.split('.')[1]);
+          const link = values.reviewLinks[index];
+          // Only validate if name is filled (meaning user is trying to complete this link)
+          if (link.name.trim() && value.trim()) {
+            if (!isValidUrl(value)) {
+              return 'Invalid URL format. Please include http:// or https:// (e.g., https://example.com)';
+            }
+          }
+          return null;
+        },
+      },
     },
   });
 
@@ -135,6 +192,43 @@ export const AccountSetup = () => {
   };
 
   const handleSubmit = async (values: typeof form.values) => {
+    // Validate review links before submission
+    const filledLinks = values.reviewLinks.filter(
+      (link) => link.name.trim() !== '' || link.url.trim() !== ''
+    );
+
+    // Check if any filled links have invalid URLs
+    for (const link of filledLinks) {
+      if (link.name.trim() && link.url.trim() && !isValidUrl(link.url)) {
+        const index = values.reviewLinks.indexOf(link);
+        form.setFieldError(
+          `reviewLinks.${index}.url`,
+          'Invalid URL format. Please include http:// or https://'
+        );
+        notifications.show({
+          title: 'Validation Error',
+          message: 'Please fix invalid URLs before saving',
+          color: 'red',
+        });
+        setLoading(false);
+        return;
+      }
+      if (link.url.trim() && !link.name.trim()) {
+        const index = values.reviewLinks.indexOf(link);
+        form.setFieldError(
+          `reviewLinks.${index}.name`,
+          'Link name is required when URL is provided'
+        );
+        notifications.show({
+          title: 'Validation Error',
+          message: 'Please provide a name for all review links',
+          color: 'red',
+        });
+        setLoading(false);
+        return;
+      }
+    }
+
     // Validate before submitting
     if (!checklist.allValid) {
       return;
@@ -190,10 +284,21 @@ export const AccountSetup = () => {
         );
       }
 
-      // Filter out empty links
-      const filteredLinks = values.reviewLinks.filter(
-        (link) => link.name.trim() !== '' && link.url.trim() !== ''
-      );
+      // Filter out empty links and ensure URLs are valid
+      const filteredLinks = values.reviewLinks
+        .filter((link) => link.name.trim() !== '' && link.url.trim() !== '')
+        .map((link) => {
+          // Ensure URL starts with http:// or https://
+          let url = link.url.trim();
+          if (url && !url.match(/^https?:\/\//i)) {
+            url = `https://${url}`;
+          }
+          return {
+            name: link.name.trim(),
+            url: url,
+          };
+        });
+
       await apiClient.updateAccount({
         business_name: values.businessName,
         review_links: filteredLinks,
@@ -223,6 +328,30 @@ export const AccountSetup = () => {
         </Title>
         <p className="text-sm text-gray-400">Manage your business information and SMS template</p>
       </div>
+
+      {!hasPaid && (
+        <Alert
+          icon={<IconAlertCircle size={16} />}
+          title="Payment Required"
+          color="yellow"
+          className="mb-6"
+        >
+          <Text size="sm" className="text-gray-300">
+            You can set up your account and manage your information, but you need to set up payment
+            to send SMS messages.
+            <Button
+              component="a"
+              href="/billing"
+              variant="subtle"
+              size="xs"
+              color="teal"
+              className="ml-2"
+            >
+              Set up payment
+            </Button>
+          </Text>
+        </Alert>
+      )}
 
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <Stack gap="lg">
@@ -256,7 +385,10 @@ export const AccountSetup = () => {
                             const newLinks = [...form.values.reviewLinks];
                             newLinks[index] = { ...newLinks[index], name: e.target.value };
                             form.setFieldValue('reviewLinks', newLinks);
+                            // Clear error when user types
+                            form.clearFieldError(`reviewLinks.${index}.name`);
                           }}
+                          error={form.errors[`reviewLinks.${index}.name`]}
                           className="w-full"
                           styles={{
                             input: {
@@ -292,7 +424,10 @@ export const AccountSetup = () => {
                           const newLinks = [...form.values.reviewLinks];
                           newLinks[index] = { ...newLinks[index], url: e.target.value };
                           form.setFieldValue('reviewLinks', newLinks);
+                          // Clear error when user types
+                          form.clearFieldError(`reviewLinks.${index}.url`);
                         }}
+                        error={form.errors[`reviewLinks.${index}.url`]}
                         className="w-full"
                         autosize
                         minRows={1}

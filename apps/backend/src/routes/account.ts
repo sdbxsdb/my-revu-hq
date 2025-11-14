@@ -10,8 +10,21 @@ const accountSchema = z.object({
   review_links: z
     .array(
       z.object({
-        name: z.string(),
-        url: z.string().url(),
+        name: z.string().min(1, 'Link name is required'),
+        url: z
+          .string()
+          .min(1, 'URL is required')
+          .refine(
+            (url) => {
+              try {
+                new URL(url);
+                return true;
+              } catch {
+                return false;
+              }
+            },
+            { message: 'Invalid URL format' }
+          ),
       })
     )
     .optional(),
@@ -22,7 +35,11 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
   try {
     const { data, error } = await supabase.from('users').select('*').eq('id', req.userId!).single();
 
-    if (error) throw error;
+    if (error && error.code !== 'PGRST116') {
+      // PGRST116 is "not found" which is fine - we'll create the user
+      console.error('Error fetching user:', error);
+      throw error;
+    }
 
     if (!data) {
       // Create user profile if it doesn't exist
@@ -35,18 +52,29 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
         .select()
         .single();
 
-      if (createError) throw createError;
+      if (createError) {
+        console.error('Error creating user:', createError);
+        throw createError;
+      }
       return res.json(newUser);
     }
 
     res.json(data);
   } catch (error: any) {
+    console.error('Account route error:', error);
     res.status(500).json({ error: error.message || 'Failed to fetch account' });
   }
 });
 
 router.put('/', authenticate, async (req: AuthRequest, res) => {
   try {
+    // Filter out empty or invalid review links before validation
+    if (req.body.review_links) {
+      req.body.review_links = req.body.review_links.filter(
+        (link: any) => link.name?.trim() && link.url?.trim() && link.url.startsWith('http')
+      );
+    }
+
     const validated = accountSchema.parse(req.body);
 
     const { data, error } = await supabase

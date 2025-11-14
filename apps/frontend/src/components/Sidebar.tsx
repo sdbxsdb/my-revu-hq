@@ -96,16 +96,21 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
       </div>
 
       {user && (
-        <button
-          onClick={() => {
-            signOut();
-            handleNavClick();
-          }}
-          className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-[#2a2a2a] hover:text-red-400 transition-all duration-200 font-medium"
-        >
-          <IconLogout size={20} />
-          <span>Logout</span>
-        </button>
+        <div className="space-y-2">
+          <div className="px-4 py-2 text-xs text-gray-500 truncate" title={user.email}>
+            {user.email}
+          </div>
+          <button
+            onClick={() => {
+              signOut();
+              handleNavClick();
+            }}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-[#2a2a2a] hover:text-red-400 transition-all duration-200 font-medium w-full"
+          >
+            <IconLogout size={20} />
+            <span>Logout</span>
+          </button>
+        </div>
       )}
 
       {!user && (
