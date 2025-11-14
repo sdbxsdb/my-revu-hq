@@ -1,13 +1,26 @@
 import { useState, useEffect } from 'react';
-import { Paper, Title, Text, Button, Tabs, Stack, Alert, Badge, Loader } from '@mantine/core';
+import {
+  Paper,
+  Title,
+  Text,
+  Button,
+  Tabs,
+  Stack,
+  Alert,
+  Badge,
+  Loader,
+  Skeleton,
+} from '@mantine/core';
 import { IconCreditCard, IconBuildingBank, IconCheck, IconAlertCircle } from '@tabler/icons-react';
 import { apiClient } from '@/lib/api';
 import { notifications } from '@mantine/notifications';
 import { usePayment } from '@/contexts/PaymentContext';
+import { useAccount } from '@/contexts/AccountContext';
 import CardBrandIcon from '@/components/CardBrandIcon';
 
 export const Billing = () => {
   const { hasPaid } = usePayment();
+  const { account: userAccount, loading: accountLoading } = useAccount();
   const [activeTab, setActiveTab] = useState<string | null>('subscription');
   const [loading, setLoading] = useState(false);
   const [loadingSubscription, setLoadingSubscription] = useState(true);
@@ -25,61 +38,9 @@ export const Billing = () => {
 
   useEffect(() => {
     const loadData = async () => {
-      // Development mode: use dummy data if backend is not available
-      const isDevMode =
-        import.meta.env.VITE_SUPABASE_URL?.includes('placeholder') ||
-        import.meta.env.VITE_SUPABASE_ANON_KEY === 'placeholder_key';
-
-      console.log('Billing page loading - isDevMode:', isDevMode);
-
-      // Load and log user account data
-      let userAccount;
-      try {
-        if (isDevMode) {
-          // Dummy user data - what a complete user row looks like in the DB
-          userAccount = {
-            id: 'dev-user-id-123',
-            email: 'user@example.com',
-            business_name: 'Example Business Ltd',
-            review_links: [
-              { name: 'Google', url: 'https://g.page/r/example' },
-              { name: 'Facebook', url: 'https://www.facebook.com/example' },
-            ],
-            sms_template:
-              "You recently had Example Business Ltd for work. We'd greatly appreciate a review on one or all of the following links:",
-            sms_sent_this_month: 15,
-            // Billing & Subscription fields
-            stripe_customer_id: hasPaid ? 'cus_1234567890abcdef' : null,
-            stripe_subscription_id: hasPaid ? 'sub_1234567890abcdef' : null,
-            access_status: hasPaid ? 'active' : 'inactive',
-            payment_method: hasPaid ? 'card' : null,
-            current_period_end: hasPaid
-              ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-              : null,
-            created_at: '2024-01-15T10:00:00Z',
-            updated_at: new Date().toISOString(),
-          };
-        } else {
-          userAccount = await apiClient.getAccount();
-        }
-      } catch (error) {
-        console.error('Failed to load user account:', error);
-        // Use dummy data as fallback if API fails
-        userAccount = {
-          id: 'error-user-id',
-          email: 'error@example.com',
-          business_name: null,
-          review_links: [],
-          sms_template: null,
-          sms_sent_this_month: 0,
-          stripe_customer_id: null,
-          stripe_subscription_id: null,
-          access_status: 'inactive',
-          payment_method: null,
-          current_period_end: null,
-          created_at: null,
-          updated_at: null,
-        };
+      if (!userAccount) {
+        setLoadingSubscription(false);
+        return;
       }
 
       // Always log the user account data
@@ -128,7 +89,7 @@ export const Billing = () => {
     };
 
     loadData();
-  }, []);
+  }, [userAccount]);
 
   const loadSubscription = async () => {
     try {
@@ -258,9 +219,11 @@ export const Billing = () => {
         <p className="text-sm text-gray-400">Manage your subscription and payment methods</p>
       </div>
 
-      {loadingSubscription ? (
-        <div className="flex justify-center p-12">
-          <Loader color="teal" />
+      {accountLoading || loadingSubscription ? (
+        <div className="space-y-6">
+          <Skeleton height={40} width="60%" />
+          <Skeleton height={100} />
+          <Skeleton height={200} />
         </div>
       ) : (
         <>

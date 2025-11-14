@@ -47,9 +47,9 @@ To enable Google and Facebook sign-in, you need to configure OAuth providers in 
 Run the migration to auto-create user profiles:
 
 1. Go to **SQL Editor** in Supabase
-2. Run: `apps/backend/supabase/migrations/006_auto_create_user_profile.sql`
+2. Run: `supabase/migrations/006_auto_create_user_profile.sql`
 
-Or if you haven't run the combined migration yet, it's already included in `000_combined_setup.sql`.
+Or if you haven't run the combined migration yet, it's already included in `supabase/migrations/000_combined_setup.sql`.
 
 ## Step 3: Test
 

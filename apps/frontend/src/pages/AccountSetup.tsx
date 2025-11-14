@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useForm } from '@mantine/form';
 import {
   Button,
@@ -10,6 +10,8 @@ import {
   Group,
   Alert,
   Text,
+  Skeleton,
+  Loader,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -20,8 +22,8 @@ import {
   IconAlertCircle,
 } from '@tabler/icons-react';
 import { apiClient } from '@/lib/api';
-import type { User } from '@/types';
 import { usePayment } from '@/contexts/PaymentContext';
+import { useAccount } from '@/contexts/AccountContext';
 
 // Helper function to validate URL
 const isValidUrl = (url: string): boolean => {
@@ -42,8 +44,12 @@ const isValidUrl = (url: string): boolean => {
 
 export const AccountSetup = () => {
   const { hasPaid } = usePayment();
+  const { account, loading: accountLoading, refetch } = useAccount();
   const [loading, setLoading] = useState(false);
-  const [account, setAccount] = useState<User | null>(null);
+
+  // Show loading skeleton only while actively loading account data
+  // Don't show skeleton if we have account data (even if form hasn't populated yet)
+  const isLoading = accountLoading && !account;
 
   const form = useForm({
     initialValues: {
@@ -94,9 +100,32 @@ export const AccountSetup = () => {
     };
   }, [form.values.businessName, form.values.reviewLinks, form.values.smsTemplate]);
 
+  // Track if form has been populated to prevent re-population
+  const formPopulatedRef = useRef(false);
+
   useEffect(() => {
-    loadAccount();
-  }, []);
+    if (account && !formPopulatedRef.current) {
+      // Populate form when account data is available (only once)
+      const template =
+        account.sms_template ||
+        form.values.smsTemplate ||
+        `You recently had _________________ for work. We'd greatly appreciate a review on one or all of the following links: `;
+      const templateWithName = template.replace(/{businessName}/g, '_________________');
+
+      const reviewLinks = account.review_links || [];
+      if (reviewLinks.length === 0) reviewLinks.push({ name: '', url: '' });
+
+      form.setValues({
+        businessName: account.business_name || '',
+        reviewLinks,
+        smsTemplate: templateWithName,
+      });
+      formPopulatedRef.current = true;
+    } else if (!account) {
+      // Reset flag if account is cleared
+      formPopulatedRef.current = false;
+    }
+  }, [account]);
 
   // Update template when business name changes
   useEffect(() => {
@@ -118,78 +147,6 @@ export const AccountSetup = () => {
       form.setFieldValue('smsTemplate', defaultTemplate);
     }
   }, [form.values.businessName]);
-
-  const loadAccount = async () => {
-    // Development mode: show dummy data immediately
-    const isDevMode =
-      !import.meta.env.VITE_SUPABASE_URL ||
-      import.meta.env.VITE_SUPABASE_URL?.includes('placeholder') ||
-      !import.meta.env.VITE_SUPABASE_ANON_KEY ||
-      import.meta.env.VITE_SUPABASE_ANON_KEY === 'placeholder_key';
-
-    if (isDevMode) {
-      // Show dummy data immediately in dev mode
-      const dummyAccount: User = {
-        id: 'dev-user',
-        email: 'dev@example.com',
-        business_name: 'Smith Construction Co.',
-        review_links: [
-          { name: 'Google', url: 'https://g.page/r/ABC123XYZ/review' },
-          { name: 'Facebook', url: 'https://www.facebook.com/smithconstruction/reviews' },
-          { name: 'Yelp', url: 'https://www.yelp.com/biz/smith-construction' },
-        ],
-        sms_template: form.values.smsTemplate,
-        sms_sent_this_month: 45,
-      };
-      setAccount(dummyAccount);
-      // Replace {businessName} placeholder with _________________ in template
-      const template =
-        dummyAccount.sms_template ||
-        form.values.smsTemplate ||
-        `You recently had _________________ for work. We'd greatly appreciate a review on one or all of the following links: `;
-      const templateWithName = template.replace(/{businessName}/g, '_________________');
-
-      // Use review_links array directly
-      const reviewLinks = dummyAccount.review_links || [];
-      // Ensure at least one empty field
-      if (reviewLinks.length === 0) reviewLinks.push({ name: '', url: '' });
-
-      form.setValues({
-        businessName: dummyAccount.business_name || '',
-        reviewLinks,
-        smsTemplate: templateWithName,
-      });
-      return;
-    }
-
-    try {
-      const data = await apiClient.getAccount();
-      setAccount(data);
-      // Replace {businessName} placeholder with _________________ in template
-      const template =
-        data.sms_template ||
-        form.values.smsTemplate ||
-        `You recently had _________________ for work. We'd greatly appreciate a review on one or all of the following links: `;
-      const templateWithName = template.replace(/{businessName}/g, '_________________');
-
-      // Use review_links array directly
-      const reviewLinks = data.review_links || [];
-      // Ensure at least one empty field
-      if (reviewLinks.length === 0) reviewLinks.push({ name: '', url: '' });
-
-      form.setValues({
-        businessName: data.business_name || '',
-        reviewLinks,
-        smsTemplate: templateWithName,
-      });
-    } catch (error: any) {
-      notifications.show({
-        title: 'Error',
-        message: error.message || 'Failed to load account',
-        color: 'red',
-      });
-    }
-  };
 
   const handleSubmit = async (values: typeof form.values) => {
     // Validate review links before submission
@@ -253,17 +210,6 @@ export const AccountSetup = () => {
         );
       }
 
-      // Filter out empty links
-      const filteredLinks = values.reviewLinks.filter(
-        (link) => link.name.trim() !== '' && link.url.trim() !== ''
-      );
-      const updatedAccount: User = {
-        ...account!,
-        business_name: values.businessName,
-        review_links: filteredLinks,
-        sms_template: templateForSave,
-      };
-      setAccount(updatedAccount);
       notifications.show({
         title: 'Success (Demo Mode)',
         message: 'Account settings saved (demo mode - not persisted)',
@@ -304,6 +250,10 @@ export const AccountSetup = () => {
         review_links: filteredLinks,
         sms_template: templateForSave,
       });
+
+      // Refetch account data to update the context
+      await refetch();
+
       notifications.show({
         title: 'Success',
         message: 'Account settings saved',
@@ -353,301 +303,325 @@ export const AccountSetup = () => {
         </Alert>
       )}
 
-      <form onSubmit={form.onSubmit(handleSubmit)}>
+      {isLoading ? (
         <Stack gap="lg">
-          <TextInput
-            label="Business Name"
-            placeholder="Your Business Name"
-            required
-            {...form.getInputProps('businessName')}
-          />
-
-          {/* Review Links */}
           <div>
-            <label className="block text-sm font-medium text-gray-200 mb-1">Review Links</label>
-            <p className="text-xs text-gray-400 mb-3">
-              Enter the full URL for each review link (e.g., https://g.page/r/ABC123XYZ/review). You
-              can add up to 5 links. At least one complete link (name and URL) is required.
-            </p>
-            <Stack gap="sm">
-              {form.values.reviewLinks.map((link, index) => (
-                <div key={index} className="border border-[#2a2a2a] rounded-md p-3 bg-[#141414]">
-                  <div className="flex flex-col gap-3">
-                    <Group gap="xs" align="flex-start" wrap="nowrap" className="w-full">
-                      <div className="flex-1">
+            <Skeleton height={16} width={120} mb={8} />
+            <Skeleton height={36} />
+          </div>
+          <div>
+            <Skeleton height={16} width={100} mb={8} />
+            <Skeleton height={36} mb={8} />
+            <Skeleton height={36} />
+          </div>
+          <div>
+            <Skeleton height={16} width={100} mb={8} />
+            <Skeleton height={100} />
+          </div>
+          <div className="flex justify-center">
+            <Loader color="teal" size="sm" />
+          </div>
+        </Stack>
+      ) : (
+        <form onSubmit={form.onSubmit(handleSubmit)}>
+          <Stack gap="lg">
+            <TextInput
+              label="Business Name"
+              placeholder="Your Business Name"
+              required
+              disabled={accountLoading}
+              {...form.getInputProps('businessName')}
+            />
+
+            {/* Review Links */}
+            <div>
+              <label className="block text-sm font-medium text-gray-200 mb-1">Review Links</label>
+              <p className="text-xs text-gray-400 mb-3">
+                Enter the full URL for each review link (e.g., https://g.page/r/ABC123XYZ/review).
+                You can add up to 5 links. At least one complete link (name and URL) is required.
+              </p>
+              <Stack gap="sm">
+                {form.values.reviewLinks.map((link, index) => (
+                  <div key={index} className="border border-[#2a2a2a] rounded-md p-3 bg-[#141414]">
+                    <div className="flex flex-col gap-3">
+                      <Group gap="xs" align="flex-start" wrap="nowrap" className="w-full">
+                        <div className="flex-1">
+                          <label className="block text-xs text-gray-400 mb-1">
+                            Site name (e.g., Google, Yelp)
+                          </label>
+                          <TextInput
+                            placeholder="Google"
+                            value={link.name}
+                            onChange={(e) => {
+                              const newLinks = [...form.values.reviewLinks];
+                              newLinks[index] = { ...newLinks[index], name: e.target.value };
+                              form.setFieldValue('reviewLinks', newLinks);
+                              // Clear error when user types
+                              form.clearFieldError(`reviewLinks.${index}.name`);
+                            }}
+                            error={form.errors[`reviewLinks.${index}.name`]}
+                            className="w-full"
+                            styles={{
+                              input: {
+                                fontSize: '0.875rem',
+                              },
+                            }}
+                          />
+                        </div>
+                        {form.values.reviewLinks.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="subtle"
+                            color="red"
+                            size="sm"
+                            onClick={() => {
+                              const newLinks = form.values.reviewLinks.filter(
+                                (_, i) => i !== index
+                              );
+                              form.setFieldValue('reviewLinks', newLinks);
+                            }}
+                            className="flex-shrink-0 mt-6"
+                          >
+                            <IconX size={18} />
+                          </Button>
+                        )}
+                      </Group>
+                      <div>
                         <label className="block text-xs text-gray-400 mb-1">
-                          Site name (e.g., Google, Yelp)
+                          Link to {link.name || 'review site'} (full URL)
                         </label>
-                        <TextInput
-                          placeholder="Google"
-                          value={link.name}
+                        <Textarea
+                          placeholder="https://g.page/r/ABC123XYZ/review"
+                          value={link.url}
                           onChange={(e) => {
                             const newLinks = [...form.values.reviewLinks];
-                            newLinks[index] = { ...newLinks[index], name: e.target.value };
+                            newLinks[index] = { ...newLinks[index], url: e.target.value };
                             form.setFieldValue('reviewLinks', newLinks);
                             // Clear error when user types
-                            form.clearFieldError(`reviewLinks.${index}.name`);
+                            form.clearFieldError(`reviewLinks.${index}.url`);
                           }}
-                          error={form.errors[`reviewLinks.${index}.name`]}
+                          error={form.errors[`reviewLinks.${index}.url`]}
                           className="w-full"
+                          autosize
+                          minRows={1}
+                          maxRows={4}
                           styles={{
                             input: {
                               fontSize: '0.875rem',
+                              lineHeight: '1.5',
+                              padding: '0.5rem 0.75rem',
                             },
                           }}
                         />
                       </div>
-                      {form.values.reviewLinks.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="subtle"
-                          color="red"
-                          size="sm"
-                          onClick={() => {
-                            const newLinks = form.values.reviewLinks.filter((_, i) => i !== index);
-                            form.setFieldValue('reviewLinks', newLinks);
-                          }}
-                          className="flex-shrink-0 mt-6"
-                        >
-                          <IconX size={18} />
-                        </Button>
-                      )}
-                    </Group>
-                    <div>
-                      <label className="block text-xs text-gray-400 mb-1">
-                        Link to {link.name || 'review site'} (full URL)
-                      </label>
-                      <Textarea
-                        placeholder="https://g.page/r/ABC123XYZ/review"
-                        value={link.url}
-                        onChange={(e) => {
-                          const newLinks = [...form.values.reviewLinks];
-                          newLinks[index] = { ...newLinks[index], url: e.target.value };
-                          form.setFieldValue('reviewLinks', newLinks);
-                          // Clear error when user types
-                          form.clearFieldError(`reviewLinks.${index}.url`);
-                        }}
-                        error={form.errors[`reviewLinks.${index}.url`]}
-                        className="w-full"
-                        autosize
-                        minRows={1}
-                        maxRows={4}
-                        styles={{
-                          input: {
-                            fontSize: '0.875rem',
-                            lineHeight: '1.5',
-                            padding: '0.5rem 0.75rem',
-                          },
-                        }}
-                      />
                     </div>
                   </div>
-                </div>
-              ))}
-              {form.values.reviewLinks.length < 5 && (
-                <Button
-                  type="button"
-                  variant="light"
-                  size="sm"
-                  leftSection={<IconPlus size={18} />}
-                  onClick={() => {
-                    form.setFieldValue('reviewLinks', [
-                      ...form.values.reviewLinks,
-                      { name: '', url: '' },
-                    ]);
-                  }}
-                  className="self-start"
-                >
-                  Add Review Link
-                </Button>
-              )}
-            </Stack>
-          </div>
-
-          <Textarea
-            label="SMS Template"
-            placeholder="SMS message template"
-            rows={4}
-            {...form.getInputProps('smsTemplate')}
-          />
-
-          {/* SMS Preview */}
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-200 mb-3">SMS Preview</label>
-            <div className="bg-gray-100 rounded-2xl p-4 max-w-sm mx-auto shadow-lg">
-              {/* Phone header */}
-              <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-300">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-white text-sm font-semibold">
-                    {form.values.businessName
-                      ? form.values.businessName.charAt(0).toUpperCase()
-                      : 'B'}
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold text-gray-900">
-                      {form.values.businessName || 'Your Business'}
-                    </div>
-                    <div className="text-xs text-gray-500">Now</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Message bubble */}
-              <div className="bg-blue-500 rounded-2xl px-4 py-3 shadow-sm">
-                <div className="text-white text-sm leading-relaxed break-words">
-                  {(() => {
-                    let message = form.values.smsTemplate || '';
-
-                    // Split message into parts for rendering
-                    const parts: (string | { type: 'link'; label: string; url: string })[] = [];
-
-                    // Add template text as-is (no replacements)
-                    if (message.trim()) {
-                      parts.push(message.trim());
-                    }
-
-                    // Add review links
-                    const links: { type: 'link'; label: string; url: string }[] = [];
-                    form.values.reviewLinks
-                      .filter((link) => link.url.trim() !== '')
-                      .forEach((link) => {
-                        // Use the custom name if provided, otherwise try to detect from URL
-                        let label = link.name.trim() || 'Review Link';
-                        if (!label || label === 'Review Link') {
-                          if (link.url.includes('google') || link.url.includes('g.page')) {
-                            label = 'Google';
-                          } else if (link.url.includes('facebook')) {
-                            label = 'Facebook';
-                          } else if (link.url.includes('yelp')) {
-                            label = 'Yelp';
-                          } else if (link.url.includes('tripadvisor')) {
-                            label = 'TripAdvisor';
-                          }
-                        }
-                        links.push({ type: 'link', label, url: link.url });
-                      });
-
-                    if (links.length > 0) {
-                      parts.push('\n\n');
-                      links.forEach((link, index) => {
-                        // Add label on its own line
-                        parts.push(link.label);
-                        parts.push('\n');
-                        // Add URL on its own line
-                        parts.push(link);
-                        if (index < links.length - 1) {
-                          parts.push('\n\n');
-                        }
-                      });
-                    }
-
-                    // Add business name at the end if it exists
-                    if (form.values.businessName && form.values.businessName.trim()) {
-                      parts.push('\n\n');
-                      parts.push(`- ${form.values.businessName.trim()}`);
-                    }
-
-                    if (parts.length === 0) {
-                      return (
-                        <span className="opacity-70">
-                          Enter your SMS template above to see a preview...
-                        </span>
-                      );
-                    }
-
-                    return (
-                      <div className="whitespace-pre-wrap break-words">
-                        {parts.map((part, index) => {
-                          if (typeof part === 'string') {
-                            return (
-                              <span key={index} className="break-words">
-                                {part}
-                              </span>
-                            );
-                          } else {
-                            return (
-                              <span key={index} className="break-words">
-                                <a
-                                  href={part.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="underline decoration-2 underline-offset-2 hover:opacity-80 transition-opacity break-all"
-                                >
-                                  {part.url}
-                                </a>
-                              </span>
-                            );
-                          }
-                        })}
-                      </div>
-                    );
-                  })()}
-                </div>
-              </div>
-
-              {/* Link styling hint */}
-              {form.values.reviewLinks.some((link) => link.url.trim() !== '') && (
-                <div className="mt-2 text-xs text-gray-500 text-center">
-                  Links will be clickable in the actual SMS
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="pt-6 border-t border-[#2a2a2a] mt-8">
-            {/* Checklist */}
-            <div className="mb-4">
-              <Stack gap="xs">
-                <div className="flex items-center gap-2">
-                  {checklist.businessName ? (
-                    <IconCheck size={16} className="text-teal-400" />
-                  ) : (
-                    <IconXCircle size={16} className="text-gray-600" />
-                  )}
-                  <span
-                    className={`text-xs ${checklist.businessName ? 'text-gray-400' : 'text-gray-600'}`}
+                ))}
+                {form.values.reviewLinks.length < 5 && (
+                  <Button
+                    type="button"
+                    variant="light"
+                    size="sm"
+                    leftSection={<IconPlus size={18} />}
+                    onClick={() => {
+                      form.setFieldValue('reviewLinks', [
+                        ...form.values.reviewLinks,
+                        { name: '', url: '' },
+                      ]);
+                    }}
+                    className="self-start"
                   >
-                    Business name
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {checklist.reviewLinks ? (
-                    <IconCheck size={16} className="text-teal-400" />
-                  ) : (
-                    <IconXCircle size={16} className="text-gray-600" />
-                  )}
-                  <span
-                    className={`text-xs ${checklist.reviewLinks ? 'text-gray-400' : 'text-gray-600'}`}
-                  >
-                    At least 1 review link (name and URL)
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {checklist.smsTemplate ? (
-                    <IconCheck size={16} className="text-teal-400" />
-                  ) : (
-                    <IconXCircle size={16} className="text-gray-600" />
-                  )}
-                  <span
-                    className={`text-xs ${checklist.smsTemplate ? 'text-gray-400' : 'text-gray-600'}`}
-                  >
-                    SMS template (at least 5 characters)
-                  </span>
-                </div>
+                    Add Review Link
+                  </Button>
+                )}
               </Stack>
             </div>
-            <Button
-              type="submit"
-              loading={loading}
-              disabled={!checklist.allValid}
-              size="md"
-              className="w-full sm:w-auto font-semibold px-8"
-            >
-              Save Settings
-            </Button>
-          </div>
-        </Stack>
-      </form>
+
+            <Textarea
+              label="SMS Template"
+              placeholder="SMS message template"
+              rows={4}
+              {...form.getInputProps('smsTemplate')}
+            />
+
+            {/* SMS Preview */}
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-200 mb-3">SMS Preview</label>
+              <div className="bg-gray-100 rounded-2xl p-4 max-w-sm mx-auto shadow-lg">
+                {/* Phone header */}
+                <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-300">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-white text-sm font-semibold">
+                      {form.values.businessName
+                        ? form.values.businessName.charAt(0).toUpperCase()
+                        : 'B'}
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        {form.values.businessName || 'Your Business'}
+                      </div>
+                      <div className="text-xs text-gray-500">Now</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Message bubble */}
+                <div className="bg-blue-500 rounded-2xl px-4 py-3 shadow-sm">
+                  <div className="text-white text-sm leading-relaxed break-words">
+                    {(() => {
+                      let message = form.values.smsTemplate || '';
+
+                      // Split message into parts for rendering
+                      const parts: (string | { type: 'link'; label: string; url: string })[] = [];
+
+                      // Add template text as-is (no replacements)
+                      if (message.trim()) {
+                        parts.push(message.trim());
+                      }
+
+                      // Add review links
+                      const links: { type: 'link'; label: string; url: string }[] = [];
+                      form.values.reviewLinks
+                        .filter((link) => link.url.trim() !== '')
+                        .forEach((link) => {
+                          // Use the custom name if provided, otherwise try to detect from URL
+                          let label = link.name.trim() || 'Review Link';
+                          if (!label || label === 'Review Link') {
+                            if (link.url.includes('google') || link.url.includes('g.page')) {
+                              label = 'Google';
+                            } else if (link.url.includes('facebook')) {
+                              label = 'Facebook';
+                            } else if (link.url.includes('yelp')) {
+                              label = 'Yelp';
+                            } else if (link.url.includes('tripadvisor')) {
+                              label = 'TripAdvisor';
+                            }
+                          }
+                          links.push({ type: 'link', label, url: link.url });
+                        });
+
+                      if (links.length > 0) {
+                        parts.push('\n\n');
+                        links.forEach((link, index) => {
+                          // Add label on its own line
+                          parts.push(link.label);
+                          parts.push('\n');
+                          // Add URL on its own line
+                          parts.push(link);
+                          if (index < links.length - 1) {
+                            parts.push('\n\n');
+                          }
+                        });
+                      }
+
+                      // Add business name at the end if it exists
+                      if (form.values.businessName && form.values.businessName.trim()) {
+                        parts.push('\n\n');
+                        parts.push(`- ${form.values.businessName.trim()}`);
+                      }
+
+                      if (parts.length === 0) {
+                        return (
+                          <span className="opacity-70">
+                            Enter your SMS template above to see a preview...
+                          </span>
+                        );
+                      }
+
+                      return (
+                        <div className="whitespace-pre-wrap break-words">
+                          {parts.map((part, index) => {
+                            if (typeof part === 'string') {
+                              return (
+                                <span key={index} className="break-words">
+                                  {part}
+                                </span>
+                              );
+                            } else {
+                              return (
+                                <span key={index} className="break-words">
+                                  <a
+                                    href={part.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="underline decoration-2 underline-offset-2 hover:opacity-80 transition-opacity break-all"
+                                  >
+                                    {part.url}
+                                  </a>
+                                </span>
+                              );
+                            }
+                          })}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+
+                {/* Link styling hint */}
+                {form.values.reviewLinks.some((link) => link.url.trim() !== '') && (
+                  <div className="mt-2 text-xs text-gray-500 text-center">
+                    Links will be clickable in the actual SMS
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-[#2a2a2a] mt-8">
+              {/* Checklist */}
+              <div className="mb-4">
+                <Stack gap="xs">
+                  <div className="flex items-center gap-2">
+                    {checklist.businessName ? (
+                      <IconCheck size={16} className="text-teal-400" />
+                    ) : (
+                      <IconXCircle size={16} className="text-gray-600" />
+                    )}
+                    <span
+                      className={`text-xs ${checklist.businessName ? 'text-gray-400' : 'text-gray-600'}`}
+                    >
+                      Business name
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {checklist.reviewLinks ? (
+                      <IconCheck size={16} className="text-teal-400" />
+                    ) : (
+                      <IconXCircle size={16} className="text-gray-600" />
+                    )}
+                    <span
+                      className={`text-xs ${checklist.reviewLinks ? 'text-gray-400' : 'text-gray-600'}`}
+                    >
+                      At least 1 review link (name and URL)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {checklist.smsTemplate ? (
+                      <IconCheck size={16} className="text-teal-400" />
+                    ) : (
+                      <IconXCircle size={16} className="text-gray-600" />
+                    )}
+                    <span
+                      className={`text-xs ${checklist.smsTemplate ? 'text-gray-400' : 'text-gray-600'}`}
+                    >
+                      SMS template (at least 5 characters)
+                    </span>
+                  </div>
+                </Stack>
+              </div>
+              <Button
+                type="submit"
+                loading={loading}
+                disabled={!checklist.allValid}
+                size="md"
+                className="w-full sm:w-auto font-semibold px-8"
+              >
+                Save Settings
+              </Button>
+            </div>
+          </Stack>
+        </form>
+      )}
     </Paper>
   );
 };

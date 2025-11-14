@@ -41,7 +41,7 @@ yarn install
 
 2. **Set up Supabase:**
    - Create a new Supabase project
-   - Go to SQL Editor and run `apps/backend/supabase/migrations/001_initial_schema.sql`
+   - Go to SQL Editor and run `supabase/migrations/000_combined_setup.sql`
    - Get your project URL and anon key from Settings > API
 
 3. **Set up Twilio:**
@@ -57,31 +57,33 @@ yarn install
    ```env
    VITE_SUPABASE_URL=your_supabase_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-   VITE_API_URL=http://localhost:3001
+   VITE_API_URL=  # Leave empty to use Vite proxy
    ```
 
-   **Backend** (`apps/backend/.env`):
+5. **Start development:**
 
-   ```env
-   PORT=3001
-   SUPABASE_URL=your_supabase_url
-   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-   TWILIO_ACCOUNT_SID=your_twilio_account_sid
-   TWILIO_AUTH_TOKEN=your_twilio_auth_token
-   TWILIO_PHONE_NUMBER=your_twilio_phone_number
-   TWILIO_ALPHANUMERIC_SENDER_ID=myrevuhq
-   NODE_ENV=development
-   FRONTEND_URL=http://localhost:5173
+   **Option 1: Frontend only (for UI development):**
+
+   ```bash
+   yarn dev
    ```
 
-5. **Start development servers:**
+   - Frontend: http://localhost:5173
+   - Note: API calls will fail unless you also run `vercel dev`
 
-```bash
-yarn dev
-```
+   **Option 2: Full stack (recommended):**
 
-- Frontend: http://localhost:5173
-- Backend: http://localhost:3001
+   ```bash
+   # Terminal 1: Start Vercel dev server (API functions)
+   vercel dev
+
+   # Terminal 2: Start frontend
+   yarn dev
+   ```
+
+   - Frontend: http://localhost:5173
+   - API: http://localhost:3000 (via Vercel dev)
+   - Vite proxy automatically routes `/api/*` to Vercel dev
 
 ## Project Structure
 
@@ -96,15 +98,13 @@ yarn dev
 │   │   │   ├── hooks/       # React hooks
 │   │   │   └── types/       # TypeScript types
 │   │   └── package.json
-│   └── backend/             # Express backend
-│       ├── src/
-│       │   ├── routes/      # API routes
-│       │   ├── middleware/  # Auth middleware
-│       │   ├── utils/       # Supabase, Twilio clients
-│       │   └── types/       # TypeScript types
-│       ├── supabase/
-│       │   └── migrations/  # Database migrations
-│       └── package.json
+├── api/                     # Vercel serverless functions
+│   ├── _utils/              # Shared utilities
+│   ├── auth/                # Auth routes
+│   ├── billing/             # Stripe billing
+│   └── *.ts                 # API route handlers
+├── supabase/
+│   └── migrations/          # Database migrations
 ├── package.json
 └── README.md
 ```
@@ -124,20 +124,19 @@ yarn dev
 - **customers**: Customer records with phone numbers and job descriptions
 - **messages**: SMS message logs
 
-See `apps/backend/supabase/migrations/001_initial_schema.sql` for full schema.
+See `supabase/migrations/000_combined_setup.sql` for full schema.
 
 ## Deployment
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
+See [VERCEL_SERVERLESS_SETUP.md](./VERCEL_SERVERLESS_SETUP.md) for detailed deployment instructions.
 
-- **Frontend**: Deploy to Vercel
-- **Backend**: Deploy to Railway or Render
+- **Everything**: Deploy to Vercel (frontend + API serverless functions)
 
-Make sure to set all environment variables in your deployment platform.
+Make sure to set all environment variables in Vercel.
 
 ## Development
 
-- `yarn dev` - Start both frontend and backend in development mode
-- `yarn build` - Build both apps for production
-- `yarn lint` - Run ESLint on both apps
+- `yarn dev` - Start frontend development server
+- `yarn build` - Build frontend for production
+- `yarn lint` - Run ESLint on frontend
 - `yarn format` - Format code with Prettier

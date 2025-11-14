@@ -1,12 +1,35 @@
 import axios from 'axios';
 import type { Customer, User } from '@/types';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// In production, API routes are on the same domain (Vercel serverless functions)
+// In development, use Vercel dev server (port 3000) or empty string to use Vite proxy
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 const api = axios.create({
   baseURL: API_URL,
   withCredentials: true,
 });
+
+// Add retry logic for 401 errors (session might still be syncing)
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // If 401 and we haven't retried yet, wait briefly and retry once
+    // Note: AccountContext now waits for session sync, so this should rarely trigger
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      // Wait briefly for session to potentially sync
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      return api(originalRequest);
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 export const apiClient = {
   // Account

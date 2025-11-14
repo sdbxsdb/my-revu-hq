@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Lazy-load environment variables to ensure dotenv.config() has run
 function getSupabaseClient() {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -17,7 +16,6 @@ function getSupabaseClient() {
   });
 }
 
-// Create client lazily
 let supabaseClient: ReturnType<typeof createClient> | null = null;
 
 export const supabase = new Proxy({} as ReturnType<typeof createClient>, {

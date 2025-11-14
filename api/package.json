@@ -1,0 +1,12 @@
+{
+  "name": "api",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@vercel/node": "^3.0.0",
+    "@supabase/supabase-js": "^2.39.3",
+    "stripe": "^19.3.1",
+    "twilio": "^4.20.0",
+    "zod": "^3.22.4"
+  }
+}

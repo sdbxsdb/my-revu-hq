@@ -14,7 +14,7 @@ Your `.env` files have been created with your Supabase credentials:
 1. Go to your Supabase Dashboard: https://supabase.com/dashboard/project/mmnabvqkstkjlkxfksbp
 2. Click on **SQL Editor** in the left sidebar
 3. Click **New Query**
-4. Open the file: `apps/backend/supabase/migrations/000_combined_setup.sql`
+4. Open the file: `supabase/migrations/000_combined_setup.sql`
 5. Copy the entire contents of that file
 6. Paste it into the SQL Editor
 7. Click **Run** (or press Cmd/Ctrl + Enter)
@@ -33,21 +33,15 @@ After running the migration, verify the tables exist:
 
 ### Step 3: Test Local Development
 
-1. **Start the backend:**
+1. **Start the frontend:**
 
    ```bash
-   cd apps/backend
    yarn dev
    ```
 
-2. **Start the frontend (in a new terminal):**
+2. Visit `http://localhost:5173` and try to sign up/login
 
-   ```bash
-   cd apps/frontend
-   yarn dev
-   ```
-
-3. Visit `http://localhost:5173` and try to sign up/login
+   Note: For local API development, use `vercel dev` to run serverless functions locally, or deploy to Vercel for testing.
 
 ## 🔐 Production Environment Variables
 
@@ -57,17 +51,15 @@ Add these in your Vercel project settings:
 
 - `VITE_SUPABASE_URL` = `https://mmnabvqkstkjlkxfksbp.supabase.co`
 - `VITE_SUPABASE_ANON_KEY` = (your anon key)
-- `VITE_API_URL` = (your backend URL, e.g., `https://your-backend.railway.app`)
+- `VITE_API_URL` = (leave empty in production, or `http://localhost:3001` for local dev with Express backend)
 
-### Backend Hosting (Railway/Render)
+### Vercel (API Serverless Functions)
 
-Add these in your backend hosting platform:
+Add these in your Vercel project settings:
 
 - `SUPABASE_URL` = `https://mmnabvqkstkjlkxfksbp.supabase.co`
 - `SUPABASE_SERVICE_ROLE_KEY` = (your service role key - keep secret!)
 - `FRONTEND_URL` = (your Vercel URL, e.g., `https://my-revu-hq.vercel.app`)
-- `NODE_ENV` = `production`
-- `PORT` = (usually auto-set by platform)
 
 ## 🔒 Security Notes
 

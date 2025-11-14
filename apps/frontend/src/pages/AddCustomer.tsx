@@ -28,20 +28,8 @@ export const AddCustomer = () => {
   const countryRef = useRef<CountryCode | undefined>('GB');
   const navigate = useNavigate();
 
-  // Load user account to get default country/region (for now defaulting to GB)
-  useEffect(() => {
-    const loadAccount = async () => {
-      try {
-        await apiClient.getAccount();
-        // TODO: When account has a region/country field, use it here
-        // For now, default to GB
-        // setSelectedCountry(account.region || 'GB');
-      } catch (error) {
-        // If account load fails, keep default (GB)
-      }
-    };
-    loadAccount();
-  }, []);
+  // TODO: When account has a region/country field, use it here
+  // For now, default to GB (no need to fetch account just for this)
 
   const form = useForm({
     initialValues: {

@@ -56,14 +56,10 @@ export const useAuth = () => {
         } = result;
         setUser(session?.user ?? null);
         if (session) {
-          try {
-            const syncTimeout = new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('Sync timeout')), 3000)
-            );
-            await Promise.race([syncSession(), syncTimeout]);
-          } catch (error) {
+          // Sync immediately without timeout (syncSession handles its own errors)
+          syncSession().catch((error) => {
             console.error('Session sync failed:', error);
-          }
+          });
         }
         setLoading(false);
       })
@@ -79,18 +75,8 @@ export const useAuth = () => {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user ?? null);
       if (session) {
+        // Sync session to backend cookies
         await syncSession();
-        // Ensure user profile exists in our database
-        // The database trigger should create it, but we'll also ensure it via API
-        try {
-          await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/account`, {
-            method: 'GET',
-            credentials: 'include',
-          });
-        } catch (error) {
-          // Silently fail - the database trigger should handle it
-          console.log('User profile sync:', error);
-        }
         // Navigate to home after successful auth
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           navigate('/');

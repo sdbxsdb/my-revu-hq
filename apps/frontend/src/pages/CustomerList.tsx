@@ -8,13 +8,13 @@ import {
   Select,
   Pagination,
   Badge,
-  Loader,
   Modal,
   TextInput,
   Textarea,
   Stack,
   Alert,
   Text,
+  Skeleton,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useForm } from '@mantine/form';
@@ -34,7 +34,7 @@ import { IconAlertCircle } from '@tabler/icons-react';
 export const CustomerList = () => {
   const { hasPaid } = usePayment();
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -611,8 +611,59 @@ export const CustomerList = () => {
       </div>
 
       {loading ? (
-        <div className="flex justify-center p-12">
-          <Loader color="teal" />
+        <div className="space-y-4">
+          {/* Desktop skeleton */}
+          <div className="hidden lg:block">
+            <Table>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>Name</Table.Th>
+                  <Table.Th>Phone</Table.Th>
+                  <Table.Th>Job Description</Table.Th>
+                  <Table.Th>Status</Table.Th>
+                  <Table.Th>Date Sent</Table.Th>
+                  <Table.Th>Actions</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                {[...Array(5)].map((_, i) => (
+                  <Table.Tr key={i}>
+                    <Table.Td>
+                      <Skeleton height={20} />
+                    </Table.Td>
+                    <Table.Td>
+                      <Skeleton height={20} width={120} />
+                    </Table.Td>
+                    <Table.Td>
+                      <Skeleton height={20} width={150} />
+                    </Table.Td>
+                    <Table.Td>
+                      <Skeleton height={24} width={80} radius="xl" />
+                    </Table.Td>
+                    <Table.Td>
+                      <Skeleton height={20} width={100} />
+                    </Table.Td>
+                    <Table.Td>
+                      <Skeleton height={32} width={100} />
+                    </Table.Td>
+                  </Table.Tr>
+                ))}
+              </Table.Tbody>
+            </Table>
+          </div>
+          {/* Mobile skeleton */}
+          <div className="lg:hidden space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <Paper key={i} p="md" className="bg-[#141414]">
+                <Stack gap="sm">
+                  <Skeleton height={20} width="60%" />
+                  <Skeleton height={16} width="40%" />
+                  <Skeleton height={16} width="50%" />
+                  <Skeleton height={24} width={80} radius="xl" />
+                </Stack>
+              </Paper>
+            ))}
+          </div>
         </div>
       ) : customers.length === 0 ? (
         <div className="text-center py-16 text-gray-400">No customers found</div>

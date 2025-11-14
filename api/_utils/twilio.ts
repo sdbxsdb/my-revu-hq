@@ -1,6 +1,5 @@
 import twilio from 'twilio';
 
-// Lazy-load Twilio client to avoid requiring credentials at startup
 let twilioClient: ReturnType<typeof twilio> | null = null;
 
 function getTwilioClient() {
@@ -13,7 +12,7 @@ function getTwilioClient() {
 
   if (!accountSid || !authToken) {
     throw new Error(
-      'Twilio is not configured. Please add TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN to your .env file.'
+      'Twilio is not configured. Please add TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN to your environment variables.'
     );
   }
 
@@ -28,7 +27,6 @@ export const sendSMS = async (
   try {
     const client = getTwilioClient();
 
-    // Use alphanumeric sender ID if available, otherwise fall back to phone number
     const from =
       process.env.TWILIO_ALPHANUMERIC_SENDER_ID || process.env.TWILIO_PHONE_NUMBER || 'myrevuhq';
 

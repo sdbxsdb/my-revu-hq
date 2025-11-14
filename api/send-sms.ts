@@ -1,10 +1,9 @@
-import { Router } from 'express';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { z } from 'zod';
-import { supabase } from '../utils/supabase';
-import { sendSMS } from '../utils/twilio';
-import { authenticate, AuthRequest } from '../middleware/auth';
-
-const router = Router();
+import { supabase } from './_utils/supabase';
+import { sendSMS } from './_utils/twilio';
+import { authenticate } from './_utils/auth';
+import { setCorsHeaders } from './_utils/response';
 
 const sendSMSSchema = z.object({
   customerId: z.string().uuid(),
@@ -12,15 +11,26 @@ const sendSMSSchema = z.object({
 
 const SMS_MONTHLY_LIMIT = 100;
 
-router.post('/send-sms', authenticate, async (req: AuthRequest, res) => {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    setCorsHeaders(res);
+    return res.status(204).end();
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
   try {
+    const auth = await authenticate(req as any);
     const { customerId } = sendSMSSchema.parse(req.body);
 
     // Get user to check limit
     const { data: user, error: userError } = await supabase
       .from('users')
       .select('sms_sent_this_month, business_name, review_links, sms_template')
-      .eq('id', req.userId!)
+      .eq('id', auth.userId)
       .single();
 
     if (userError) throw userError;
@@ -39,7 +49,7 @@ router.post('/send-sms', authenticate, async (req: AuthRequest, res) => {
       .from('customers')
       .select('*')
       .eq('id', customerId)
-      .eq('user_id', req.userId!)
+      .eq('user_id', auth.userId)
       .single();
 
     if (customerError) throw customerError;
@@ -86,7 +96,7 @@ router.post('/send-sms', authenticate, async (req: AuthRequest, res) => {
     // Log message
     await supabase.from('messages').insert({
       customer_id: customerId,
-      user_id: req.userId!,
+      user_id: auth.userId,
       body: messageBody,
       sent_at: new Date().toISOString(),
     });
@@ -97,15 +107,16 @@ router.post('/send-sms', authenticate, async (req: AuthRequest, res) => {
       .update({
         sms_sent_this_month: sentThisMonth + 1,
       })
-      .eq('id', req.userId!);
+      .eq('id', auth.userId);
 
-    res.json({ success: true, messageSid: result.sid });
+    return res.json({ success: true, messageSid: result.sid });
   } catch (error: any) {
+    if (error.message === 'Unauthorized') {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.errors });
     }
-    res.status(500).json({ error: error.message || 'Failed to send SMS' });
+    return res.status(500).json({ error: error.message || 'Failed to send SMS' });
   }
-});
-
-export default router;
+}

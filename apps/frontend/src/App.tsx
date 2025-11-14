@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { AccountProvider } from '@/contexts/AccountContext';
 import { PaymentProvider } from '@/contexts/PaymentContext';
 import { Layout } from '@/components/Layout';
 import { Login } from '@/pages/Login';
@@ -64,32 +65,34 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 function App() {
   return (
     <BrowserRouter>
-      <PaymentProvider>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route element={<Layout />}>
-            {/* Public legal pages with navigation */}
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/refund-policy" element={<RefundPolicy />} />
-          </Route>
-          {/* Protected routes with navigation */}
-          <Route
-            element={
-              <ProtectedRoute>
-                <Layout />
-              </ProtectedRoute>
-            }
-          >
-            <Route path="/" element={<Navigate to="/account" replace />} />
-            <Route path="/home" element={<Navigate to="/account" replace />} />
-            <Route path="/account" element={<AccountSetup />} />
-            <Route path="/billing" element={<Billing />} />
-            <Route path="/customers/add" element={<AddCustomer />} />
-            <Route path="/customers" element={<CustomerList />} />
-          </Route>
-        </Routes>
-      </PaymentProvider>
+      <AccountProvider>
+        <PaymentProvider>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route element={<Layout />}>
+              {/* Public legal pages with navigation */}
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/refund-policy" element={<RefundPolicy />} />
+            </Route>
+            {/* Protected routes with navigation */}
+            <Route
+              element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }
+            >
+              <Route path="/" element={<Navigate to="/account" replace />} />
+              <Route path="/home" element={<Navigate to="/account" replace />} />
+              <Route path="/account" element={<AccountSetup />} />
+              <Route path="/billing" element={<Billing />} />
+              <Route path="/customers/add" element={<AddCustomer />} />
+              <Route path="/customers" element={<CustomerList />} />
+            </Route>
+          </Routes>
+        </PaymentProvider>
+      </AccountProvider>
     </BrowserRouter>
   );
 }
