@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { useForm } from '@mantine/form';
 import {
   Button,
@@ -290,8 +291,8 @@ export const AccountSetup = () => {
             You can set up your account and manage your information, but you need to set up payment
             to send SMS messages.
             <Button
-              component="a"
-              href="/billing"
+              component={Link}
+              to="/billing"
               variant="subtle"
               size="xs"
               color="teal"

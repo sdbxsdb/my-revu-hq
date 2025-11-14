@@ -33,17 +33,27 @@ export const syncSession = async () => {
 
       if (session) {
         try {
-          await axios.post(
+          // Add timeout to prevent hanging
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Sync timeout')), 2000)
+          );
+
+          const syncRequest = axios.post(
             `${API_URL}/api/auth/sync-session`,
             {
               access_token: session.access_token,
               refresh_token: session.refresh_token,
             },
-            { withCredentials: true }
+            { withCredentials: true, timeout: 2000 }
           );
+
+          await Promise.race([syncRequest, timeoutPromise]);
           lastSyncTime = Date.now();
-        } catch (error) {
-          console.error('Failed to sync session:', error);
+        } catch (error: any) {
+          // Don't log timeout errors as they're expected if API isn't available
+          if (error.message !== 'Sync timeout' && error.code !== 'ECONNABORTED') {
+            console.error('Failed to sync session:', error);
+          }
         }
       }
     } finally {

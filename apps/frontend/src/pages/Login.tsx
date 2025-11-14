@@ -41,15 +41,26 @@ export const Login = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await signInWithPassword(email, password);
-      navigate('/');
+      const session = await signInWithPassword(email, password);
+      if (session) {
+        // Success - navigate immediately
+        navigate('/');
+      } else {
+        // No session returned - this shouldn't happen, but handle it
+        notifications.show({
+          title: 'Error',
+          message: 'Login succeeded but no session was created',
+          color: 'red',
+        });
+        setLoading(false);
+      }
+      // Loading will be cleared by navigation/unmount
     } catch (error: any) {
       notifications.show({
         title: 'Error',
         message: error.message || 'Failed to sign in',
         color: 'red',
       });
-    } finally {
       setLoading(false);
     }
   };

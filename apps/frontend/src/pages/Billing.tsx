@@ -1,16 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-  Paper,
-  Title,
-  Text,
-  Button,
-  Tabs,
-  Stack,
-  Alert,
-  Badge,
-  Loader,
-  Skeleton,
-} from '@mantine/core';
+import { Paper, Title, Text, Button, Tabs, Stack, Alert, Badge, Skeleton } from '@mantine/core';
 import { IconCreditCard, IconBuildingBank, IconCheck, IconAlertCircle } from '@tabler/icons-react';
 import { apiClient } from '@/lib/api';
 import { notifications } from '@mantine/notifications';

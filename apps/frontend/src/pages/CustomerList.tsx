@@ -565,8 +565,8 @@ export const CustomerList = () => {
                   You can add and manage customers, but you need to set up payment to send SMS
                   messages.
                   <Button
-                    component="a"
-                    href="/billing"
+                    component={Link}
+                    to="/billing"
                     variant="subtle"
                     size="xs"
                     color="teal"

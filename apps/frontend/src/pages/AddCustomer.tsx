@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { useForm } from '@mantine/form';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   Button,
   TextInput,
@@ -200,8 +200,8 @@ export const AddCustomer = () => {
           <Text size="sm" className="text-gray-300">
             You can add customers, but you need to set up payment to send SMS messages.
             <Button
-              component="a"
-              href="/billing"
+              component={Link}
+              to="/billing"
               variant="subtle"
               size="xs"
               color="teal"
