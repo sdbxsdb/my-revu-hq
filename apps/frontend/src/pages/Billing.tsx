@@ -278,7 +278,8 @@ export const Billing = () => {
                     Your subscription is active.
                     {nextBillingDate && (
                       <>
-                        {' '}Next billing date:{' '}
+                        {' '}
+                        Next billing date:{' '}
                         {new Date(nextBillingDate).toLocaleDateString('en-GB', {
                           day: 'numeric',
                           month: 'long',
