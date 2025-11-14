@@ -275,12 +275,17 @@ export const Billing = () => {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div>
                   <Text size="sm" className="text-gray-300">
-                    Your subscription is active. Next billing date:{' '}
-                    {new Date(nextBillingDate).toLocaleDateString('en-GB', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                    })}
+                    Your subscription is active.
+                    {nextBillingDate && (
+                      <>
+                        {' '}Next billing date:{' '}
+                        {new Date(nextBillingDate).toLocaleDateString('en-GB', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                        })}
+                      </>
+                    )}
                   </Text>
                 </div>
                 <Badge color="teal" size="lg">
