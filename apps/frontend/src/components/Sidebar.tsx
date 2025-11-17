@@ -55,7 +55,7 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium ${
                     isActive
-                      ? 'bg-teal-600 text-white shadow-lg shadow-teal-500/30'
+                      ? 'bg-[rgb(9,146,104)] text-white shadow-lg shadow-[rgba(9,146,104,0.3)]'
                       : 'text-gray-400 hover:bg-[#2a2a2a] hover:text-white'
                   }`
                 }

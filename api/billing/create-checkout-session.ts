@@ -37,8 +37,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'Stripe not configured' });
     }
 
-    if (!process.env.STRIPE_PRICE_ID) {
-      return res.status(500).json({ error: 'STRIPE_PRICE_ID not configured' });
+    // Get currency from request body, default to GBP
+    const currency = (req.body?.currency as string) || 'GBP';
+
+    // Get the appropriate price ID based on currency
+    const priceIdEnvVar = `STRIPE_PRICE_ID_${currency}`;
+    const priceId = process.env[priceIdEnvVar] || process.env.STRIPE_PRICE_ID;
+
+    if (!priceId) {
+      return res.status(500).json({
+        error: `Price ID not configured for currency ${currency}. Please set ${priceIdEnvVar} or STRIPE_PRICE_ID.`,
+      });
     }
 
     // Get or create Stripe customer
@@ -77,7 +86,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       payment_method_types: ['card'],
       line_items: [
         {
-          price: process.env.STRIPE_PRICE_ID!,
+          price: priceId,
           quantity: 1,
         },
       ],

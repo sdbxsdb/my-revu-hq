@@ -6,6 +6,7 @@ import { notifications } from '@mantine/notifications';
 import { usePayment } from '@/contexts/PaymentContext';
 import { useAccount } from '@/contexts/AccountContext';
 import CardBrandIcon from '@/components/CardBrandIcon';
+import { detectCurrency, formatPrice, createCurrencyInfo, type CurrencyInfo } from '@/lib/currency';
 
 export const Billing = () => {
   const { hasPaid } = usePayment();
@@ -13,6 +14,11 @@ export const Billing = () => {
   const [activeTab, setActiveTab] = useState<string | null>('subscription');
   const [loading, setLoading] = useState(false);
   const [loadingSubscription, setLoadingSubscription] = useState(true);
+  const [loadingPrices, setLoadingPrices] = useState(true);
+  const detectedCurrency = detectCurrency();
+  const [currencyInfo, setCurrencyInfo] = useState<CurrencyInfo>(() =>
+    createCurrencyInfo(detectedCurrency.currency, detectedCurrency.country)
+  );
   const [accessStatus, setAccessStatus] = useState<'active' | 'inactive' | 'past_due' | 'canceled'>(
     hasPaid ? 'active' : 'inactive'
   );
@@ -24,6 +30,41 @@ export const Billing = () => {
   );
   const [cardLast4, setCardLast4] = useState<string | undefined>(hasPaid ? '4242' : undefined);
   const [cardBrand, setCardBrand] = useState<string | undefined>(hasPaid ? 'visa' : undefined);
+
+  // Fetch prices from Stripe on mount
+  useEffect(() => {
+    const loadPrices = async () => {
+      try {
+        const { prices } = await apiClient.getPrices();
+        console.log('Fetched prices from Stripe:', prices);
+        console.log('Detected currency:', detectedCurrency.currency);
+
+        // Try to get price for detected currency, fallback to GBP if not available
+        let priceData = prices[detectedCurrency.currency];
+        if (!priceData && prices.GBP) {
+          // Fallback to GBP if detected currency price not available
+          console.log('Using GBP fallback price');
+          priceData = prices.GBP;
+          // Update currency to GBP if we're using fallback
+          setCurrencyInfo(createCurrencyInfo('GBP', 'GB', priceData));
+        } else if (priceData) {
+          console.log('Using price for detected currency:', priceData);
+          setCurrencyInfo(
+            createCurrencyInfo(detectedCurrency.currency, detectedCurrency.country, priceData)
+          );
+        } else {
+          console.warn('No price data available for any currency');
+        }
+      } catch (error) {
+        console.error('Failed to load prices:', error);
+        // Keep default currency info if fetch fails
+      } finally {
+        setLoadingPrices(false);
+      }
+    };
+
+    loadPrices();
+  }, [detectedCurrency.currency, detectedCurrency.country]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -152,7 +193,7 @@ export const Billing = () => {
 
     setLoading(true);
     try {
-      const response = await apiClient.createCheckoutSession();
+      const response = await apiClient.createCheckoutSession(currencyInfo.currency);
       window.location.href = response.url;
     } catch (error: any) {
       console.error('Failed to create checkout session:', error);
@@ -208,7 +249,7 @@ export const Billing = () => {
         <p className="text-sm text-gray-400">Manage your subscription and payment methods</p>
       </div>
 
-      {accountLoading || loadingSubscription ? (
+      {accountLoading || loadingSubscription || loadingPrices ? (
         <div className="space-y-6">
           <Skeleton height={40} width="60%" />
           <Skeleton height={100} />
@@ -242,7 +283,7 @@ export const Billing = () => {
                   </Text>
                 </div>
                 <Badge color="teal" size="lg">
-                  £10/month
+                  {formatPrice(currencyInfo.price, currencyInfo.currency)}/month
                 </Badge>
               </div>
             </Alert>
@@ -325,7 +366,9 @@ export const Billing = () => {
                 ) : (
                   <div className="p-6 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
                     <div className="mb-4">
-                      <Text className="text-2xl font-bold text-white mb-1">£10</Text>
+                      <Text className="text-2xl font-bold text-white mb-1">
+                        {formatPrice(currencyInfo.price, currencyInfo.currency)}
+                      </Text>
                       <Text size="sm" className="text-gray-400">
                         per month
                       </Text>

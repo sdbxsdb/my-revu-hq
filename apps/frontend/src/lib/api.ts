@@ -95,12 +95,20 @@ export const apiClient = {
     return data;
   },
 
-  createCheckoutSession: async (): Promise<{ url: string }> => {
-    const { data } = await api.post('/api/billing/create-checkout-session');
+  createCheckoutSession: async (currency?: string): Promise<{ url: string }> => {
+    const { data } = await api.post('/api/billing/create-checkout-session', { currency });
     return data;
   },
 
   requestInvoiceSetup: async (): Promise<void> => {
     await api.post('/api/billing/request-invoice');
+  },
+
+  // Get prices for all currencies from Stripe
+  getPrices: async (): Promise<{
+    prices: Record<string, { amount: number; currency: string; formatted: string }>;
+  }> => {
+    const { data } = await api.get('/api/billing/prices');
+    return data;
   },
 };

@@ -37,7 +37,7 @@ export const Layout = ({ children }: LayoutProps) => {
             <img
               src="/assets/logos/myrevuhq.png"
               alt="MyRevuHQ"
-              className="h-8 w-auto object-contain"
+              className="h-16 w-auto object-contain"
             />
           </div>
           <button
