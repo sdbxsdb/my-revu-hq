@@ -50,9 +50,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const country = await geoResponse.text();
             if (country && country.length === 2) {
               const detectedCountry = country.trim().toUpperCase();
-              console.log(
-                `[Geo] Detected country: ${detectedCountry} (via IP API, IP: ${clientIp})`
-              );
               return res.json({
                 country: detectedCountry,
                 method: 'ip-api',
@@ -61,12 +58,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }
           }
         } catch (error) {
-          console.error('[Geo] IP geolocation failed:', error);
+          // IP geolocation failed, continue to fallback
         }
       }
 
       // Final fallback to GBP
-      console.log(`[Geo] No country detected, defaulting to GB (IP: ${clientIp})`);
       return res.json({
         country: 'GB',
         method: 'fallback',
@@ -75,9 +71,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const detectedCountry = countryCode.toUpperCase();
-    console.log(
-      `[Geo] Detected country: ${detectedCountry} (via ${detectionMethod}, IP: ${clientIp})`
-    );
     return res.json({
       country: detectedCountry,
       method: detectionMethod.toLowerCase().replace(' ', '-'),
@@ -85,7 +78,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   } catch (error: any) {
     setCorsHeaders(res);
-    console.error('[Geo] Error detecting country:', error);
     return res.status(500).json({ error: error.message });
   }
 }

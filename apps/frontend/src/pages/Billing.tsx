@@ -12,6 +12,7 @@ import {
   formatPrice,
   createCurrencyInfo,
   type CurrencyInfo,
+  type Currency,
 } from '@/lib/currency';
 import '@/lib/currency-debug'; // Load debug utility in dev
 
@@ -24,6 +25,10 @@ export const Billing = () => {
   const [loadingPrices, setLoadingPrices] = useState(true);
   const [loadingCountry, setLoadingCountry] = useState(true);
   const [detectedCurrency, setDetectedCurrency] = useState(() => detectCurrency()); // Fallback
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency>('GBP'); // Will be updated when detected
+  const [allPrices, setAllPrices] = useState<
+    Record<string, { amount: number; currency: string; formatted: string }>
+  >({});
   const [currencyInfo, setCurrencyInfo] = useState<CurrencyInfo>(() =>
     createCurrencyInfo(detectedCurrency.currency, detectedCurrency.country)
   );
@@ -44,19 +49,10 @@ export const Billing = () => {
     const detectUserCountry = async () => {
       try {
         const response = await apiClient.detectCountry();
-        console.log('🌍 [Currency Detection]', {
-          country: response.country,
-          method: (response as any).method || 'unknown',
-          ip: (response as any).ip || 'unknown',
-        });
         const currencyData = getCurrencyFromCountry(response.country);
-        console.log('💰 [Currency Selection]', {
-          currency: currencyData.currency,
-          country: currencyData.country,
-        });
         setDetectedCurrency(currencyData);
+        setSelectedCurrency(currencyData.currency); // Set initial selected currency to detected
       } catch (error) {
-        console.error('❌ [Currency Detection] Failed to detect country, using fallback:', error);
         // Keep fallback currency
       } finally {
         setLoadingCountry(false);
@@ -73,38 +69,47 @@ export const Billing = () => {
     const loadPrices = async () => {
       try {
         const { prices } = await apiClient.getPrices();
-        console.log('💳 [Stripe Prices]', prices);
-        console.log('💵 [Price Selection]', {
-          detectedCurrency: detectedCurrency.currency,
-          priceAvailable: !!prices[detectedCurrency.currency],
-        });
+        setAllPrices(prices); // Store all prices for currency selector
 
-        // Try to get price for detected currency, fallback to GBP if not available
-        let priceData = prices[detectedCurrency.currency];
-        if (!priceData && prices.GBP) {
-          // Fallback to GBP if detected currency price not available
-          console.log('Using GBP fallback price');
-          priceData = prices.GBP;
-          // Update currency to GBP if we're using fallback
-          setCurrencyInfo(createCurrencyInfo('GBP', 'GB', priceData));
-        } else if (priceData) {
-          console.log('Using price for detected currency:', priceData);
-          setCurrencyInfo(
-            createCurrencyInfo(detectedCurrency.currency, detectedCurrency.country, priceData)
-          );
+        // Initialize currency info with selected currency's price (which should be detected currency)
+        // If detected currency price is available, use it; otherwise fallback to first available
+        const currentPrice = prices[selectedCurrency];
+        if (currentPrice) {
+          const country =
+            selectedCurrency === 'GBP' ? 'GB' : selectedCurrency === 'EUR' ? 'IE' : 'US';
+          setCurrencyInfo(createCurrencyInfo(selectedCurrency, country, currentPrice));
         } else {
-          console.warn('No price data available for any currency');
+          // Fallback to first available price
+          const availableCurrency = Object.keys(prices)[0] as Currency;
+          if (availableCurrency && prices[availableCurrency]) {
+            const country =
+              availableCurrency === 'GBP' ? 'GB' : availableCurrency === 'EUR' ? 'IE' : 'US';
+            setCurrencyInfo(
+              createCurrencyInfo(availableCurrency, country, prices[availableCurrency])
+            );
+            setSelectedCurrency(availableCurrency);
+          }
         }
       } catch (error) {
-        console.error('Failed to load prices:', error);
-        // Keep default currency info if fetch fails
+        // Failed to load prices
       } finally {
         setLoadingPrices(false);
       }
     };
 
     loadPrices();
-  }, [detectedCurrency.currency, detectedCurrency.country, loadingCountry]);
+  }, [loadingCountry]);
+
+  // Update currency info when selected currency changes
+  useEffect(() => {
+    if (Object.keys(allPrices).length === 0) return; // Wait for prices to load
+
+    const priceData = allPrices[selectedCurrency];
+    if (priceData) {
+      const country = selectedCurrency === 'GBP' ? 'GB' : selectedCurrency === 'EUR' ? 'IE' : 'US';
+      setCurrencyInfo(createCurrencyInfo(selectedCurrency, country, priceData));
+    }
+  }, [selectedCurrency, allPrices]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -112,27 +117,6 @@ export const Billing = () => {
         setLoadingSubscription(false);
         return;
       }
-
-      // Always log the user account data
-      console.log('=== USER ACCOUNT DATA (Full Object) ===');
-      console.log('Complete User Object (as stored in DB):', {
-        id: userAccount.id,
-        email: userAccount.email,
-        business_name: userAccount.business_name,
-        review_links: userAccount.review_links, // Array: [{name: "Google", url: "https://..."}, ...]
-        sms_template: userAccount.sms_template,
-        sms_sent_this_month: userAccount.sms_sent_this_month,
-        // Billing & Subscription fields
-        stripe_customer_id: userAccount.stripe_customer_id,
-        stripe_subscription_id: userAccount.stripe_subscription_id,
-        access_status: userAccount.access_status,
-        payment_method: userAccount.payment_method,
-        current_period_end: userAccount.current_period_end,
-        created_at: userAccount.created_at,
-        updated_at: userAccount.updated_at,
-      });
-      console.log('Raw user account object:', userAccount);
-      console.log('=== END USER ACCOUNT DATA ===');
 
       await loadSubscription();
 
@@ -202,7 +186,7 @@ export const Billing = () => {
       // setCardLast4(subscription.cardLast4); // From Stripe PaymentMethod.card.last4
       // setCardBrand(subscription.cardBrand); // From Stripe PaymentMethod.card.brand
     } catch (error: any) {
-      console.error('Failed to load subscription:', error);
+      // Failed to load subscription
       notifications.show({
         title: 'Error',
         message: 'Failed to load subscription information',
@@ -233,10 +217,10 @@ export const Billing = () => {
 
     setLoading(true);
     try {
-      const response = await apiClient.createCheckoutSession(currencyInfo.currency);
+      const response = await apiClient.createCheckoutSession(selectedCurrency);
       window.location.href = response.url;
     } catch (error: any) {
-      console.error('Failed to create checkout session:', error);
+      // Failed to create checkout session
       notifications.show({
         title: 'Error',
         message: error.message || 'Failed to create checkout session',
@@ -269,7 +253,7 @@ export const Billing = () => {
       });
       await loadSubscription(); // Reload to update status
     } catch (error: any) {
-      console.error('Failed to request invoice setup:', error);
+      // Failed to request invoice setup
       notifications.show({
         title: 'Error',
         message: error.message || 'Failed to request invoice setup',
@@ -431,6 +415,77 @@ export const Billing = () => {
                         <span>Cancel anytime</span>
                       </li>
                     </ul>
+
+                    {/* Currency Selector Tabs */}
+                    {!loadingPrices && (
+                      <div className="mb-4">
+                        <div className="flex gap-2 mb-2">
+                          <button
+                            type="button"
+                            onClick={() => allPrices.GBP && setSelectedCurrency('GBP')}
+                            disabled={!allPrices.GBP}
+                            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${
+                              selectedCurrency === 'GBP'
+                                ? 'bg-[rgb(9,146,104)] text-white shadow-lg'
+                                : allPrices.GBP
+                                  ? 'bg-[#2a2a2a] text-gray-400 hover:text-white hover:bg-[#333333]'
+                                  : 'bg-[#1a1a1a] text-gray-600 cursor-not-allowed opacity-50'
+                            }`}
+                          >
+                            <div className="flex flex-col items-center gap-0.5">
+                              <span className="text-sm font-semibold">GBP</span>
+                              <span className="text-xs opacity-90">
+                                {allPrices.GBP ? `£${allPrices.GBP.amount.toFixed(2)}` : 'N/A'}
+                              </span>
+                            </div>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => allPrices.EUR && setSelectedCurrency('EUR')}
+                            disabled={!allPrices.EUR}
+                            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${
+                              selectedCurrency === 'EUR'
+                                ? 'bg-[rgb(9,146,104)] text-white shadow-lg'
+                                : allPrices.EUR
+                                  ? 'bg-[#2a2a2a] text-gray-400 hover:text-white hover:bg-[#333333]'
+                                  : 'bg-[#1a1a1a] text-gray-600 cursor-not-allowed opacity-50'
+                            }`}
+                          >
+                            <div className="flex flex-col items-center gap-0.5">
+                              <span className="text-sm font-semibold">EUR</span>
+                              <span className="text-xs opacity-90">
+                                {allPrices.EUR ? `€${allPrices.EUR.amount.toFixed(2)}` : 'N/A'}
+                              </span>
+                            </div>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => allPrices.USD && setSelectedCurrency('USD')}
+                            disabled={!allPrices.USD}
+                            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${
+                              selectedCurrency === 'USD'
+                                ? 'bg-[rgb(9,146,104)] text-white shadow-lg'
+                                : allPrices.USD
+                                  ? 'bg-[#2a2a2a] text-gray-400 hover:text-white hover:bg-[#333333]'
+                                  : 'bg-[#1a1a1a] text-gray-600 cursor-not-allowed opacity-50'
+                            }`}
+                          >
+                            <div className="flex flex-col items-center gap-0.5">
+                              <span className="text-sm font-semibold">USD</span>
+                              <span className="text-xs opacity-90">
+                                {allPrices.USD ? `$${allPrices.USD.amount.toFixed(2)}` : 'N/A'}
+                              </span>
+                            </div>
+                          </button>
+                        </div>
+                        {selectedCurrency === detectedCurrency.currency && (
+                          <Text size="xs" className="text-teal-400 text-center">
+                            Auto-detected for your location
+                          </Text>
+                        )}
+                      </div>
+                    )}
+
                     <Button
                       fullWidth
                       size="lg"

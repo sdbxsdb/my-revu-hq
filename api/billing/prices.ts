@@ -11,7 +11,7 @@ try {
     });
   }
 } catch (error) {
-  console.warn('Stripe not initialized - STRIPE_SECRET_KEY missing or invalid');
+  // Stripe not initialized
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -40,19 +40,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       USD: process.env.STRIPE_PRICE_ID_USD || '',
     };
 
-    // Log which price IDs are configured
-    console.log('[Prices API] Price ID configuration:', {
-      GBP: priceIds.GBP ? '✅ Set' : '❌ Missing',
-      EUR: priceIds.EUR ? '✅ Set' : '❌ Missing',
-      USD: priceIds.USD ? '✅ Set' : '❌ Missing',
-    });
-
-    // Fetch prices from Stripe
+    // Fetch prices from Stripe for all configured currencies
     const prices: Record<string, { amount: number; currency: string; formatted: string }> = {};
 
     for (const [currency, priceId] of Object.entries(priceIds)) {
       if (!priceId) {
-        console.log(`[Prices API] Skipping ${currency} - no price ID configured`);
         continue;
       }
 
@@ -80,8 +72,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           formatted,
         };
       } catch (error: any) {
-        console.error(`Failed to fetch price for ${currency}:`, error.message);
-        // Continue with other currencies
+        // Continue with other currencies - don't add to prices object if fetch fails
       }
     }
 
