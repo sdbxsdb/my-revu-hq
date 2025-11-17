@@ -5,6 +5,7 @@ import {
   IconList,
   IconLogout,
   IconCreditCard,
+  IconInfoCircle,
 } from '@tabler/icons-react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -16,6 +17,7 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
   const { signOut, user } = useAuth();
 
   const navItems = [
+    { to: '/about', label: 'About', icon: IconInfoCircle },
     { to: '/customers/add', label: 'Add Customer', icon: IconUserPlus },
     { to: '/customers', label: 'Customer List', icon: IconList },
     { to: '/account', label: 'SMS Setup', icon: IconDeviceMobile },
@@ -91,13 +93,9 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
             Privacy
           </Link>
           <span className="text-gray-600">•</span>
-          <Link
-            to="/refund-policy"
-            onClick={handleNavClick}
-            className="hover:text-gray-400 transition-colors"
-          >
-            Refunds
-          </Link>
+          <a href="mailto:myrevuhq@gmail.com" className="hover:text-gray-400 transition-colors">
+            Contact Us
+          </a>
         </div>
       </div>
 

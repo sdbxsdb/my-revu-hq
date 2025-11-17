@@ -119,27 +119,6 @@ export const Billing = () => {
       }
 
       await loadSubscription();
-
-      // Handle Stripe Checkout redirect
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('success') === 'true') {
-        notifications.show({
-          title: 'Success!',
-          message: 'Your subscription has been activated.',
-          color: 'teal',
-        });
-        // Clean up URL
-        window.history.replaceState({}, '', '/billing');
-        await loadSubscription(); // Reload subscription status
-      } else if (params.get('canceled') === 'true') {
-        notifications.show({
-          title: 'Cancelled',
-          message: 'Subscription setup was cancelled.',
-          color: 'yellow',
-        });
-        // Clean up URL
-        window.history.replaceState({}, '', '/billing');
-      }
     };
 
     loadData();

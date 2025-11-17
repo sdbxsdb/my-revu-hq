@@ -422,7 +422,70 @@ export const Terms = () => {
 
           <section>
             <Title order={2} size="h3" className="text-white mb-3">
-              21. Contact Information
+              21. Refund and Cancellation Policy
+            </Title>
+            <Text size="sm" className="text-gray-300 mb-4">
+              <strong className="text-white">21.1 Subscription Cancellation:</strong> You may cancel
+              your MyRevuHQ subscription at any time through your account settings or by contacting
+              us at{' '}
+              <a href="mailto:myrevuhq@gmail.com" className="text-teal-400 hover:underline">
+                myrevuhq@gmail.com
+              </a>
+              . When you cancel:
+            </Text>
+            <ul className="list-disc list-inside text-gray-300 text-sm mb-4 space-y-2 ml-4">
+              <li>
+                Your subscription will remain active until the end of your current billing period
+              </li>
+              <li>
+                You will continue to have full access to all Service features until the billing
+                period ends
+              </li>
+              <li>No further charges will be made after the current billing period</li>
+              <li>Your subscription will not automatically renew</li>
+            </ul>
+            <Text size="sm" className="text-gray-300 mb-4">
+              <strong className="text-white">21.2 Partial/Prorated Refunds:</strong> We offer
+              partial, prorated refunds for the unused portion of your subscription period. Refunds
+              are calculated based on the number of days remaining in your current billing period
+              from the date of cancellation.
+            </Text>
+            <Text size="sm" className="text-gray-300 mb-4">
+              <strong className="text-white">21.3 Refund Processing:</strong> Refunds will be
+              processed to the original payment method within 5-10 business days. The refund amount
+              will be calculated as follows:
+            </Text>
+            <Text size="sm" className="text-gray-300 mb-4 ml-4">
+              Refund Amount = (Monthly Subscription Fee ÷ Days in Billing Period) × Remaining Days
+            </Text>
+            <Text size="sm" className="text-gray-300 mb-4">
+              <strong className="text-white">21.4 Refund Requests:</strong> To request a refund,
+              please contact us at{' '}
+              <a href="mailto:myrevuhq@gmail.com" className="text-teal-400 hover:underline">
+                myrevuhq@gmail.com
+              </a>{' '}
+              with your account details and reason for cancellation.
+            </Text>
+            <Text size="sm" className="text-gray-300 mb-4">
+              <strong className="text-white">21.5 Non-Refundable Items:</strong> The following are
+              not eligible for refunds:
+            </Text>
+            <ul className="list-disc list-inside text-gray-300 text-sm mb-4 space-y-2 ml-4">
+              <li>SMS messages already sent (charges are based on usage)</li>
+              <li>Any fees or charges incurred due to violation of our Terms of Service</li>
+            </ul>
+            <Text size="sm" className="text-gray-300 mb-4">
+              <strong className="text-white">21.6 Account Termination by Us:</strong> If we
+              terminate your account due to a violation of our Terms of Service, you will not be
+              eligible for a refund. If we terminate your account for reasons other than Terms
+              violations, we will provide a prorated refund for the unused portion of your
+              subscription.
+            </Text>
+          </section>
+
+          <section>
+            <Title order={2} size="h3" className="text-white mb-3">
+              22. Contact Information
             </Title>
             <Text size="sm" className="text-gray-300 mb-4">
               If you have any questions about these Terms, please contact us at:{' '}

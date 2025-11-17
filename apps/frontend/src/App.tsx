@@ -7,11 +7,13 @@ import { Layout } from '@/components/Layout';
 import { Login } from '@/pages/Login';
 import { AccountSetup } from '@/pages/AccountSetup';
 import { Billing } from '@/pages/Billing';
+import { BillingSuccess } from '@/pages/BillingSuccess';
+import { BillingCancel } from '@/pages/BillingCancel';
 import { AddCustomer } from '@/pages/AddCustomer';
 import { CustomerList } from '@/pages/CustomerList';
 import { Terms } from '@/pages/Terms';
 import { Privacy } from '@/pages/Privacy';
-import { RefundPolicy } from '@/pages/RefundPolicy';
+import { About } from '@/pages/About';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -70,10 +72,10 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route element={<Layout />}>
-              {/* Public legal pages with navigation */}
+              {/* Public pages with navigation */}
+              <Route path="/about" element={<About />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
-              <Route path="/refund-policy" element={<RefundPolicy />} />
             </Route>
             {/* Protected routes with navigation */}
             <Route
@@ -83,10 +85,12 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              <Route path="/" element={<Navigate to="/account" replace />} />
-              <Route path="/home" element={<Navigate to="/account" replace />} />
+              <Route path="/" element={<Navigate to="/about" replace />} />
+              <Route path="/home" element={<Navigate to="/about" replace />} />
               <Route path="/account" element={<AccountSetup />} />
               <Route path="/billing" element={<Billing />} />
+              <Route path="/billing/success" element={<BillingSuccess />} />
+              <Route path="/billing/cancel" element={<BillingCancel />} />
               <Route path="/customers/add" element={<AddCustomer />} />
               <Route path="/customers" element={<CustomerList />} />
             </Route>

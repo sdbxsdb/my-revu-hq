@@ -90,8 +90,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           quantity: 1,
         },
       ],
-      success_url: `${process.env.FRONTEND_URL}/billing?success=true`,
-      cancel_url: `${process.env.FRONTEND_URL}/billing?canceled=true`,
+      success_url: `${process.env.FRONTEND_URL}/billing/success`,
+      cancel_url: `${process.env.FRONTEND_URL}/billing/cancel`,
     });
 
     return res.json({ url: session.url });
