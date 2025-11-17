@@ -13,6 +13,7 @@ const updateCustomerSchema = z.object({
     })
     .optional(),
   jobDescription: z.string().optional(),
+  scheduledSendAt: z.string().datetime().nullable().optional(),
 });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -46,6 +47,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (validated.phone) updateData.phone = validated.phone;
       if (validated.jobDescription !== undefined) {
         updateData.job_description = validated.jobDescription || null;
+      }
+      if (validated.scheduledSendAt !== undefined) {
+        updateData.scheduled_send_at = validated.scheduledSendAt || null;
       }
 
       const { data, error } = await supabase

@@ -15,7 +15,11 @@ import {
   Alert,
   Text,
   Skeleton,
+  Switch,
 } from '@mantine/core';
+import { DatePickerInput } from '@mantine/dates';
+import { IconCalendar } from '@tabler/icons-react';
+import dayjs from 'dayjs';
 import { notifications } from '@mantine/notifications';
 import { useForm } from '@mantine/form';
 import { CountryCode } from 'libphonenumber-js';
@@ -46,6 +50,11 @@ export const CustomerList = () => {
 
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<CountryCode | undefined>('GB');
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
+  const [scheduledHour, setScheduledHour] = useState<string>('7'); // Default to 7
+  const [scheduledMinute, setScheduledMinute] = useState<string>('00');
+  const [scheduledAmPm, setScheduledAmPm] = useState<string>('PM'); // Default to PM
   const countryRef = useRef<CountryCode | undefined>('GB');
 
   const editForm = useForm({
@@ -53,6 +62,8 @@ export const CustomerList = () => {
       name: '',
       phoneNumber: '' as string | undefined,
       jobDescription: '',
+      scheduledDate: null as Date | null,
+      scheduleEnabled: false,
     },
     validate: {
       name: (value) => (value.trim().length < 2 ? 'Name must be at least 2 characters' : null),
@@ -275,11 +286,52 @@ export const CustomerList = () => {
     // Just use it directly - no transformation needed
     const displayNumber = customer.phone.number;
 
+    // Parse scheduled_send_at if it exists
+    let scheduledDateValue: Date | null = null;
+    let hourValue = '7';
+    let minuteValue = '00';
+    let amPmValue = 'PM';
+    let scheduleEnabledValue = false;
+
+    if (customer.scheduled_send_at) {
+      const scheduledDateTime = dayjs(customer.scheduled_send_at);
+      scheduledDateValue = scheduledDateTime.toDate();
+
+      // Convert 24-hour to 12-hour format
+      const hours24 = scheduledDateTime.hour();
+      const minutes = scheduledDateTime.minute();
+
+      if (hours24 === 0) {
+        hourValue = '12';
+        amPmValue = 'AM';
+      } else if (hours24 === 12) {
+        hourValue = '12';
+        amPmValue = 'PM';
+      } else if (hours24 < 12) {
+        hourValue = String(hours24);
+        amPmValue = 'AM';
+      } else {
+        hourValue = String(hours24 - 12);
+        amPmValue = 'PM';
+      }
+
+      minuteValue = String(minutes).padStart(2, '0');
+      scheduleEnabledValue = true;
+    }
+
     editForm.setValues({
       name: customer.name,
       phoneNumber: displayNumber || '',
       jobDescription: customer.job_description || '',
+      scheduledDate: scheduledDateValue,
+      scheduleEnabled: scheduleEnabledValue,
     });
+
+    setScheduleEnabled(scheduleEnabledValue);
+    setScheduledDate(scheduledDateValue);
+    setScheduledHour(hourValue);
+    setScheduledMinute(minuteValue);
+    setScheduledAmPm(amPmValue);
 
     setEditingCustomer(customer);
     setEditModalOpen(true);
@@ -353,6 +405,26 @@ export const CustomerList = () => {
         return;
       }
 
+      // Calculate scheduled_send_at if date is provided
+      let scheduledSendAt: string | undefined = undefined;
+      if (scheduleEnabled && scheduledDate) {
+        // Convert 12-hour format to 24-hour format
+        let hours24 = parseInt(scheduledHour);
+        if (scheduledAmPm === 'PM' && hours24 !== 12) {
+          hours24 += 12;
+        } else if (scheduledAmPm === 'AM' && hours24 === 12) {
+          hours24 = 0;
+        }
+        const minutes = parseInt(scheduledMinute);
+
+        const combinedDateTime = dayjs(scheduledDate)
+          .hour(hours24)
+          .minute(minutes)
+          .second(0)
+          .millisecond(0);
+        scheduledSendAt = combinedDateTime.toISOString();
+      }
+
       await apiClient.updateCustomer(editingCustomer.id, {
         name: values.name,
         phone: {
@@ -361,6 +433,7 @@ export const CustomerList = () => {
           // Country is auto-detected from the number (not stored in DB)
         },
         jobDescription: values.jobDescription || undefined,
+        scheduledSendAt: scheduleEnabled ? scheduledSendAt : null,
       });
 
       notifications.show({
@@ -625,6 +698,7 @@ export const CustomerList = () => {
                   <Table.Th>Job Description</Table.Th>
                   <Table.Th>Status</Table.Th>
                   <Table.Th>Date Sent</Table.Th>
+                  <Table.Th>Scheduled</Table.Th>
                   <Table.Th>Actions</Table.Th>
                 </Table.Tr>
               </Table.Thead>
@@ -645,6 +719,9 @@ export const CustomerList = () => {
                     </Table.Td>
                     <Table.Td>
                       <Skeleton height={20} width={100} />
+                    </Table.Td>
+                    <Table.Td>
+                      <Skeleton height={20} width={120} />
                     </Table.Td>
                     <Table.Td>
                       <Skeleton height={32} width={100} />
@@ -716,6 +793,11 @@ export const CustomerList = () => {
                       </Badge>
                     </Table.Td>
                     <Table.Td className="text-gray-400">{formatDate(customer.sent_at)}</Table.Td>
+                    <Table.Td className="text-gray-400">
+                      {customer.scheduled_send_at
+                        ? dayjs(customer.scheduled_send_at).format('MMM D, YYYY h:mm A')
+                        : '-'}
+                    </Table.Td>
                     <Table.Td>
                       <div className="flex items-center gap-2">
                         <Button
@@ -801,6 +883,11 @@ export const CustomerList = () => {
                       {customer.job_description}
                     </div>
                   )}
+                  {customer.scheduled_send_at && (
+                    <div className="text-xs text-gray-400 mb-2">
+                      Scheduled: {dayjs(customer.scheduled_send_at).format('MMM D, YYYY h:mm A')}
+                    </div>
+                  )}
                   <div className="flex justify-between items-center pt-4 border-t border-[#2a2a2a]">
                     <Button
                       size="xs"
@@ -850,6 +937,11 @@ export const CustomerList = () => {
           setEditingCustomer(null);
           setSelectedCountry('GB');
           countryRef.current = 'GB';
+          setScheduleEnabled(false);
+          setScheduledDate(null);
+          setScheduledHour('7');
+          setScheduledMinute('00');
+          setScheduledAmPm('PM');
           editForm.reset();
         }}
         title="Edit Customer"
@@ -951,6 +1043,140 @@ export const CustomerList = () => {
               rows={3}
               {...editForm.getInputProps('jobDescription')}
             />
+
+            {/* Schedule Send Section */}
+            <div className="pt-4 border-t border-[#2a2a2a]">
+              <Switch
+                label="Schedule SMS to send later"
+                description="Set a date to automatically send the review request"
+                checked={scheduleEnabled}
+                onChange={(e) => {
+                  setScheduleEnabled(e.currentTarget.checked);
+                  if (!e.currentTarget.checked) {
+                    setScheduledDate(null);
+                    setScheduledHour('7');
+                    setScheduledMinute('00');
+                    setScheduledAmPm('PM');
+                  }
+                }}
+                className="mb-4"
+              />
+
+              {scheduleEnabled && (
+                <Stack gap="md" className="mt-4">
+                  <DatePickerInput
+                    label="Date"
+                    placeholder="Pick a date"
+                    value={scheduledDate}
+                    onChange={setScheduledDate}
+                    minDate={new Date()}
+                    leftSection={<IconCalendar size={16} />}
+                  />
+                  <div>
+                    <Text size="sm" fw={500} className="mb-2 text-gray-300">
+                      Time
+                    </Text>
+                    <div className="space-y-4">
+                      {/* AM Section */}
+                      <div>
+                        <Text size="xs" className="text-gray-500 mb-2 uppercase tracking-wide">
+                          AM
+                        </Text>
+                        <div className="grid grid-cols-4 gap-2">
+                          {[
+                            { hour: 8, minute: 0 },
+                            { hour: 8, minute: 30 },
+                            { hour: 9, minute: 0 },
+                            { hour: 9, minute: 30 },
+                            { hour: 10, minute: 0 },
+                            { hour: 10, minute: 30 },
+                            { hour: 11, minute: 0 },
+                            { hour: 11, minute: 30 },
+                          ].map(({ hour, minute }) => {
+                            const isSelected =
+                              scheduledAmPm === 'AM' &&
+                              scheduledHour === String(hour === 12 ? 12 : hour) &&
+                              scheduledMinute === String(minute).padStart(2, '0');
+                            const displayHour = hour === 12 ? 12 : hour;
+                            return (
+                              <button
+                                key={`am-${hour}-${minute}`}
+                                type="button"
+                                onClick={() => {
+                                  setScheduledHour(String(displayHour));
+                                  setScheduledMinute(String(minute).padStart(2, '0'));
+                                  setScheduledAmPm('AM');
+                                }}
+                                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                                  isSelected
+                                    ? 'bg-[rgb(9,146,104)] text-white shadow-lg'
+                                    : 'bg-[#2a2a2a] text-gray-400 hover:bg-[#333333] hover:text-white'
+                                }`}
+                              >
+                                {displayHour}:{String(minute).padStart(2, '0')} AM
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      {/* PM Section */}
+                      <div>
+                        <Text size="xs" className="text-gray-500 mb-2 uppercase tracking-wide">
+                          PM
+                        </Text>
+                        <div className="grid grid-cols-4 gap-2">
+                          {[
+                            { hour: 12, minute: 0 },
+                            { hour: 12, minute: 30 },
+                            { hour: 1, minute: 0 },
+                            { hour: 1, minute: 30 },
+                            { hour: 2, minute: 0 },
+                            { hour: 2, minute: 30 },
+                            { hour: 3, minute: 0 },
+                            { hour: 3, minute: 30 },
+                            { hour: 4, minute: 0 },
+                            { hour: 4, minute: 30 },
+                            { hour: 5, minute: 0 },
+                            { hour: 5, minute: 30 },
+                            { hour: 6, minute: 0 },
+                            { hour: 6, minute: 30 },
+                            { hour: 7, minute: 0 },
+                            { hour: 7, minute: 30 },
+                            { hour: 8, minute: 0 },
+                            { hour: 8, minute: 30 },
+                            { hour: 9, minute: 0 },
+                          ].map(({ hour, minute }) => {
+                            const isSelected =
+                              scheduledAmPm === 'PM' &&
+                              scheduledHour === String(hour === 12 ? 12 : hour) &&
+                              scheduledMinute === String(minute).padStart(2, '0');
+                            const displayHour = hour === 12 ? 12 : hour;
+                            return (
+                              <button
+                                key={`pm-${hour}-${minute}`}
+                                type="button"
+                                onClick={() => {
+                                  setScheduledHour(String(displayHour));
+                                  setScheduledMinute(String(minute).padStart(2, '0'));
+                                  setScheduledAmPm('PM');
+                                }}
+                                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                                  isSelected
+                                    ? 'bg-[rgb(9,146,104)] text-white shadow-lg'
+                                    : 'bg-[#2a2a2a] text-gray-400 hover:bg-[#333333] hover:text-white'
+                                }`}
+                              >
+                                {displayHour}:{String(minute).padStart(2, '0')} PM
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Stack>
+              )}
+            </div>
 
             <div className="flex gap-3 pt-4 border-t border-[#2a2a2a]">
               <Button

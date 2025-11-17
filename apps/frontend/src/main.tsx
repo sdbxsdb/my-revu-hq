@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { MantineProvider, createTheme } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import '@mantine/core/styles.css';
+import '@mantine/dates/styles.css';
 import '@mantine/notifications/styles.css';
 import App from './App';
 import './index.css';
@@ -135,7 +136,7 @@ const theme = createTheme({
           '&:hover': {
             backgroundColor: 'rgb(40 40 40)',
           },
-          '&[data-selected="true"]': {
+          '&[data-selected]': {
             backgroundColor: 'rgb(20 184 166)',
             color: 'rgb(255 255 255)',
             '&:hover': {
