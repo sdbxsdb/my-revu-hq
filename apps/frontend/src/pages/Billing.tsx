@@ -6,7 +6,14 @@ import { notifications } from '@mantine/notifications';
 import { usePayment } from '@/contexts/PaymentContext';
 import { useAccount } from '@/contexts/AccountContext';
 import CardBrandIcon from '@/components/CardBrandIcon';
-import { detectCurrency, formatPrice, createCurrencyInfo, type CurrencyInfo } from '@/lib/currency';
+import {
+  getCurrencyFromCountry,
+  detectCurrency,
+  formatPrice,
+  createCurrencyInfo,
+  type CurrencyInfo,
+} from '@/lib/currency';
+import '@/lib/currency-debug'; // Load debug utility in dev
 
 export const Billing = () => {
   const { hasPaid } = usePayment();
@@ -15,7 +22,8 @@ export const Billing = () => {
   const [loading, setLoading] = useState(false);
   const [loadingSubscription, setLoadingSubscription] = useState(true);
   const [loadingPrices, setLoadingPrices] = useState(true);
-  const detectedCurrency = detectCurrency();
+  const [loadingCountry, setLoadingCountry] = useState(true);
+  const [detectedCurrency, setDetectedCurrency] = useState(() => detectCurrency()); // Fallback
   const [currencyInfo, setCurrencyInfo] = useState<CurrencyInfo>(() =>
     createCurrencyInfo(detectedCurrency.currency, detectedCurrency.country)
   );
@@ -31,13 +39,45 @@ export const Billing = () => {
   const [cardLast4, setCardLast4] = useState<string | undefined>(hasPaid ? '4242' : undefined);
   const [cardBrand, setCardBrand] = useState<string | undefined>(hasPaid ? 'visa' : undefined);
 
-  // Fetch prices from Stripe on mount
+  // Detect country from IP geolocation first
   useEffect(() => {
+    const detectUserCountry = async () => {
+      try {
+        const response = await apiClient.detectCountry();
+        console.log('🌍 [Currency Detection]', {
+          country: response.country,
+          method: (response as any).method || 'unknown',
+          ip: (response as any).ip || 'unknown',
+        });
+        const currencyData = getCurrencyFromCountry(response.country);
+        console.log('💰 [Currency Selection]', {
+          currency: currencyData.currency,
+          country: currencyData.country,
+        });
+        setDetectedCurrency(currencyData);
+      } catch (error) {
+        console.error('❌ [Currency Detection] Failed to detect country, using fallback:', error);
+        // Keep fallback currency
+      } finally {
+        setLoadingCountry(false);
+      }
+    };
+
+    detectUserCountry();
+  }, []);
+
+  // Fetch prices from Stripe after country is detected
+  useEffect(() => {
+    if (loadingCountry) return; // Wait for country detection
+
     const loadPrices = async () => {
       try {
         const { prices } = await apiClient.getPrices();
-        console.log('Fetched prices from Stripe:', prices);
-        console.log('Detected currency:', detectedCurrency.currency);
+        console.log('💳 [Stripe Prices]', prices);
+        console.log('💵 [Price Selection]', {
+          detectedCurrency: detectedCurrency.currency,
+          priceAvailable: !!prices[detectedCurrency.currency],
+        });
 
         // Try to get price for detected currency, fallback to GBP if not available
         let priceData = prices[detectedCurrency.currency];
@@ -64,7 +104,7 @@ export const Billing = () => {
     };
 
     loadPrices();
-  }, [detectedCurrency.currency, detectedCurrency.country]);
+  }, [detectedCurrency.currency, detectedCurrency.country, loadingCountry]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -249,7 +289,7 @@ export const Billing = () => {
         <p className="text-sm text-gray-400">Manage your subscription and payment methods</p>
       </div>
 
-      {accountLoading || loadingSubscription || loadingPrices ? (
+      {accountLoading || loadingSubscription || loadingPrices || loadingCountry ? (
         <div className="space-y-6">
           <Skeleton height={40} width="60%" />
           <Skeleton height={100} />

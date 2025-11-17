@@ -27,15 +27,35 @@ const COUNTRY_CURRENCY_MAP: Record<Country, Currency> = {
 };
 
 /**
- * Detect user's currency based on browser locale
- * Returns the currency code, price will be fetched from Stripe
+ * Detect user's currency based on IP geolocation
+ * This is called from the component after fetching country from API
+ */
+export function getCurrencyFromCountry(country: string): { currency: Currency; country: Country } {
+  const countryUpper = country.toUpperCase() as Country;
+
+  // Map country codes to currencies
+  if (countryUpper === 'IE') {
+    return { currency: 'EUR', country: 'IE' };
+  }
+  if (countryUpper === 'US') {
+    return { currency: 'USD', country: 'US' };
+  }
+  if (countryUpper === 'GB') {
+    return { currency: 'GBP', country: 'GB' };
+  }
+
+  // Default to GBP for other countries
+  return { currency: 'GBP', country: 'GB' };
+}
+
+/**
+ * Legacy function for browser-based detection (fallback only)
+ * @deprecated Use IP geolocation instead
  */
 export function detectCurrency(): { currency: Currency; country: Country } {
-  // Try to detect from browser locale
+  // Fallback to browser detection if API fails
   if (typeof window !== 'undefined') {
     const locale = navigator.language || (navigator as any).userLanguage;
-
-    // Check for country code in locale (e.g., "en-IE", "en-US", "en-GB")
     const countryMatch = locale.match(/-([A-Z]{2})$/i);
     if (countryMatch) {
       const country = countryMatch[1].toUpperCase() as Country;
@@ -45,35 +65,6 @@ export function detectCurrency(): { currency: Currency; country: Country } {
           country,
         };
       }
-    }
-
-    // Check for currency in locale (e.g., "en-US-u-cu-EUR")
-    const currencyMatch = locale.match(/cu-([A-Z]{3})/i);
-    if (currencyMatch) {
-      const currency = currencyMatch[1].toUpperCase() as Currency;
-      // Find country by currency
-      const country = Object.entries(COUNTRY_CURRENCY_MAP).find(
-        ([, curr]) => curr === currency
-      )?.[0] as Country | undefined;
-      if (country) {
-        return { currency, country };
-      }
-    }
-
-    // Check timezone as fallback
-    try {
-      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      if (timezone.includes('Dublin') || timezone.includes('Europe/Dublin')) {
-        return { currency: 'EUR', country: 'IE' };
-      }
-      if (timezone.includes('America/') || timezone.includes('US/')) {
-        return { currency: 'USD', country: 'US' };
-      }
-      if (timezone.includes('Europe/London') || timezone.includes('GB')) {
-        return { currency: 'GBP', country: 'GB' };
-      }
-    } catch (e) {
-      // Fallback to default
     }
   }
 

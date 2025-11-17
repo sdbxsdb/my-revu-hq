@@ -111,4 +111,10 @@ export const apiClient = {
     const { data } = await api.get('/api/billing/prices');
     return data;
   },
+
+  // Get user's country from IP geolocation
+  detectCountry: async (): Promise<{ country: string }> => {
+    const { data } = await api.get('/api/geo/detect-country');
+    return data;
+  },
 };
