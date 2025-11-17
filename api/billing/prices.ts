@@ -40,11 +40,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       USD: process.env.STRIPE_PRICE_ID_USD || '',
     };
 
+    // Log which price IDs are configured
+    console.log('[Prices API] Price ID configuration:', {
+      GBP: priceIds.GBP ? '✅ Set' : '❌ Missing',
+      EUR: priceIds.EUR ? '✅ Set' : '❌ Missing',
+      USD: priceIds.USD ? '✅ Set' : '❌ Missing',
+    });
+
     // Fetch prices from Stripe
     const prices: Record<string, { amount: number; currency: string; formatted: string }> = {};
 
     for (const [currency, priceId] of Object.entries(priceIds)) {
-      if (!priceId) continue;
+      if (!priceId) {
+        console.log(`[Prices API] Skipping ${currency} - no price ID configured`);
+        continue;
+      }
 
       try {
         const price = await stripe.prices.retrieve(priceId);
