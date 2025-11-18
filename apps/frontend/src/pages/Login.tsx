@@ -547,18 +547,7 @@ export const Login = () => {
             onChange={(e) => setTermsAgreed(e.currentTarget.checked)}
             className="mt-4"
           />
-          <div className="flex gap-3 mt-4">
-            <Button
-              variant="outline"
-              fullWidth
-              onClick={() => {
-                setTermsModalOpen(false);
-                setTermsAgreed(false);
-                setPendingAction(null);
-              }}
-            >
-              Cancel
-            </Button>
+          <div className="flex flex-col gap-3 mt-4">
             <Button
               fullWidth
               onClick={handleAgreeAndContinue}
@@ -582,6 +571,17 @@ export const Login = () => {
                       : 'Magic Link'}
                 </span>
               </div>
+            </Button>
+            <Button
+              variant="outline"
+              fullWidth
+              onClick={() => {
+                setTermsModalOpen(false);
+                setTermsAgreed(false);
+                setPendingAction(null);
+              }}
+            >
+              Cancel
             </Button>
           </div>
         </Stack>
