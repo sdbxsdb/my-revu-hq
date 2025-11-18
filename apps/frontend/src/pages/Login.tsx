@@ -230,8 +230,8 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-950 p-4">
-      <Paper shadow="xl" p="md" className="w-full max-w-md">
+    <div className="min-h-screen flex items-start justify-center bg-gray-950 p-4 pt-6 pb-6">
+      <Paper shadow="xl" p="md" className="w-full max-w-md mt-4">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
             <img
