@@ -43,7 +43,7 @@ export const About = () => {
                   <Text size="sm" className="text-gray-300">
                     Send personalised review requests directly to your customers' phones via SMS. No
                     more manual follow-ups or forgotten requests. You choose when to send each
-                    review request - send immediately or schedule for later.
+                    review request.
                   </Text>
                 </div>
               </div>
@@ -60,7 +60,7 @@ export const About = () => {
                     Where else are you able to gather your list of customers? MyRevuHQ lets you
                     build and manage your customer database exactly how you want. Add customer
                     details, job descriptions, and contact information. Send review requests
-                    instantly or schedule them for later - it's your list, your control.
+                    instantly - it's your list, your control.
                   </Text>
                 </div>
               </div>
@@ -169,8 +169,8 @@ export const About = () => {
               </List.Item>
               <List.Item>
                 <strong className="text-white">Send Review Requests:</strong> Send requests
-                immediately or schedule them for later. Your customers receive a friendly SMS with
-                direct links to leave reviews
+                immediately. Your customers receive a friendly SMS with direct links to leave
+                reviews
               </List.Item>
               <List.Item>
                 <strong className="text-white">Track Everything:</strong> Monitor all your review

@@ -11,17 +11,14 @@ import {
   Alert,
   Text,
   Tooltip,
-  Switch,
 } from '@mantine/core';
-import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { CountryCode } from 'libphonenumber-js';
 import { apiClient } from '@/lib/api';
 import { PhoneNumber } from '@/components/PhoneNumber';
 import { validatePhoneNumber, formatPhoneNumberForApi } from '@/lib/phone-validation';
 import { usePayment } from '@/contexts/PaymentContext';
-import { IconAlertCircle, IconCalendar } from '@tabler/icons-react';
-import dayjs from 'dayjs';
+import { IconAlertCircle } from '@tabler/icons-react';
 
 export const AddCustomer = () => {
   const { hasPaid } = usePayment();
@@ -29,11 +26,6 @@ export const AddCustomer = () => {
   const [loadingSendLater, setLoadingSendLater] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<CountryCode | undefined>('GB'); // Default to GB, can be updated from account
-  const [scheduleEnabled, setScheduleEnabled] = useState(false);
-  const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
-  const [scheduledHour, setScheduledHour] = useState<string>('7'); // Default to 7
-  const [scheduledMinute, setScheduledMinute] = useState<string>('00');
-  const [scheduledAmPm, setScheduledAmPm] = useState<string>('PM'); // Default to PM
   const countryRef = useRef<CountryCode | undefined>('GB');
   const navigate = useNavigate();
 
@@ -119,8 +111,6 @@ export const AddCustomer = () => {
       });
 
       form.reset();
-      setScheduleEnabled(false);
-      setScheduledDate(null);
       navigate('/customers');
     } catch (error: any) {
       notifications.show({
@@ -164,26 +154,6 @@ export const AddCustomer = () => {
       // The number in values.phoneNumber is already in local format (as user entered)
       const localNumber = values.phoneNumber || '';
 
-      // Calculate scheduled_send_at if date is provided
-      let scheduledSendAt: string | undefined = undefined;
-      if (scheduleEnabled && scheduledDate) {
-        // Convert 12-hour format to 24-hour format
-        let hours24 = parseInt(scheduledHour);
-        if (scheduledAmPm === 'PM' && hours24 !== 12) {
-          hours24 += 12;
-        } else if (scheduledAmPm === 'AM' && hours24 === 12) {
-          hours24 = 0;
-        }
-        const minutes = parseInt(scheduledMinute);
-
-        const combinedDateTime = dayjs(scheduledDate)
-          .hour(hours24)
-          .minute(minutes)
-          .second(0)
-          .millisecond(0);
-        scheduledSendAt = combinedDateTime.toISOString();
-      }
-
       await apiClient.createCustomer({
         name: values.name,
         phone: {
@@ -191,22 +161,15 @@ export const AddCustomer = () => {
           number: localNumber, // LOCAL format: "07780586444" (as user entered)
         },
         jobDescription: values.jobDescription || undefined,
-        scheduledSendAt,
       });
-
-      const message = scheduledSendAt
-        ? `Customer added. SMS will be sent automatically on ${dayjs(scheduledSendAt).format('DD MMM YYYY [at] HH:mm')}`
-        : 'Customer added (pending SMS)';
 
       notifications.show({
         title: 'Success',
-        message,
+        message: 'Customer added (pending SMS)',
         color: 'green',
       });
 
       form.reset();
-      setScheduleEnabled(false);
-      setScheduledDate(null);
       navigate('/customers');
     } catch (error: any) {
       notifications.show({
@@ -331,140 +294,6 @@ export const AddCustomer = () => {
             rows={3}
             {...form.getInputProps('jobDescription')}
           />
-
-          {/* Schedule Send Section */}
-          <div className="pt-4 border-t border-[#2a2a2a]">
-            <Switch
-              label="Schedule SMS to send later"
-              description="Set a date to automatically send the review request"
-              checked={scheduleEnabled}
-              onChange={(e) => {
-                setScheduleEnabled(e.currentTarget.checked);
-                if (!e.currentTarget.checked) {
-                  setScheduledDate(null);
-                  setScheduledHour('7');
-                  setScheduledMinute('00');
-                  setScheduledAmPm('PM');
-                }
-              }}
-              className="mb-4"
-            />
-
-            {scheduleEnabled && (
-              <Stack gap="md" className="mt-4">
-                <DatePickerInput
-                  label="Date"
-                  placeholder="Pick a date"
-                  value={scheduledDate}
-                  onChange={setScheduledDate}
-                  minDate={new Date()}
-                  leftSection={<IconCalendar size={16} />}
-                />
-                <div>
-                  <Text size="sm" fw={500} className="mb-2 text-gray-300">
-                    Time
-                  </Text>
-                  <div className="space-y-4">
-                    {/* AM Section */}
-                    <div>
-                      <Text size="xs" className="text-gray-500 mb-2 uppercase tracking-wide">
-                        AM
-                      </Text>
-                      <div className="grid grid-cols-4 gap-2">
-                        {[
-                          { hour: 8, minute: 0 },
-                          { hour: 8, minute: 30 },
-                          { hour: 9, minute: 0 },
-                          { hour: 9, minute: 30 },
-                          { hour: 10, minute: 0 },
-                          { hour: 10, minute: 30 },
-                          { hour: 11, minute: 0 },
-                          { hour: 11, minute: 30 },
-                        ].map(({ hour, minute }) => {
-                          const isSelected =
-                            scheduledAmPm === 'AM' &&
-                            scheduledHour === String(hour === 12 ? 12 : hour) &&
-                            scheduledMinute === String(minute).padStart(2, '0');
-                          const displayHour = hour === 12 ? 12 : hour;
-                          return (
-                            <button
-                              key={`am-${hour}-${minute}`}
-                              type="button"
-                              onClick={() => {
-                                setScheduledHour(String(displayHour));
-                                setScheduledMinute(String(minute).padStart(2, '0'));
-                                setScheduledAmPm('AM');
-                              }}
-                              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                                isSelected
-                                  ? 'bg-[rgb(9,146,104)] text-white shadow-lg'
-                                  : 'bg-[#2a2a2a] text-gray-400 hover:bg-[#333333] hover:text-white'
-                              }`}
-                            >
-                              {displayHour}:{String(minute).padStart(2, '0')} AM
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    {/* PM Section */}
-                    <div>
-                      <Text size="xs" className="text-gray-500 mb-2 uppercase tracking-wide">
-                        PM
-                      </Text>
-                      <div className="grid grid-cols-4 gap-2">
-                        {[
-                          { hour: 12, minute: 0 },
-                          { hour: 12, minute: 30 },
-                          { hour: 1, minute: 0 },
-                          { hour: 1, minute: 30 },
-                          { hour: 2, minute: 0 },
-                          { hour: 2, minute: 30 },
-                          { hour: 3, minute: 0 },
-                          { hour: 3, minute: 30 },
-                          { hour: 4, minute: 0 },
-                          { hour: 4, minute: 30 },
-                          { hour: 5, minute: 0 },
-                          { hour: 5, minute: 30 },
-                          { hour: 6, minute: 0 },
-                          { hour: 6, minute: 30 },
-                          { hour: 7, minute: 0 },
-                          { hour: 7, minute: 30 },
-                          { hour: 8, minute: 0 },
-                          { hour: 8, minute: 30 },
-                          { hour: 9, minute: 0 },
-                        ].map(({ hour, minute }) => {
-                          const isSelected =
-                            scheduledAmPm === 'PM' &&
-                            scheduledHour === String(hour === 12 ? 12 : hour) &&
-                            scheduledMinute === String(minute).padStart(2, '0');
-                          const displayHour = hour === 12 ? 12 : hour;
-                          return (
-                            <button
-                              key={`pm-${hour}-${minute}`}
-                              type="button"
-                              onClick={() => {
-                                setScheduledHour(String(displayHour));
-                                setScheduledMinute(String(minute).padStart(2, '0'));
-                                setScheduledAmPm('PM');
-                              }}
-                              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                                isSelected
-                                  ? 'bg-[rgb(9,146,104)] text-white shadow-lg'
-                                  : 'bg-[#2a2a2a] text-gray-400 hover:bg-[#333333] hover:text-white'
-                              }`}
-                            >
-                              {displayHour}:{String(minute).padStart(2, '0')} PM
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Stack>
-            )}
-          </div>
 
           <div className="flex flex-col gap-3 mt-8 pt-6 border-t border-[#2a2a2a]">
             <Tooltip

@@ -136,13 +136,6 @@ const theme = createTheme({
           '&:hover': {
             backgroundColor: 'rgb(40 40 40)',
           },
-          '&[data-selected]': {
-            backgroundColor: 'rgb(20 184 166)',
-            color: 'rgb(255 255 255)',
-            '&:hover': {
-              backgroundColor: 'rgb(20 184 166)',
-            },
-          },
         },
       },
     },

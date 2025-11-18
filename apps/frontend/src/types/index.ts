@@ -27,7 +27,6 @@ export interface Customer {
   job_description?: string;
   sms_status: 'sent' | 'pending';
   sent_at?: string;
-  scheduled_send_at?: string;
 }
 
 export interface Message {

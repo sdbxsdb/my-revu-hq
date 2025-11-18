@@ -73,4 +73,14 @@
       padding: 0 !important;
     }
   }
+
+  /* Select option selected state */
+  .mantine-Select-option[data-selected] {
+    background-color: rgb(20 184 166) !important;
+    color: rgb(255 255 255) !important;
+  }
+
+  .mantine-Select-option[data-selected]:hover {
+    background-color: rgb(20 184 166) !important;
+  }
 }

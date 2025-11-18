@@ -11,7 +11,6 @@ const customerSchema = z.object({
     number: z.string(),
   }),
   jobDescription: z.string().optional(),
-  scheduledSendAt: z.string().datetime().optional(),
 });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -62,7 +61,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           phone: validated.phone,
           job_description: validated.jobDescription,
           sms_status: 'pending',
-          scheduled_send_at: validated.scheduledSendAt || null,
         } as any)
         .select()
         .single();
