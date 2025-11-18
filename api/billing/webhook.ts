@@ -48,6 +48,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Handle subscription events
   switch (event.type) {
+    case 'checkout.session.completed':
+      // Handle successful checkout completion - this fires immediately when payment succeeds
+      const session = event.data.object as Stripe.Checkout.Session;
+
+      if (session.mode === 'subscription' && session.subscription && session.customer) {
+        // Fetch the subscription to get full details
+        const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+
+        const customerId =
+          typeof session.customer === 'string'
+            ? session.customer
+            : (session.customer as Stripe.Customer).id;
+
+        const { data: checkoutUser } = await supabase
+          .from('users')
+          .select('id')
+          .eq('stripe_customer_id', customerId)
+          .single<{ id: string }>();
+
+        if (checkoutUser) {
+          await supabase
+            .from('users')
+            // @ts-ignore - Supabase types don't include billing fields yet
+            .update({
+              stripe_subscription_id: subscription.id,
+              access_status: subscription.status === 'active' ? 'active' : 'inactive',
+              payment_method: 'card',
+              current_period_end: subscription.current_period_end
+                ? new Date(subscription.current_period_end * 1000).toISOString()
+                : null,
+            })
+            .eq('id', checkoutUser.id);
+        }
+      }
+      break;
+
     case 'customer.subscription.created':
     case 'customer.subscription.updated':
       const subscription = event.data.object as Stripe.Subscription;
