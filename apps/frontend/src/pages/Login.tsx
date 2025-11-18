@@ -483,10 +483,11 @@ export const Login = () => {
           header: 'bg-[#1a1a1a] text-white',
           title: 'text-white',
           close: 'text-gray-400 hover:bg-[#2a2a2a] hover:text-white',
+          body: 'p-0',
         }}
       >
-        <Stack gap="md">
-          <ScrollArea h={400}>
+        <Stack gap="md" className="p-6">
+          <ScrollArea h={400} className="pr-4">
             <Text size="sm" className="text-gray-300 whitespace-pre-line">
               By creating an account or signing in, you agree to our Terms and Conditions and
               Privacy Policy.

@@ -91,4 +91,24 @@
       height: 100vh; /* Fallback for older browsers */
     }
   }
+
+  /* Terms modal - prevent scroll content from going under header */
+  .mantine-Modal-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: rgb(26 26 26) !important;
+    border-bottom: 1px solid rgb(42 42 42) !important;
+  }
+
+  .mantine-Modal-body {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+  }
+
+  /* Ensure ScrollArea content doesn't overflow */
+  .mantine-ScrollArea-viewport {
+    max-height: 100% !important;
+  }
 }
