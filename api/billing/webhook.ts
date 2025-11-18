@@ -26,24 +26,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const sig = req.headers['stripe-signature'] as string;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
+  if (!sig) {
+    return res.status(400).json({ error: 'Missing stripe-signature header' });
+  }
+
   if (!webhookSecret) {
     return res.status(500).json({ error: 'STRIPE_WEBHOOK_SECRET not configured' });
   }
 
   // Get raw body for webhook signature verification
-  // Vercel provides raw body as Buffer or string for webhooks
-  const body = Buffer.isBuffer(req.body)
-    ? req.body.toString('utf8')
-    : typeof req.body === 'string'
-      ? req.body
-      : JSON.stringify(req.body);
+  // In Vercel, req.body should be the raw body as Buffer or string
+  let body: string | Buffer;
+
+  if (Buffer.isBuffer(req.body)) {
+    body = req.body;
+  } else if (typeof req.body === 'string') {
+    body = Buffer.from(req.body, 'utf8');
+  } else {
+    // If body was parsed as JSON (shouldn't happen, but handle it)
+    console.error('[Webhook] Body was parsed as JSON - this should not happen');
+    return res.status(400).json({ error: 'Invalid request body format' });
+  }
 
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
+    // constructEvent expects string, so convert Buffer to string
+    const bodyString = Buffer.isBuffer(body) ? body.toString('utf8') : body;
+    event = stripe.webhooks.constructEvent(bodyString, sig, webhookSecret);
   } catch (err: any) {
-    return res.status(400).send(`Webhook Error: ${err.message}`);
+    console.error('[Webhook] Signature verification failed:', err.message);
+    console.error('[Webhook] Body type:', typeof req.body);
+    console.error('[Webhook] Body is Buffer:', Buffer.isBuffer(req.body));
+    console.error('[Webhook] Signature header present:', !!sig);
+    return res.status(400).json({ error: `Webhook signature verification failed: ${err.message}` });
   }
 
   // Handle subscription events
@@ -53,33 +69,82 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const session = event.data.object as Stripe.Checkout.Session;
 
       if (session.mode === 'subscription' && session.subscription && session.customer) {
-        // Fetch the subscription to get full details
-        const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+        try {
+          // Fetch the subscription to get full details
+          const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
 
-        const customerId =
-          typeof session.customer === 'string'
-            ? session.customer
-            : (session.customer as Stripe.Customer).id;
+          const customerId =
+            typeof session.customer === 'string'
+              ? session.customer
+              : (session.customer as Stripe.Customer).id;
 
-        const { data: checkoutUser } = await supabase
-          .from('users')
-          .select('id')
-          .eq('stripe_customer_id', customerId)
-          .single<{ id: string }>();
-
-        if (checkoutUser) {
-          await supabase
+          // Find user by stripe_customer_id
+          const { data: checkoutUser, error: userError } = await supabase
             .from('users')
-            // @ts-ignore - Supabase types don't include billing fields yet
-            .update({
-              stripe_subscription_id: subscription.id,
-              access_status: subscription.status === 'active' ? 'active' : 'inactive',
-              payment_method: 'card',
-              current_period_end: subscription.current_period_end
-                ? new Date(subscription.current_period_end * 1000).toISOString()
-                : null,
-            })
-            .eq('id', checkoutUser.id);
+            .select('id')
+            .eq('stripe_customer_id', customerId)
+            .single<{ id: string }>();
+
+          if (userError) {
+            console.error('[Webhook] Error finding user:', userError);
+            // Try to find by customer email as fallback
+            if (session.customer_email) {
+              const { data: userByEmail } = await supabase
+                .from('users')
+                .select('id, stripe_customer_id')
+                .eq('email', session.customer_email)
+                .single<{ id: string; stripe_customer_id: string | null }>();
+
+              if (userByEmail) {
+                // Update customer_id if missing, then update subscription
+                if (!userByEmail.stripe_customer_id) {
+                  await supabase
+                    .from('users')
+                    // @ts-ignore
+                    .update({ stripe_customer_id: customerId })
+                    .eq('id', userByEmail.id);
+                }
+
+                // Update subscription details
+                const { error: updateError } = await supabase
+                  .from('users')
+                  // @ts-ignore - Supabase types don't include billing fields yet
+                  .update({
+                    stripe_subscription_id: subscription.id,
+                    access_status: subscription.status === 'active' ? 'active' : 'inactive',
+                    payment_method: 'card',
+                    current_period_end: subscription.current_period_end
+                      ? new Date(subscription.current_period_end * 1000).toISOString()
+                      : null,
+                  })
+                  .eq('id', userByEmail.id);
+
+                if (updateError) {
+                  console.error('[Webhook] Error updating user by email:', updateError);
+                }
+              }
+            }
+          } else if (checkoutUser) {
+            // Update subscription details
+            const { error: updateError } = await supabase
+              .from('users')
+              // @ts-ignore - Supabase types don't include billing fields yet
+              .update({
+                stripe_subscription_id: subscription.id,
+                access_status: subscription.status === 'active' ? 'active' : 'inactive',
+                payment_method: 'card',
+                current_period_end: subscription.current_period_end
+                  ? new Date(subscription.current_period_end * 1000).toISOString()
+                  : null,
+              })
+              .eq('id', checkoutUser.id);
+
+            if (updateError) {
+              console.error('[Webhook] Error updating user:', updateError);
+            }
+          }
+        } catch (error: any) {
+          console.error('[Webhook] Error processing checkout.session.completed:', error);
         }
       }
       break;
