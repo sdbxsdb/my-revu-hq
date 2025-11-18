@@ -23,12 +23,12 @@ export const BillingSuccess = () => {
             </div>
 
             <Title order={1} className="text-white text-center">
-              Payment Successful!
+              You're All Set!
             </Title>
 
             <Text size="lg" className="text-gray-400 text-center max-w-md">
-              Your subscription has been activated successfully. You now have full access to all
-              features of MyRevuHQ.
+              Your payment was successful and your subscription is now active. You have full access
+              to all features of MyRevuHQ.
             </Text>
 
             <Alert

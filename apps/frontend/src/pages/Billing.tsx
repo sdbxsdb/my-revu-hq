@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Paper, Title, Text, Button, Tabs, Stack, Alert, Badge, Skeleton } from '@mantine/core';
 import { IconCreditCard, IconBuildingBank, IconCheck, IconAlertCircle } from '@tabler/icons-react';
 import { apiClient } from '@/lib/api';
@@ -20,7 +20,8 @@ import '@/lib/currency-debug'; // Load debug utility in dev
 export const Billing = () => {
   const { hasPaid } = usePayment();
   const { account: userAccount, loading: accountLoading, refetch } = useAccount();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string | null>('subscription');
   const [loading, setLoading] = useState(false);
   const [loadingSubscription, setLoadingSubscription] = useState(true);
@@ -120,16 +121,10 @@ export const Billing = () => {
     if (success === 'true') {
       // Refetch account data to get updated subscription status
       refetch();
-      notifications.show({
-        title: 'Payment Successful!',
-        message: 'Your subscription has been activated successfully.',
-        color: 'teal',
-        icon: <IconCheck size={16} />,
-      });
-      // Remove query parameter from URL
-      setSearchParams({});
+      // Redirect to success page
+      navigate('/billing/success', { replace: true });
     }
-  }, [searchParams, refetch, setSearchParams]);
+  }, [searchParams, refetch, navigate]);
 
   useEffect(() => {
     const loadData = async () => {

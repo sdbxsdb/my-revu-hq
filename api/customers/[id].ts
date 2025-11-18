@@ -61,6 +61,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.json(data);
     }
 
+    if (req.method === 'DELETE') {
+      const { id } = req.query;
+
+      // First verify the customer belongs to the user
+      const { data: existing, error: fetchError } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('id', id)
+        .eq('user_id', auth.userId)
+        .single();
+
+      if (fetchError || !existing) {
+        return res.status(404).json({ error: 'Customer not found' });
+      }
+
+      const { error } = await supabase
+        .from('customers')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', auth.userId);
+
+      if (error) throw error;
+
+      return res.status(204).end();
+    }
+
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (error: any) {
     if (error.message === 'Unauthorized') {

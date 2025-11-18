@@ -32,7 +32,7 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
   };
 
   return (
-    <div className="w-64 bg-[#141414] border-r border-[#2a2a2a] text-white min-h-screen p-6 flex flex-col">
+    <div className="w-64 bg-[#141414] border-r border-[#2a2a2a] text-white h-full p-6 flex flex-col overflow-y-auto overscroll-contain">
       <div className="mb-10 hidden lg:block">
         <div className="mb-2">
           <img

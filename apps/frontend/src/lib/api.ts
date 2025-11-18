@@ -89,6 +89,10 @@ export const apiClient = {
     return data;
   },
 
+  deleteCustomer: async (customerId: string): Promise<void> => {
+    await api.delete(`/api/customers/${customerId}`);
+  },
+
   // SMS
   sendSMS: async (customerId: string): Promise<void> => {
     await api.post('/api/send-sms', { customerId });

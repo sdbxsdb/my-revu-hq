@@ -83,4 +83,12 @@
   .mantine-Select-option[data-selected]:hover {
     background-color: rgb(20 184 166) !important;
   }
+
+  /* Mobile sidebar height - accounts for browser UI */
+  @media (max-width: 1023px) {
+    .sidebar-mobile-height {
+      height: 100svh; /* Small viewport height - accounts for mobile browser UI */
+      height: 100vh; /* Fallback for older browsers */
+    }
+  }
 }

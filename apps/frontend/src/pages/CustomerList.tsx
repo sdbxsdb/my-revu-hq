@@ -29,7 +29,7 @@ import {
 } from '@/lib/phone-validation';
 import { parsePhoneNumberFromString, isValidPhoneNumber } from 'libphonenumber-js';
 import { usePayment } from '@/contexts/PaymentContext';
-import { IconAlertCircle } from '@tabler/icons-react';
+import { IconAlertCircle, IconTrash } from '@tabler/icons-react';
 
 export const CustomerList = () => {
   const { hasPaid } = usePayment();
@@ -42,6 +42,8 @@ export const CustomerList = () => {
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const limit = 10;
 
   const [phoneError, setPhoneError] = useState<string | null>(null);
@@ -419,6 +421,53 @@ export const CustomerList = () => {
         message: error.message || 'Failed to send SMS',
         color: 'red',
       });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!editingCustomer) return;
+
+    setDeleting(true);
+    try {
+      const isDevMode =
+        !import.meta.env.VITE_SUPABASE_URL ||
+        import.meta.env.VITE_SUPABASE_URL?.includes('placeholder') ||
+        !import.meta.env.VITE_SUPABASE_ANON_KEY ||
+        import.meta.env.VITE_SUPABASE_ANON_KEY === 'placeholder_key';
+
+      if (isDevMode) {
+        // Update local state in dev mode
+        const updatedCustomers = customers.filter((c) => c.id !== editingCustomer.id);
+        setCustomers(updatedCustomers);
+        setTotal(updatedCustomers.length);
+        notifications.show({
+          title: 'Success (Demo Mode)',
+          message: 'Customer deleted (demo mode - not persisted)',
+          color: 'green',
+        });
+        setDeleteConfirmOpen(false);
+        setEditingCustomer(null);
+        setDeleting(false);
+        return;
+      }
+
+      await apiClient.deleteCustomer(editingCustomer.id);
+      notifications.show({
+        title: 'Success',
+        message: 'Customer deleted successfully',
+        color: 'green',
+      });
+      setDeleteConfirmOpen(false);
+      setEditingCustomer(null);
+      loadCustomers();
+    } catch (error: any) {
+      notifications.show({
+        title: 'Error',
+        message: error.message || 'Failed to delete customer',
+        color: 'red',
+      });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -945,25 +994,81 @@ export const CustomerList = () => {
               {...editForm.getInputProps('jobDescription')}
             />
 
-            <div className="flex gap-3 pt-4 border-t border-[#2a2a2a]">
+            <div className="flex flex-col gap-3 pt-4 border-t border-[#2a2a2a]">
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="subtle"
+                  onClick={() => {
+                    setEditModalOpen(false);
+                    setEditingCustomer(null);
+                    editForm.reset();
+                  }}
+                  className="flex-1"
+                  disabled={saving || deleting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  loading={saving}
+                  className="flex-1 font-semibold"
+                  disabled={deleting}
+                >
+                  Save
+                </Button>
+              </div>
               <Button
                 type="button"
-                variant="subtle"
+                variant="light"
+                color="red"
                 onClick={() => {
                   setEditModalOpen(false);
-                  setEditingCustomer(null);
-                  editForm.reset();
+                  setDeleteConfirmOpen(true);
                 }}
-                className="flex-1"
+                className="w-full"
+                disabled={saving || deleting}
+                leftSection={<IconTrash size={16} />}
               >
-                Cancel
-              </Button>
-              <Button type="submit" loading={saving} className="flex-1 font-semibold">
-                Save
+                Delete Customer
               </Button>
             </div>
           </Stack>
         </form>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        opened={deleteConfirmOpen}
+        onClose={() => !deleting && setDeleteConfirmOpen(false)}
+        title="Delete Customer"
+        size="md"
+        centered
+      >
+        <Stack gap="md">
+          <Text size="sm" className="text-gray-300">
+            Are you sure you want to delete <strong>{editingCustomer?.name}</strong>? This action
+            cannot be undone.
+          </Text>
+          <div className="flex gap-3 pt-4">
+            <Button
+              variant="subtle"
+              onClick={() => setDeleteConfirmOpen(false)}
+              className="flex-1"
+              disabled={deleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              color="red"
+              onClick={handleDelete}
+              loading={deleting}
+              className="flex-1 font-semibold"
+            >
+              Delete
+            </Button>
+          </div>
+        </Stack>
       </Modal>
     </Paper>
   );
