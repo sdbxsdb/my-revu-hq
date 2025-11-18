@@ -3,7 +3,7 @@ import { Paper, Title, Text, Container, Stack, Divider } from '@mantine/core';
 export const Terms = () => {
   return (
     <Container size="md" py="xl">
-      <Paper shadow="md" p="xl" className="bg-[#1a1a1a]">
+      <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
         <Stack gap="lg">
           <Title order={1} className="text-white mb-4">
             Terms and Conditions

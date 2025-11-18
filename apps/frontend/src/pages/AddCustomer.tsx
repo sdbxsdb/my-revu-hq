@@ -183,7 +183,7 @@ export const AddCustomer = () => {
   };
 
   return (
-    <Paper shadow="md" p="md" className="w-full max-w-2xl mx-auto sm:p-xl">
+    <Paper shadow="md" p="md" className="w-full max-w-2xl mx-auto">
       <div className="mb-8">
         <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
           Add Customer

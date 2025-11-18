@@ -6,9 +6,9 @@ export const BillingCancel = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-[#141414] p-4 md:p-8">
+    <div className="min-h-screen bg-[#141414] p-4">
       <div className="max-w-2xl mx-auto">
-        <Paper p="xl" className="bg-[#1a1a1a] border border-[#2a2a2a]">
+        <Paper p="md" className="bg-[#1a1a1a] border border-[#2a2a2a]">
           <Stack gap="lg" align="center">
             <div className="w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center">
               <IconX size={40} className="text-yellow-400" />

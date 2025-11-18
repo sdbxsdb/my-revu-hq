@@ -591,7 +591,7 @@ export const CustomerList = () => {
   };
 
   return (
-    <Paper shadow="md" p="md" className="w-full sm:p-xl">
+    <Paper shadow="md" p="md" className="w-full">
       <div className="flex flex-col gap-6 mb-8 pb-6 border-b border-[#2a2a2a]">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

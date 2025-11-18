@@ -259,7 +259,7 @@ export const Billing = () => {
   };
 
   return (
-    <Paper shadow="md" p="md" className="w-full max-w-4xl mx-auto sm:p-xl">
+    <Paper shadow="md" p="md" className="w-full max-w-4xl mx-auto">
       <div className="mb-8">
         <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
           Billing & Subscription
@@ -339,7 +339,7 @@ export const Billing = () => {
                 </div>
 
                 {accessStatus === 'active' && paymentMethod === 'card' ? (
-                  <div className="p-6 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
+                  <div className="p-4 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
                     <div className="flex items-center gap-4 mb-6">
                       <div className="flex-shrink-0">
                         <CardBrandIcon brand={cardBrand} size={64} />
@@ -382,7 +382,7 @@ export const Billing = () => {
                     )}
                   </Alert>
                 ) : (
-                  <div className="p-6 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
+                  <div className="p-4 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
                     <div className="mb-4">
                       <Text className="text-2xl font-bold text-white mb-1">
                         {formatPrice(currencyInfo.price, currencyInfo.currency)}
@@ -514,7 +514,7 @@ export const Billing = () => {
                 </div>
 
                 {paymentMethod === 'direct_debit' ? (
-                  <div className="p-6 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
+                  <div className="p-4 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
                     <div className="flex items-center gap-4 mb-6">
                       <div>
                         <Text className="font-semibold text-white mb-1">Payment Method</Text>
@@ -545,7 +545,7 @@ export const Billing = () => {
                     </Text>
                   </Alert>
                 ) : (
-                  <div className="p-6 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
+                  <div className="p-4 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
                     <Alert
                       icon={<IconAlertCircle size={16} />}
                       title="Manual Setup Required"

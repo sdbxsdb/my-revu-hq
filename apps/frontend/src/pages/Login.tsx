@@ -231,7 +231,7 @@ export const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-950 p-4">
-      <Paper shadow="xl" p="md" className="w-full max-w-md sm:p-xl">
+      <Paper shadow="xl" p="md" className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
             <img
@@ -486,7 +486,7 @@ export const Login = () => {
           body: 'p-0 flex flex-col flex-1 min-h-0',
         }}
       >
-        <Stack gap="md" className="flex-1 flex min-h-0 p-6">
+        <Stack gap="md" className="flex-1 flex min-h-0 p-4">
           <ScrollArea className="flex-1 min-h-0">
             <Text size="sm" className="text-gray-300 whitespace-pre-line">
               By creating an account or signing in, you agree to our Terms and Conditions and
