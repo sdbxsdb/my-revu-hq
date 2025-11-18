@@ -27,6 +27,17 @@ api.interceptors.response.use(
       return api(originalRequest);
     }
 
+    // If still 401 after retry, session is likely expired - redirect to login
+    if (error.response?.status === 401 && originalRequest._retry) {
+      // Only redirect if we're not already on the login page
+      if (window.location.pathname !== '/login') {
+        // Clear any stale session data
+        localStorage.clear();
+        // Redirect to login
+        window.location.href = '/login';
+      }
+    }
+
     return Promise.reject(error);
   }
 );
