@@ -79,6 +79,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .eq('id', auth.userId);
     }
 
+    // Normalize FRONTEND_URL to ensure no double slashes
+    const frontendUrl = (process.env.FRONTEND_URL || '').replace(/\/$/, ''); // Remove trailing slash
+
     // Create checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -90,8 +93,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           quantity: 1,
         },
       ],
-      success_url: `${process.env.FRONTEND_URL}/billing/success`,
-      cancel_url: `${process.env.FRONTEND_URL}/billing/cancel`,
+      success_url: `${frontendUrl}/billing?success=true`,
+      cancel_url: `${frontendUrl}/billing/cancel`,
     });
 
     return res.json({ url: session.url });
