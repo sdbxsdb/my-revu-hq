@@ -48,7 +48,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching user:', error);
         throw error;
       }
 
@@ -64,7 +63,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           .single();
 
         if (createError) {
-          console.error('Error creating user:', createError);
           throw createError;
         }
         return res.json(newUser);
@@ -103,7 +101,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.errors });
     }
-    console.error('Account route error:', error);
     return res.status(500).json({ error: error.message || 'Failed to process request' });
   }
 }

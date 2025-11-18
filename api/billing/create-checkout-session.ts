@@ -13,7 +13,7 @@ try {
     });
   }
 } catch (error) {
-  console.warn('Stripe not initialized - STRIPE_SECRET_KEY missing or invalid');
+  // Stripe not initialized - will fail gracefully
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
