@@ -92,23 +92,46 @@
     }
   }
 
-  /* Terms modal - prevent scroll content from going under header */
+  /* Terms modal - full height on mobile, scrollable text area */
+  .terms-modal-full-height {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  @media (max-width: 47.99em) {
+    .terms-modal-full-height {
+      height: 100svh !important;
+      max-height: 100svh !important;
+      border-radius: 0 !important;
+      margin: 0 !important;
+    }
+
+    /* Fallback for browsers that don't support svh */
+    @supports not (height: 100svh) {
+      .terms-modal-full-height {
+        height: 100vh !important;
+        max-height: 100vh !important;
+      }
+    }
+  }
+
+  @media (min-width: 48em) {
+    .terms-modal-full-height {
+      max-height: 90vh !important;
+    }
+  }
+
   .mantine-Modal-header {
-    position: sticky;
-    top: 0;
-    z-index: 10;
+    flex-shrink: 0 !important;
     background-color: rgb(26 26 26) !important;
     border-bottom: 1px solid rgb(42 42 42) !important;
   }
 
   .mantine-Modal-body {
-    position: relative;
-    z-index: 1;
-    overflow: hidden;
-  }
-
-  /* Ensure ScrollArea content doesn't overflow */
-  .mantine-ScrollArea-viewport {
-    max-height: 100% !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
   }
 }

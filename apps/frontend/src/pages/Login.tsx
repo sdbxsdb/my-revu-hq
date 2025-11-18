@@ -479,15 +479,15 @@ export const Login = () => {
           blur: 3,
         }}
         classNames={{
-          content: 'bg-[#1a1a1a] text-white',
-          header: 'bg-[#1a1a1a] text-white',
+          content: 'bg-[#1a1a1a] text-white terms-modal-full-height',
+          header: 'bg-[#1a1a1a] text-white flex-shrink-0',
           title: 'text-white',
           close: 'text-gray-400 hover:bg-[#2a2a2a] hover:text-white',
-          body: 'p-0',
+          body: 'p-0 flex flex-col flex-1 min-h-0',
         }}
       >
-        <Stack gap="md" className="p-6">
-          <ScrollArea h={400} className="pr-4">
+        <Stack gap="md" className="flex-1 flex min-h-0 p-6">
+          <ScrollArea className="flex-1 min-h-0">
             <Text size="sm" className="text-gray-300 whitespace-pre-line">
               By creating an account or signing in, you agree to our Terms and Conditions and
               Privacy Policy.
@@ -519,71 +519,72 @@ export const Login = () => {
               </a>
             </Text>
           </ScrollArea>
-          <Checkbox
-            label={
-              <Text size="sm" className="text-gray-300">
-                I have read and agree to the{' '}
-                <a
-                  href="/terms"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-teal-400 hover:text-teal-300 underline"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  Terms and Conditions
-                </a>{' '}
-                and{' '}
-                <a
-                  href="/privacy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-teal-400 hover:text-teal-300 underline"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  Privacy Policy
-                </a>
-              </Text>
-            }
-            checked={termsAgreed}
-            onChange={(e) => setTermsAgreed(e.currentTarget.checked)}
-            className="mt-4"
-          />
-          <div className="flex flex-col gap-3 mt-4">
-            <Button
-              fullWidth
-              onClick={handleAgreeAndContinue}
-              disabled={!termsAgreed}
-              loading={loading || oauthLoading}
-              className="!h-auto !py-3 min-h-[3.5rem]"
-            >
-              <div className="flex flex-col gap-0.5">
-                <span className="font-semibold">
-                  {pendingAction === 'signup'
-                    ? 'Agree & Create'
-                    : pendingAction === 'oauth'
-                      ? 'Agree & Continue'
-                      : 'Agree & Send'}
-                </span>
-                <span className="text-xs font-normal opacity-90">
-                  {pendingAction === 'signup'
-                    ? 'Account'
-                    : pendingAction === 'oauth'
-                      ? 'with Google'
-                      : 'Magic Link'}
-                </span>
-              </div>
-            </Button>
-            <Button
-              variant="outline"
-              fullWidth
-              onClick={() => {
-                setTermsModalOpen(false);
-                setTermsAgreed(false);
-                setPendingAction(null);
-              }}
-            >
-              Cancel
-            </Button>
+          <div className="flex-shrink-0 pt-4 border-t border-[#2a2a2a]">
+            <Checkbox
+              label={
+                <Text size="sm" className="text-gray-300">
+                  I have read and agree to the{' '}
+                  <a
+                    href="/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-teal-400 hover:text-teal-300 underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Terms and Conditions
+                  </a>{' '}
+                  and{' '}
+                  <a
+                    href="/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-teal-400 hover:text-teal-300 underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Privacy Policy
+                  </a>
+                </Text>
+              }
+              checked={termsAgreed}
+              onChange={(e) => setTermsAgreed(e.currentTarget.checked)}
+            />
+            <div className="flex flex-col gap-3 mt-4">
+              <Button
+                fullWidth
+                onClick={handleAgreeAndContinue}
+                disabled={!termsAgreed}
+                loading={loading || oauthLoading}
+                className="!h-auto !py-3 min-h-[3.5rem]"
+              >
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-semibold">
+                    {pendingAction === 'signup'
+                      ? 'Agree & Create'
+                      : pendingAction === 'oauth'
+                        ? 'Agree & Continue'
+                        : 'Agree & Send'}
+                  </span>
+                  <span className="text-xs font-normal opacity-90">
+                    {pendingAction === 'signup'
+                      ? 'Account'
+                      : pendingAction === 'oauth'
+                        ? 'with Google'
+                        : 'Magic Link'}
+                  </span>
+                </div>
+              </Button>
+              <Button
+                variant="outline"
+                fullWidth
+                onClick={() => {
+                  setTermsModalOpen(false);
+                  setTermsAgreed(false);
+                  setPendingAction(null);
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
           </div>
         </Stack>
       </Modal>
