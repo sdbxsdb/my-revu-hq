@@ -30,7 +30,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { data: user, error: userError } = await supabase
       .from('users')
       .select(
-        'sms_sent_this_month, business_name, review_links, sms_template, account_status, access_status'
+        'sms_sent_this_month, business_name, review_links, sms_template, account_lifecycle_status, payment_status'
       )
       .eq('id', auth.userId)
       .single<{
@@ -38,23 +38,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         business_name: string | null;
         review_links: any;
         sms_template: string | null;
-        account_status: string | null;
-        access_status: string | null;
+        account_lifecycle_status: string | null;
+        payment_status: string | null;
       }>();
 
     if (userError) throw userError;
     if (!user) throw new Error('User not found');
 
     // Check if account is cancelled or deleted
-    if (user.account_status === 'cancelled' || user.account_status === 'deleted') {
+    if (
+      user.account_lifecycle_status === 'cancelled' ||
+      user.account_lifecycle_status === 'deleted'
+    ) {
       return res.status(403).json({
         error:
           'Your subscription has been cancelled. Please reactivate your subscription to send SMS messages.',
       });
     }
 
-    // Check if access is active
-    if (user.access_status !== 'active') {
+    // Check if payment is active
+    if (user.payment_status !== 'active') {
       return res.status(403).json({
         error: 'Your subscription is not active. Please set up payment to send SMS messages.',
       });

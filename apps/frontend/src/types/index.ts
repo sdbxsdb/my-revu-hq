@@ -8,10 +8,10 @@ export interface User {
   // Billing & Subscription fields
   stripe_customer_id?: string;
   stripe_subscription_id?: string;
-  access_status?: 'active' | 'inactive' | 'past_due' | 'canceled'; // Our app's access status, not Stripe's
+  payment_status?: 'active' | 'inactive' | 'past_due' | 'canceled'; // Payment/subscription status
   payment_method?: 'card' | 'direct_debit';
   current_period_end?: string;
-  account_status?: 'active' | 'cancelled' | 'deleted'; // Account lifecycle status
+  account_lifecycle_status?: 'active' | 'cancelled' | 'deleted'; // Account lifecycle status
   created_at?: string;
   updated_at?: string;
 }

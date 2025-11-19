@@ -57,6 +57,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return handleDeleteAccount(req, res);
     case 'request-invoice':
       return handleRequestInvoice(req, res);
+    case 'create-portal-session':
+      return handleCreatePortalSession(req, res);
     case 'prices':
       return handlePrices(req, res);
     default:
@@ -90,37 +92,38 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
     }
 
     // Get user's subscription data from our database (source of truth)
-    // Note: account_status may not exist in all databases, so we'll query it separately if needed
+    // Note: account_lifecycle_status may not exist in all databases, so we'll query it separately if needed
     const { data: user, error: userError } = await supabase
       .from('users')
       .select(
-        'email, stripe_customer_id, stripe_subscription_id, access_status, payment_method, current_period_end, subscription_start_date'
+        'email, stripe_customer_id, stripe_subscription_id, payment_status, payment_method, current_period_end, subscription_start_date'
       )
       .eq('id', auth.userId)
       .single<{
         email: string | null;
         stripe_customer_id: string | null;
         stripe_subscription_id: string | null;
-        access_status: string | null;
+        payment_status: string | null;
         payment_method: string | null;
         current_period_end: string | null;
         subscription_start_date: string | null;
       }>();
 
-    // Try to get account_status separately if the column exists
-    let accountStatus: 'active' | 'cancelled' | 'deleted' | null = null;
+    // Try to get account_lifecycle_status separately if the column exists
+    let accountLifecycleStatus: 'active' | 'cancelled' | 'deleted' | null = null;
     if (user && !userError) {
       try {
         const { data: accountData } = await supabase
           .from('users')
-          .select('account_status')
+          .select('account_lifecycle_status')
           .eq('id', auth.userId)
-          .single<{ account_status: string | null }>();
-        accountStatus =
-          (accountData?.account_status as 'active' | 'cancelled' | 'deleted' | null) || null;
+          .single<{ account_lifecycle_status: string | null }>();
+        accountLifecycleStatus =
+          (accountData?.account_lifecycle_status as 'active' | 'cancelled' | 'deleted' | null) ||
+          null;
       } catch (e) {
-        // Column doesn't exist, that's okay - accountStatus will remain null
-        console.log('[Subscription API] account_status column does not exist, skipping');
+        // Column doesn't exist, that's okay - accountLifecycleStatus will remain null
+        console.log('[Subscription API] account_lifecycle_status column does not exist, skipping');
       }
     }
 
@@ -132,13 +135,13 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
             email: user.email,
             stripe_customer_id: user.stripe_customer_id,
             stripe_subscription_id: user.stripe_subscription_id,
-            access_status: user.access_status,
+            payment_status: user.payment_status,
             payment_method: user.payment_method,
             current_period_end: user.current_period_end,
             subscription_start_date: user.subscription_start_date,
           }
         : null,
-      accountStatus,
+      accountLifecycleStatus,
       error: userError,
       hasUser: !!user,
     });
@@ -154,15 +157,15 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
 
     console.log('[Subscription API] ✅ User found in database');
     console.log('[Subscription API] User email:', user.email);
-    console.log('[Subscription API] User access_status:', user.access_status);
+    console.log('[Subscription API] User payment_status:', user.payment_status);
     console.log('[Subscription API] User payment_method:', user.payment_method);
     console.log('[Subscription API] User stripe_subscription_id:', user.stripe_subscription_id);
 
-    // If no access status, return inactive
-    if (!user.access_status || user.access_status === 'inactive') {
+    // If no payment status, return inactive
+    if (!user.payment_status || user.payment_status === 'inactive') {
       console.log(
-        '[Subscription API] ❌ User has inactive or missing access_status:',
-        user.access_status
+        '[Subscription API] ❌ User has inactive or missing payment_status:',
+        user.payment_status
       );
       console.log('[Subscription API] ===== END SUBSCRIPTION CHECK =====');
       return res.json({
@@ -172,7 +175,7 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
     }
 
     console.log(
-      '[Subscription API] ✅ User has active access_status, proceeding to fetch Stripe data'
+      '[Subscription API] ✅ User has active payment_status, proceeding to fetch Stripe data'
     );
 
     // Determine payment type based on subscription_id
@@ -281,7 +284,7 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
 
     // Consolidate all data for logging
     const responseData = {
-      accessStatus: user.access_status,
+      accessStatus: user.payment_status,
       paymentMethod: user.payment_method as 'card' | 'direct_debit' | null,
       nextBillingDate: currentPeriodEnd || user.current_period_end || undefined,
       subscriptionStartDate,
@@ -289,7 +292,7 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
       currentPeriodEnd,
       cardLast4,
       cardBrand,
-      accountStatus: accountStatus,
+      accountStatus: accountLifecycleStatus,
     };
 
     // Comprehensive log with all user and subscription data
@@ -299,10 +302,10 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
     console.log('[Subscription API] Database User Data:', {
       stripe_customer_id: user.stripe_customer_id,
       stripe_subscription_id: user.stripe_subscription_id,
-      access_status: user.access_status,
+      payment_status: user.payment_status,
       payment_method: user.payment_method,
       current_period_end: user.current_period_end,
-      account_status: user.account_status,
+      account_lifecycle_status: accountLifecycleStatus,
       subscription_start_date: user.subscription_start_date,
     });
     console.log('[Subscription API] Stripe Subscription Data:', {
@@ -423,12 +426,12 @@ async function handleCancelSubscription(req: VercelRequest, res: VercelResponse)
     // Get user's subscription info
     const { data: user } = await supabase
       .from('users')
-      .select('stripe_subscription_id, stripe_customer_id, account_status')
+      .select('stripe_subscription_id, stripe_customer_id, account_lifecycle_status')
       .eq('id', auth.userId)
       .single<{
         stripe_subscription_id: string | null;
         stripe_customer_id: string | null;
-        account_status: string | null;
+        account_lifecycle_status: string | null;
       }>();
 
     if (!user) {
@@ -436,11 +439,11 @@ async function handleCancelSubscription(req: VercelRequest, res: VercelResponse)
     }
 
     // If account is already cancelled or deleted, return error
-    if (user.account_status === 'cancelled') {
+    if (user.account_lifecycle_status === 'cancelled') {
       return res.status(400).json({ error: 'Subscription is already cancelled' });
     }
 
-    if (user.account_status === 'deleted') {
+    if (user.account_lifecycle_status === 'deleted') {
       return res.status(400).json({ error: 'Account is already deleted' });
     }
 
@@ -457,13 +460,13 @@ async function handleCancelSubscription(req: VercelRequest, res: VercelResponse)
       }
     }
 
-    // Update database: set account_status to 'cancelled' and access_status to 'canceled'
+    // Update database: set account_lifecycle_status to 'cancelled' and payment_status to 'canceled'
     const { error: updateError } = await supabase
       .from('users')
       // @ts-ignore - Supabase types don't include these fields yet
       .update({
-        account_status: 'cancelled',
-        access_status: 'canceled',
+        account_lifecycle_status: 'cancelled',
+        payment_status: 'canceled',
         current_period_end: null,
       })
       .eq('id', auth.userId);
@@ -527,13 +530,13 @@ async function handleDeleteAccount(req: VercelRequest, res: VercelResponse) {
 
     // Mark account as deleted (soft delete - keeps data but marks as deleted)
     // Note: To fully delete the auth user, you would need to use Supabase Admin API with service role key
-    // For now, marking as deleted prevents access and the account_status can be used to filter deleted accounts
+    // For now, marking as deleted prevents access and the account_lifecycle_status can be used to filter deleted accounts
     const { error: updateError } = await supabase
       .from('users')
       // @ts-ignore - Supabase types don't include these fields yet
       .update({
-        account_status: 'deleted',
-        access_status: 'canceled',
+        account_lifecycle_status: 'deleted',
+        payment_status: 'canceled',
         current_period_end: null,
       })
       .eq('id', auth.userId);
@@ -600,6 +603,57 @@ async function handleRequestInvoice(req: VercelRequest, res: VercelResponse) {
 
     return res.json({ message: 'Invoice setup requested' });
   } catch (error: any) {
+    if (error.message === 'Unauthorized') {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    return res.status(500).json({ error: error.message });
+  }
+}
+
+// POST /api/billing/create-portal-session
+async function handleCreatePortalSession(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'POST') {
+    setCorsHeaders(res);
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  setCorsHeaders(res);
+
+  try {
+    const auth = await authenticate(req as any);
+
+    if (!stripe) {
+      return res.status(500).json({ error: 'Stripe not configured' });
+    }
+
+    // Get user's Stripe customer ID
+    const { data: user } = await supabase
+      .from('users')
+      .select('stripe_customer_id, email')
+      .eq('id', auth.userId)
+      .single<{
+        stripe_customer_id: string | null;
+        email: string;
+      }>();
+
+    if (!user?.stripe_customer_id) {
+      return res.status(400).json({
+        error: 'No Stripe customer found. Please set up a payment method first.',
+      });
+    }
+
+    // Normalize FRONTEND_URL to ensure no double slashes
+    const frontendUrl = (process.env.FRONTEND_URL || '').replace(/\/$/, ''); // Remove trailing slash
+
+    // Create billing portal session
+    const portalSession = await stripe.billingPortal.sessions.create({
+      customer: user.stripe_customer_id,
+      return_url: `${frontendUrl}/billing`,
+    });
+
+    return res.json({ url: portalSession.url });
+  } catch (error: any) {
+    setCorsHeaders(res);
     if (error.message === 'Unauthorized') {
       return res.status(401).json({ error: 'Unauthorized' });
     }

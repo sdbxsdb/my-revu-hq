@@ -73,28 +73,15 @@ export const Billing = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  // Local testing toggles - only in dev mode
-  const [localTestPaid, setLocalTestPaid] = useState(false);
-  const [localTestPaymentMethod, setLocalTestPaymentMethod] = useState<
-    'card' | 'direct_debit' | null
-  >(null);
-  const isPaid = accessStatus === 'active' || localTestPaid;
-  const displayPaymentMethod = localTestPaymentMethod || paymentMethod;
+  const isPaid = accessStatus === 'active';
+  const displayPaymentMethod = paymentMethod;
 
-  // For local testing, add test dates if none exist
-  const displaySubscriptionStartDate =
-    subscriptionStartDate ||
-    (localTestPaid ? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() : undefined);
-  const displayCurrentPeriodStart =
-    currentPeriodStart ||
-    (localTestPaid ? new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString() : undefined);
-  const displayNextBillingDate =
-    nextBillingDate ||
-    (localTestPaid ? new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString() : undefined);
-  const displayCardLast4 =
-    cardLast4 || (localTestPaid && displayPaymentMethod === 'card' ? '4242' : cardLast4);
-  const displayCardBrand =
-    cardBrand || (localTestPaid && displayPaymentMethod === 'card' ? 'visa' : cardBrand);
+  // Use actual data from API
+  const displaySubscriptionStartDate = subscriptionStartDate;
+  const displayCurrentPeriodStart = currentPeriodStart;
+  const displayNextBillingDate = nextBillingDate;
+  const displayCardLast4 = cardLast4;
+  const displayCardBrand = cardBrand;
 
   // Detect country from IP geolocation first
   useEffect(() => {
@@ -351,50 +338,6 @@ export const Billing = () => {
         <p className="text-sm text-gray-400">Manage your subscription and payment methods</p>
       </div>
 
-      {/* Local Testing Toggle - Remove in production */}
-      {import.meta.env.DEV && (
-        <div className="mb-4 p-3 bg-yellow-900/20 border border-yellow-800/50 rounded-lg">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Text size="sm" className="text-yellow-300">
-                🧪 Local Testing Mode
-              </Text>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={localTestPaid}
-                  onChange={(e) => setLocalTestPaid(e.target.checked)}
-                  className="w-4 h-4"
-                />
-                <Text size="sm" className="text-yellow-300">
-                  Simulate Paid Status
-                </Text>
-              </label>
-            </div>
-            {localTestPaid && (
-              <div className="flex items-center gap-3">
-                <Text size="xs" className="text-yellow-300">
-                  Payment Method:
-                </Text>
-                <select
-                  value={localTestPaymentMethod || ''}
-                  onChange={(e) =>
-                    setLocalTestPaymentMethod(
-                      (e.target.value as 'card' | 'direct_debit' | '') || null
-                    )
-                  }
-                  className="px-2 py-1 bg-[#1a1a1a] border border-[#2a2a2a] rounded text-yellow-300 text-xs"
-                >
-                  <option value="">Use DB Value</option>
-                  <option value="card">Card</option>
-                  <option value="direct_debit">Invoice/Direct Debit</option>
-                </select>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {accountLoading || loadingSubscription || loadingPrices || loadingCountry ? (
         <div className="space-y-6">
           <Skeleton height={40} width="60%" />
@@ -543,7 +486,27 @@ export const Billing = () => {
                     </div>
                   </div>
                   <div>
-                    <Button variant="light" size="sm" fullWidth>
+                    <Button
+                      variant="light"
+                      size="sm"
+                      fullWidth
+                      onClick={async () => {
+                        try {
+                          setLoading(true);
+                          const response = await apiClient.createPortalSession();
+                          window.location.href = response.url;
+                        } catch (error: any) {
+                          notifications.show({
+                            title: 'Error',
+                            message: error.message || 'Failed to open payment settings',
+                            color: 'red',
+                          });
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      loading={loading}
+                    >
                       Update Payment Method
                     </Button>
                   </div>
@@ -596,7 +559,27 @@ export const Billing = () => {
                     </ul>
                   </div>
                   <div>
-                    <Button variant="light" size="sm" fullWidth>
+                    <Button
+                      variant="light"
+                      size="sm"
+                      fullWidth
+                      onClick={async () => {
+                        try {
+                          setLoading(true);
+                          const response = await apiClient.createPortalSession();
+                          window.location.href = response.url;
+                        } catch (error: any) {
+                          notifications.show({
+                            title: 'Error',
+                            message: error.message || 'Failed to open billing settings',
+                            color: 'red',
+                          });
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      loading={loading}
+                    >
                       Update Payment Details
                     </Button>
                   </div>

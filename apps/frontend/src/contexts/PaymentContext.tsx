@@ -11,10 +11,10 @@ const PaymentContext = createContext<PaymentContextType | undefined>(undefined);
 export const PaymentProvider = ({ children }: { children: ReactNode }) => {
   const { account, loading } = useAccount();
 
-  // User has paid if access_status is 'active'
+  // User has paid if payment_status is 'active'
   const hasPaid = useMemo(() => {
-    return account?.access_status === 'active';
-  }, [account?.access_status]);
+    return account?.payment_status === 'active';
+  }, [account?.payment_status]);
 
   return <PaymentContext.Provider value={{ hasPaid, loading }}>{children}</PaymentContext.Provider>;
 };

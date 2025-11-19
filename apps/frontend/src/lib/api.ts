@@ -118,6 +118,11 @@ export const apiClient = {
     await api.post('/api/billing/cancel-subscription');
   },
 
+  createPortalSession: async (): Promise<{ url: string }> => {
+    const { data } = await api.post('/api/billing/create-portal-session');
+    return data;
+  },
+
   deleteAccount: async (): Promise<void> => {
     await api.post('/api/billing/delete-account');
   },

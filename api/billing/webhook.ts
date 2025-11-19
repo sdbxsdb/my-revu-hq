@@ -204,7 +204,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                   // @ts-ignore - Supabase types don't include billing fields yet
                   .update({
                     stripe_subscription_id: subscription.id,
-                    access_status: subscription.status === 'active' ? 'active' : 'inactive',
+                    payment_status: subscription.status === 'active' ? 'active' : 'inactive',
                     payment_method: 'card',
                     current_period_end: (subscription as any).current_period_end
                       ? new Date((subscription as any).current_period_end * 1000).toISOString()
@@ -224,7 +224,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               // @ts-ignore - Supabase types don't include billing fields yet
               .update({
                 stripe_subscription_id: subscription.id,
-                access_status: subscription.status === 'active' ? 'active' : 'inactive',
+                payment_status: subscription.status === 'active' ? 'active' : 'inactive',
                 payment_method: 'card',
                 subscription_start_date: subscription.created
                   ? new Date(subscription.created * 1000).toISOString()
@@ -260,7 +260,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           // @ts-ignore - Supabase types don't include billing fields yet
           .update({
             stripe_subscription_id: subscription.id,
-            access_status:
+            payment_status:
               subscription.status === 'active'
                 ? 'active'
                 : subscription.status === 'past_due'
@@ -293,7 +293,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           .from('users')
           // @ts-ignore - Supabase types don't include billing fields yet
           .update({
-            access_status: 'canceled',
+            payment_status: 'canceled',
             current_period_end: null,
           })
           .eq('id', deletedUser.id);
@@ -318,7 +318,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             .from('users')
             // @ts-ignore - Supabase types don't include billing fields yet
             .update({
-              access_status: 'active',
+              payment_status: 'active',
               payment_method: 'direct_debit',
               subscription_start_date: invoice.created
                 ? new Date(invoice.created * 1000).toISOString()
@@ -348,7 +348,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           .from('users')
           // @ts-ignore - Supabase types don't include billing fields yet
           .update({
-            access_status: 'past_due',
+            payment_status: 'past_due',
           })
           .eq('id', failedUser.id);
       }
