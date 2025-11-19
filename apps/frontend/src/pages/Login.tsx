@@ -461,6 +461,29 @@ export const Login = () => {
             </div>
           )}
         </Stack>
+
+        {/* Footer with Privacy Policy and Terms Links */}
+        <div className="mt-6 pt-4 border-t border-[#2a2a2a] text-center">
+          <Text size="xs" className="text-gray-400">
+            <a
+              href="/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-teal-400 hover:text-teal-300 hover:underline"
+            >
+              Privacy Policy
+            </a>
+            {' • '}
+            <a
+              href="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-teal-400 hover:text-teal-300 hover:underline"
+            >
+              Terms and Conditions
+            </a>
+          </Text>
+        </div>
       </Paper>
 
       {/* Terms and Conditions Modal */}
