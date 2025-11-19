@@ -36,30 +36,64 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Get raw body for webhook signature verification
   // Vercel automatically parses JSON, so we need to get the raw body
-  let body: string;
+  // The rawBody property should be available in Vercel serverless functions
+  let bodyString: string;
 
-  // Try multiple methods to get raw body
-  if (typeof (req as any).rawBody === 'string') {
-    // Vercel sometimes provides rawBody
-    body = (req as any).rawBody;
-  } else if (Buffer.isBuffer(req.body)) {
-    body = req.body.toString('utf8');
-  } else if (typeof req.body === 'string') {
-    body = req.body;
-  } else if (req.body && typeof req.body === 'object') {
-    // Body was parsed as JSON - reconstruct it
-    // IMPORTANT: This may fail signature verification if whitespace/key order differs
-    // For production, consider using a middleware to capture raw body
-    body = JSON.stringify(req.body);
+  // Log what we have for debugging
+  console.log('[Webhook] Body type:', typeof req.body);
+  console.log('[Webhook] Body is Buffer:', Buffer.isBuffer(req.body));
+  console.log('[Webhook] Has rawBody property:', typeof (req as any).rawBody !== 'undefined');
+  if (typeof (req as any).rawBody !== 'undefined') {
+    console.log('[Webhook] rawBody type:', typeof (req as any).rawBody);
+    console.log('[Webhook] rawBody is Buffer:', Buffer.isBuffer((req as any).rawBody));
+  }
+
+  // Method 1: Check if rawBody is available (Vercel-specific property)
+  if (typeof (req as any).rawBody !== 'undefined') {
+    if (Buffer.isBuffer((req as any).rawBody)) {
+      bodyString = (req as any).rawBody.toString('utf8');
+      console.log('[Webhook] Using rawBody (Buffer)');
+    } else if (typeof (req as any).rawBody === 'string') {
+      bodyString = (req as any).rawBody;
+      console.log('[Webhook] Using rawBody (string)');
+    } else {
+      // Fallback: try to stringify if it's an object
+      console.warn(
+        '[Webhook] rawBody is an object, stringifying (may fail signature verification)'
+      );
+      bodyString = JSON.stringify((req as any).rawBody);
+    }
+  }
+  // Method 2: Check if body is a Buffer (raw body)
+  else if (Buffer.isBuffer(req.body)) {
+    bodyString = req.body.toString('utf8');
+    console.log('[Webhook] Using req.body (Buffer)');
+  }
+  // Method 3: Check if body is a string (raw body as string)
+  else if (typeof req.body === 'string') {
+    bodyString = req.body;
+    console.log('[Webhook] Using req.body (string)');
+  }
+  // Method 4: Last resort - reconstruct from parsed JSON (will likely fail signature verification)
+  else if (req.body && typeof req.body === 'object') {
+    console.warn(
+      '[Webhook] Body was parsed as JSON - reconstructing. Signature verification will likely fail.'
+    );
+    console.warn('[Webhook] This usually means Vercel parsed the body before we could access it.');
+    bodyString = JSON.stringify(req.body);
   } else {
-    console.error('[Webhook] Unable to get request body');
+    console.error('[Webhook] Unable to get raw request body');
     return res.status(400).json({ error: 'Invalid request body format' });
   }
+
+  console.log('[Webhook] Body string length:', bodyString.length);
+  console.log('[Webhook] Body string preview:', bodyString.substring(0, 100));
 
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
+    // Use the raw body string for signature verification
+    event = stripe.webhooks.constructEvent(bodyString, sig, webhookSecret);
   } catch (err: any) {
     // If signature verification fails, log details for debugging
     console.error('[Webhook] Signature verification failed:', err.message);
