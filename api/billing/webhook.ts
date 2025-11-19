@@ -199,17 +199,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 }
 
                 // Update subscription details
+                // If subscription is active and account was cancelled, reactivate it
+                const updateData: any = {
+                  stripe_subscription_id: subscription.id,
+                  payment_status: subscription.status === 'active' ? 'active' : 'inactive',
+                  payment_method: 'card',
+                  current_period_end: (subscription as any).current_period_end
+                    ? new Date((subscription as any).current_period_end * 1000).toISOString()
+                    : null,
+                };
+
+                // Reactivate account if subscription is active and account was cancelled (not deleted)
+                if (subscription.status === 'active') {
+                  updateData.account_lifecycle_status = 'active';
+                }
+
                 const { error: updateError } = await supabase
                   .from('users')
                   // @ts-ignore - Supabase types don't include billing fields yet
-                  .update({
-                    stripe_subscription_id: subscription.id,
-                    payment_status: subscription.status === 'active' ? 'active' : 'inactive',
-                    payment_method: 'card',
-                    current_period_end: (subscription as any).current_period_end
-                      ? new Date((subscription as any).current_period_end * 1000).toISOString()
-                      : null,
-                  })
+                  .update(updateData)
                   .eq('id', userByEmail.id);
 
                 if (updateError) {
@@ -219,20 +227,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }
           } else if (checkoutUser) {
             // Update subscription details
+            // If subscription is active and account was cancelled, reactivate it
+            const updateData: any = {
+              stripe_subscription_id: subscription.id,
+              payment_status: subscription.status === 'active' ? 'active' : 'inactive',
+              payment_method: 'card',
+              subscription_start_date: subscription.created
+                ? new Date(subscription.created * 1000).toISOString()
+                : null,
+              current_period_end: (subscription as any).current_period_end
+                ? new Date((subscription as any).current_period_end * 1000).toISOString()
+                : null,
+            };
+
+            // Reactivate account if subscription is active and account was cancelled (not deleted)
+            if (subscription.status === 'active') {
+              updateData.account_lifecycle_status = 'active';
+            }
+
             const { error: updateError } = await supabase
               .from('users')
               // @ts-ignore - Supabase types don't include billing fields yet
-              .update({
-                stripe_subscription_id: subscription.id,
-                payment_status: subscription.status === 'active' ? 'active' : 'inactive',
-                payment_method: 'card',
-                subscription_start_date: subscription.created
-                  ? new Date(subscription.created * 1000).toISOString()
-                  : null,
-                current_period_end: (subscription as any).current_period_end
-                  ? new Date((subscription as any).current_period_end * 1000).toISOString()
-                  : null,
-              })
+              .update(updateData)
               .eq('id', checkoutUser.id);
 
             if (updateError) {
@@ -250,32 +266,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const subscription = event.data.object as Stripe.Subscription;
       const { data: subUser } = await supabase
         .from('users')
-        .select('id')
+        .select('id, account_lifecycle_status')
         .eq('stripe_customer_id', subscription.customer as string)
-        .single<{ id: string }>();
+        .single<{ id: string; account_lifecycle_status: string | null }>();
 
       if (subUser) {
+        const updateData: any = {
+          stripe_subscription_id: subscription.id,
+          payment_status:
+            subscription.status === 'active'
+              ? 'active'
+              : subscription.status === 'past_due'
+                ? 'past_due'
+                : subscription.status === 'canceled'
+                  ? 'canceled'
+                  : 'inactive',
+          payment_method: 'card',
+          subscription_start_date: subscription.created
+            ? new Date(subscription.created * 1000).toISOString()
+            : null,
+          current_period_end: (subscription as any).current_period_end
+            ? new Date((subscription as any).current_period_end * 1000).toISOString()
+            : null,
+        };
+
+        // Reactivate account if subscription is active and account was cancelled (not deleted)
+        // Don't reactivate if account was deleted - that requires explicit action
+        if (subscription.status === 'active' && subUser.account_lifecycle_status === 'cancelled') {
+          updateData.account_lifecycle_status = 'active';
+        }
+
         await supabase
           .from('users')
           // @ts-ignore - Supabase types don't include billing fields yet
-          .update({
-            stripe_subscription_id: subscription.id,
-            payment_status:
-              subscription.status === 'active'
-                ? 'active'
-                : subscription.status === 'past_due'
-                  ? 'past_due'
-                  : subscription.status === 'canceled'
-                    ? 'canceled'
-                    : 'inactive',
-            payment_method: 'card',
-            subscription_start_date: subscription.created
-              ? new Date(subscription.created * 1000).toISOString()
-              : null,
-            current_period_end: (subscription as any).current_period_end
-              ? new Date((subscription as any).current_period_end * 1000).toISOString()
-              : null,
-          })
+          .update(updateData)
           .eq('id', subUser.id);
       }
       break;

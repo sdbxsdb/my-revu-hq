@@ -214,11 +214,23 @@ export const useAuth = () => {
   };
 
   const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
-    if (error) throw error;
+
+    // Check if signup was successful but user already exists
+    // Supabase might return a user but with a message indicating it already exists
+    if (error) {
+      throw error;
+    }
+
+    // Additional check: if no user returned, something went wrong
+    if (!data.user) {
+      throw new Error('Signup failed - no user was created');
+    }
+
+    return data;
   };
 
   const signOut = async () => {

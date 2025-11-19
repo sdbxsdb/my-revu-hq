@@ -45,14 +45,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (userError) throw userError;
     if (!user) throw new Error('User not found');
 
-    // Check if account is cancelled or deleted
-    if (
-      user.account_lifecycle_status === 'cancelled' ||
-      user.account_lifecycle_status === 'deleted'
-    ) {
+    // Check if account is deleted (cancelled accounts can still send if payment_status is active)
+    if (user.account_lifecycle_status === 'deleted') {
       return res.status(403).json({
-        error:
-          'Your subscription has been cancelled. Please reactivate your subscription to send SMS messages.',
+        error: 'This account has been deleted. Please contact support if you wish to reactivate.',
       });
     }
 

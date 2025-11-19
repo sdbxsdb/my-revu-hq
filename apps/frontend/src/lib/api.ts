@@ -136,6 +136,14 @@ export const apiClient = {
     await api.post('/api/billing/request-invoice');
   },
 
+  // Check if email exists
+  checkEmailExists: async (
+    email: string
+  ): Promise<{ exists: boolean; createdAt: string | null }> => {
+    const { data } = await api.get(`/api/auth/check-email?email=${encodeURIComponent(email)}`);
+    return data;
+  },
+
   // Get prices for all currencies from Stripe
   getPrices: async (): Promise<{
     prices: Record<string, { amount: number; currency: string; formatted: string }>;

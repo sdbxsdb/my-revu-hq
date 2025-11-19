@@ -16,6 +16,7 @@ import { notifications } from '@mantine/notifications';
 import { useAuth } from '@/hooks/useAuth';
 import { IconMail, IconLock, IconEye, IconEyeOff } from '@tabler/icons-react';
 import { supabase } from '@/lib/supabase';
+import { apiClient } from '@/lib/api';
 
 export const Login = () => {
   const [email, setEmail] = useState('');
@@ -64,11 +65,28 @@ export const Login = () => {
       setTermsAgreed(false);
       setPendingAction(null);
     } catch (error: any) {
-      notifications.show({
-        title: 'Error',
-        message: error.message || 'Failed to send magic link',
-        color: 'red',
-      });
+      // Check if error is due to account not existing (magic link can create accounts)
+      const errorMessage = error.message || '';
+      const isAccountNotFound =
+        errorMessage.toLowerCase().includes('invalid login credentials') ||
+        errorMessage.toLowerCase().includes('user not found') ||
+        error.status === 400;
+
+      if (isAccountNotFound) {
+        notifications.show({
+          title: 'Account Not Found',
+          message:
+            'No account found with this email. Please create an account first using "Create new account".',
+          color: 'yellow',
+          autoClose: 8000,
+        });
+      } else {
+        notifications.show({
+          title: 'Error',
+          message: error.message || 'Failed to send magic link',
+          color: 'red',
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -143,7 +161,51 @@ export const Login = () => {
     setLoading(true);
     setTermsModalOpen(false);
     try {
+      // First, check if email already exists in our database
+      try {
+        const emailCheck = await apiClient.checkEmailExists(email);
+        if (emailCheck.exists) {
+          // Check if account was created recently (within last 5 seconds) - might be from this signup attempt
+          if (emailCheck.createdAt) {
+            const createdAt = new Date(emailCheck.createdAt);
+            const now = new Date();
+            const secondsSinceCreation = (now.getTime() - createdAt.getTime()) / 1000;
+
+            // If account was created more than 5 seconds ago, it's definitely an existing account
+            if (secondsSinceCreation > 5) {
+              notifications.show({
+                title: 'Account Already Exists',
+                message:
+                  'An account with this email already exists. Please sign in instead, or use "Forgot Password" if you don\'t remember your password.',
+                color: 'yellow',
+                autoClose: 8000,
+              });
+              // Switch to password login mode to help user
+              setMode('password');
+              setLoading(false);
+              return;
+            }
+          } else {
+            // Email exists but no createdAt (shouldn't happen, but handle it)
+            notifications.show({
+              title: 'Account Already Exists',
+              message: 'An account with this email already exists. Please sign in instead.',
+              color: 'yellow',
+              autoClose: 8000,
+            });
+            setMode('password');
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (checkError) {
+        // If check fails, continue with signup anyway
+        console.log('[SignUp] Could not check if email exists:', checkError);
+      }
+
+      // Proceed with signup
       await signUp(email, password);
+
       notifications.show({
         title: 'Success',
         message: 'Account created! Please check your email to verify your account.',
@@ -157,11 +219,39 @@ export const Login = () => {
       setConfirmPassword('');
       setPasswordError('');
     } catch (error: any) {
-      notifications.show({
-        title: 'Error',
-        message: error.message || 'Failed to sign up',
-        color: 'red',
-      });
+      console.error('[SignUp] Error:', error);
+
+      // Check if error is due to duplicate email
+      const errorMessage = error.message || '';
+      const errorCode = error.code || error.status || '';
+      const isDuplicateEmail =
+        errorMessage.toLowerCase().includes('already registered') ||
+        errorMessage.toLowerCase().includes('user already exists') ||
+        errorMessage.toLowerCase().includes('email already registered') ||
+        errorMessage.toLowerCase().includes('email address is already in use') ||
+        errorMessage.toLowerCase().includes('user with this email already exists') ||
+        errorCode === 'signup_disabled' ||
+        errorCode === 'user_already_registered' ||
+        error.status === 422 ||
+        error.status === 400;
+
+      if (isDuplicateEmail) {
+        notifications.show({
+          title: 'Account Already Exists',
+          message:
+            'An account with this email already exists. Please sign in instead, or use "Forgot Password" if you don\'t remember your password.',
+          color: 'yellow',
+          autoClose: 8000,
+        });
+        // Switch to password login mode to help user
+        setMode('password');
+      } else {
+        notifications.show({
+          title: 'Error',
+          message: error.message || 'Failed to sign up. Please try again.',
+          color: 'red',
+        });
+      }
     } finally {
       setLoading(false);
     }

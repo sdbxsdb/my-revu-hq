@@ -359,14 +359,26 @@ async function handleCreateCheckoutSession(req: VercelRequest, res: VercelRespon
     // Get or create Stripe customer
     let { data: user } = await supabase
       .from('users')
-      .select('stripe_customer_id, email')
+      .select('stripe_customer_id, email, account_lifecycle_status')
       .eq('id', auth.userId)
       .single<{
         stripe_customer_id: string | null;
         email: string;
+        account_lifecycle_status: string | null;
       }>();
 
-    let customerId = user?.stripe_customer_id;
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Prevent checkout if account is deleted
+    if (user.account_lifecycle_status === 'deleted') {
+      return res.status(403).json({
+        error: 'This account has been deleted. Please contact support if you wish to reactivate.',
+      });
+    }
+
+    let customerId = user.stripe_customer_id;
 
     if (!customerId) {
       const customer = await stripe.customers.create({
@@ -378,10 +390,16 @@ async function handleCreateCheckoutSession(req: VercelRequest, res: VercelRespon
       customerId = customer.id;
 
       // Save customer ID to database
+      // If account was cancelled, reactivate it when creating checkout
+      const updateData: any = { stripe_customer_id: customerId };
+      if (user.account_lifecycle_status === 'cancelled') {
+        updateData.account_lifecycle_status = 'active';
+      }
+
       await supabase
         .from('users')
         // @ts-ignore - Supabase types don't include billing fields yet
-        .update({ stripe_customer_id: customerId })
+        .update(updateData)
         .eq('id', auth.userId);
     }
 
@@ -499,12 +517,12 @@ async function handleDeleteAccount(req: VercelRequest, res: VercelResponse) {
     // Get user's subscription info
     const { data: user } = await supabase
       .from('users')
-      .select('stripe_subscription_id, stripe_customer_id, account_status')
+      .select('stripe_subscription_id, stripe_customer_id, account_lifecycle_status')
       .eq('id', auth.userId)
       .single<{
         stripe_subscription_id: string | null;
         stripe_customer_id: string | null;
-        account_status: string | null;
+        account_lifecycle_status: string | null;
       }>();
 
     if (!user) {
@@ -512,7 +530,7 @@ async function handleDeleteAccount(req: VercelRequest, res: VercelResponse) {
     }
 
     // If account is already deleted, return error
-    if (user.account_status === 'deleted') {
+    if (user.account_lifecycle_status === 'deleted') {
       return res.status(400).json({ error: 'Account is already deleted' });
     }
 
