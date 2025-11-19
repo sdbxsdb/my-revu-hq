@@ -74,43 +74,106 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    console.log('[Subscription API] ===== REQUEST RECEIVED =====');
+    console.log('[Subscription API] Request method:', req.method);
+    console.log('[Subscription API] Request URL:', req.url);
+
     const auth = await authenticate(req as any);
+    console.log('[Subscription API] ✅ User authenticated:', {
+      userId: auth.userId,
+      userEmail: auth.user?.email || 'N/A',
+    });
 
     if (!stripe) {
+      console.error('[Subscription API] Stripe not configured');
       return res.status(500).json({ error: 'Stripe not configured' });
     }
 
     // Get user's subscription data from our database (source of truth)
-    const { data: user } = await supabase
+    // Note: account_status may not exist in all databases, so we'll query it separately if needed
+    const { data: user, error: userError } = await supabase
       .from('users')
       .select(
-        'stripe_customer_id, stripe_subscription_id, access_status, payment_method, current_period_end, account_status, subscription_start_date'
+        'email, stripe_customer_id, stripe_subscription_id, access_status, payment_method, current_period_end, subscription_start_date'
       )
       .eq('id', auth.userId)
       .single<{
+        email: string | null;
         stripe_customer_id: string | null;
         stripe_subscription_id: string | null;
         access_status: string | null;
         payment_method: string | null;
         current_period_end: string | null;
-        account_status: string | null;
         subscription_start_date: string | null;
       }>();
 
+    // Try to get account_status separately if the column exists
+    let accountStatus: 'active' | 'cancelled' | 'deleted' | null = null;
+    if (user && !userError) {
+      try {
+        const { data: accountData } = await supabase
+          .from('users')
+          .select('account_status')
+          .eq('id', auth.userId)
+          .single<{ account_status: string | null }>();
+        accountStatus =
+          (accountData?.account_status as 'active' | 'cancelled' | 'deleted' | null) || null;
+      } catch (e) {
+        // Column doesn't exist, that's okay - accountStatus will remain null
+        console.log('[Subscription API] account_status column does not exist, skipping');
+      }
+    }
+
+    console.log('[Subscription API] ===== START SUBSCRIPTION CHECK =====');
+    console.log('[Subscription API] Authenticated User ID:', auth.userId);
+    console.log('[Subscription API] Database query result:', {
+      user: user
+        ? {
+            email: user.email,
+            stripe_customer_id: user.stripe_customer_id,
+            stripe_subscription_id: user.stripe_subscription_id,
+            access_status: user.access_status,
+            payment_method: user.payment_method,
+            current_period_end: user.current_period_end,
+            subscription_start_date: user.subscription_start_date,
+          }
+        : null,
+      accountStatus,
+      error: userError,
+      hasUser: !!user,
+    });
+
     if (!user) {
+      console.log('[Subscription API] ❌ User not found in database - returning inactive');
+      console.log('[Subscription API] ===== END SUBSCRIPTION CHECK =====');
       return res.json({
         accessStatus: 'inactive',
         paymentMethod: null,
       });
     }
 
+    console.log('[Subscription API] ✅ User found in database');
+    console.log('[Subscription API] User email:', user.email);
+    console.log('[Subscription API] User access_status:', user.access_status);
+    console.log('[Subscription API] User payment_method:', user.payment_method);
+    console.log('[Subscription API] User stripe_subscription_id:', user.stripe_subscription_id);
+
     // If no access status, return inactive
     if (!user.access_status || user.access_status === 'inactive') {
+      console.log(
+        '[Subscription API] ❌ User has inactive or missing access_status:',
+        user.access_status
+      );
+      console.log('[Subscription API] ===== END SUBSCRIPTION CHECK =====');
       return res.json({
         accessStatus: 'inactive',
         paymentMethod: null,
       });
     }
+
+    console.log(
+      '[Subscription API] ✅ User has active access_status, proceeding to fetch Stripe data'
+    );
 
     // Determine payment type based on subscription_id
     let cardLast4: string | undefined;
@@ -121,8 +184,20 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
 
     if (user.stripe_subscription_id) {
       // Card payment: Get card details and subscription info from Stripe
+      console.log(
+        '[Subscription API] Fetching subscription from Stripe:',
+        user.stripe_subscription_id
+      );
       try {
         const subscription = await stripe.subscriptions.retrieve(user.stripe_subscription_id);
+        console.log('[Subscription API] Stripe subscription retrieved:', {
+          id: subscription.id,
+          status: subscription.status,
+          created: subscription.created,
+          current_period_start: subscription.current_period_start,
+          current_period_end: subscription.current_period_end,
+          default_payment_method: subscription.default_payment_method,
+        });
 
         // Get subscription dates
         subscriptionStartDate = subscription.created
@@ -135,53 +210,77 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
           ? new Date(subscription.current_period_end * 1000).toISOString()
           : undefined;
 
+        console.log('[Subscription API] Parsed subscription dates:', {
+          subscriptionStartDate,
+          currentPeriodStart,
+          currentPeriodEnd,
+        });
+
         // Get card details if available
         if (subscription.default_payment_method) {
+          console.log(
+            '[Subscription API] Fetching payment method:',
+            subscription.default_payment_method
+          );
           try {
             const paymentMethod = await stripe.paymentMethods.retrieve(
               subscription.default_payment_method as string
             );
+            console.log('[Subscription API] Payment method retrieved:', {
+              id: paymentMethod.id,
+              type: paymentMethod.type,
+              card: paymentMethod.card
+                ? {
+                    brand: paymentMethod.card.brand,
+                    last4: paymentMethod.card.last4,
+                    exp_month: paymentMethod.card.exp_month,
+                    exp_year: paymentMethod.card.exp_year,
+                  }
+                : null,
+            });
 
             if (paymentMethod?.type === 'card' && paymentMethod.card) {
               cardLast4 = paymentMethod.card.last4;
               cardBrand = paymentMethod.card.brand;
-              console.log('[Subscription API] Card details retrieved:', {
+              console.log('[Subscription API] Card details extracted:', {
                 last4: cardLast4,
                 brand: cardBrand,
               });
+            } else {
+              console.log('[Subscription API] Payment method is not a card or has no card data');
             }
           } catch (pmError: any) {
-            console.error('[Subscription API] Error retrieving payment method:', pmError.message);
+            console.error('[Subscription API] Error retrieving payment method:', {
+              message: pmError.message,
+              code: pmError.code,
+              type: pmError.type,
+            });
           }
         } else {
           console.log('[Subscription API] No default_payment_method on subscription');
         }
       } catch (stripeError: any) {
-        console.error(
-          '[Subscription API] Error retrieving subscription from Stripe:',
-          stripeError.message
-        );
+        console.error('[Subscription API] Error retrieving subscription from Stripe:', {
+          message: stripeError.message,
+          code: stripeError.code,
+          type: stripeError.type,
+          subscription_id: user.stripe_subscription_id,
+        });
         // Fallback to database values
         subscriptionStartDate = user.subscription_start_date || undefined;
         currentPeriodEnd = user.current_period_end || undefined;
       }
     } else {
       // For invoice payments, use dates from database
+      console.log(
+        '[Subscription API] No stripe_subscription_id, using database values for invoice payment'
+      );
       subscriptionStartDate = user.subscription_start_date || undefined;
       currentPeriodEnd = user.current_period_end || undefined;
     }
 
-    console.log('[Subscription API] Returning subscription data:', {
-      accessStatus: user.access_status,
-      paymentMethod: user.payment_method,
-      subscriptionStartDate,
-      currentPeriodStart,
-      currentPeriodEnd,
-      cardLast4,
-      cardBrand,
-    });
-
-    return res.json({
+    // Consolidate all data for logging
+    const responseData = {
       accessStatus: user.access_status,
       paymentMethod: user.payment_method as 'card' | 'direct_debit' | null,
       nextBillingDate: currentPeriodEnd || user.current_period_end || undefined,
@@ -190,8 +289,33 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
       currentPeriodEnd,
       cardLast4,
       cardBrand,
-      accountStatus: user.account_status as 'active' | 'cancelled' | 'deleted' | null,
+      accountStatus: accountStatus,
+    };
+
+    // Comprehensive log with all user and subscription data
+    console.log('[Subscription API] ===== COMPLETE SUBSCRIPTION DATA =====');
+    console.log('[Subscription API] User ID:', auth.userId);
+    console.log('[Subscription API] User Email:', user.email || 'N/A');
+    console.log('[Subscription API] Database User Data:', {
+      stripe_customer_id: user.stripe_customer_id,
+      stripe_subscription_id: user.stripe_subscription_id,
+      access_status: user.access_status,
+      payment_method: user.payment_method,
+      current_period_end: user.current_period_end,
+      account_status: user.account_status,
+      subscription_start_date: user.subscription_start_date,
     });
+    console.log('[Subscription API] Stripe Subscription Data:', {
+      subscriptionStartDate,
+      currentPeriodStart,
+      currentPeriodEnd,
+      cardLast4,
+      cardBrand,
+    });
+    console.log('[Subscription API] Final Response Data:', responseData);
+    console.log('[Subscription API] =======================================');
+
+    return res.json(responseData);
   } catch (error: any) {
     if (error.message === 'Unauthorized') {
       return res.status(401).json({ error: 'Unauthorized' });
