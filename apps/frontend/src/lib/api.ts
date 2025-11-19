@@ -105,9 +105,18 @@ export const apiClient = {
     nextBillingDate?: string;
     cardLast4?: string;
     cardBrand?: string;
+    accountStatus?: 'active' | 'cancelled' | 'deleted' | null;
   }> => {
     const { data } = await api.get('/api/billing/subscription');
     return data;
+  },
+
+  cancelSubscription: async (): Promise<void> => {
+    await api.post('/api/billing/cancel-subscription');
+  },
+
+  deleteAccount: async (): Promise<void> => {
+    await api.post('/api/billing/delete-account');
   },
 
   createCheckoutSession: async (currency?: string): Promise<{ url: string }> => {

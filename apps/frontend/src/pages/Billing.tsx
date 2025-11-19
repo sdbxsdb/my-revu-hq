@@ -1,7 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Paper, Title, Text, Button, Tabs, Stack, Alert, Badge, Skeleton } from '@mantine/core';
-import { IconCreditCard, IconBuildingBank, IconCheck, IconAlertCircle } from '@tabler/icons-react';
+import {
+  Paper,
+  Title,
+  Text,
+  Button,
+  Tabs,
+  Stack,
+  Alert,
+  Badge,
+  Skeleton,
+  Modal,
+  Divider,
+} from '@mantine/core';
+import {
+  IconCreditCard,
+  IconBuildingBank,
+  IconCheck,
+  IconAlertCircle,
+  IconTrash,
+  IconX,
+} from '@tabler/icons-react';
 import { apiClient } from '@/lib/api';
 import { notifications } from '@mantine/notifications';
 import { usePayment } from '@/contexts/PaymentContext';
@@ -46,6 +65,13 @@ export const Billing = () => {
   );
   const [cardLast4, setCardLast4] = useState<string | undefined>(hasPaid ? '4242' : undefined);
   const [cardBrand, setCardBrand] = useState<string | undefined>(hasPaid ? 'visa' : undefined);
+  const [accountStatus, setAccountStatus] = useState<'active' | 'cancelled' | 'deleted' | null>(
+    null
+  );
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Detect country from IP geolocation first
   useEffect(() => {
@@ -142,43 +168,13 @@ export const Billing = () => {
   const loadSubscription = async () => {
     try {
       setLoadingSubscription(true);
-      // Use payment context for now (temp toggle)
-      // TODO: When backend is ready, replace this with real data
-      //
-      // SUBSCRIPTION DATA SOURCE:
-      // We store subscription data in our DB (access_status, payment_method, etc.)
-      // and sync it from Stripe via webhooks. This means:
-      // - Our DB is the source of truth for our app (fast queries, no Stripe API calls on every page load)
-      // - Stripe webhooks update our DB when subscriptions change (payment succeeded, canceled, etc.)
-      // - The backend should query our DB first, then optionally verify with Stripe if needed
-      // - Card details (last4, brand) come from Stripe's API when needed (we don't store them)
-      //
-      // Backend flow:
-      // 1. Query user's access_status, payment_method from our DB
-      // 2. If subscription is active, optionally verify with Stripe API
-      // 3. Get payment method details (last4, brand) from Stripe PaymentMethod API
-      // 4. Return combined data to frontend
-      if (hasPaid) {
-        setAccessStatus('active');
-        setPaymentMethod('card');
-        setNextBillingDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString());
-        setCardLast4('4242'); // Demo card last 4 - will come from Stripe API
-        setCardBrand('visa'); // Demo card brand - will come from Stripe API
-      } else {
-        setAccessStatus('inactive');
-        setPaymentMethod(null);
-        setNextBillingDate(undefined);
-        setCardLast4(undefined);
-        setCardBrand(undefined);
-      }
-
-      // TODO: When backend is ready, uncomment and use real Stripe data:
-      // const subscription = await apiClient.getSubscription();
-      // setAccessStatus(subscription.accessStatus);
-      // setPaymentMethod(subscription.paymentMethod);
-      // setNextBillingDate(subscription.nextBillingDate);
-      // setCardLast4(subscription.cardLast4); // From Stripe PaymentMethod.card.last4
-      // setCardBrand(subscription.cardBrand); // From Stripe PaymentMethod.card.brand
+      const subscription = await apiClient.getSubscription();
+      setAccessStatus(subscription.accessStatus);
+      setPaymentMethod(subscription.paymentMethod);
+      setNextBillingDate(subscription.nextBillingDate);
+      setCardLast4(subscription.cardLast4);
+      setCardBrand(subscription.cardBrand);
+      setAccountStatus(subscription.accountStatus || 'active');
     } catch (error: any) {
       // Failed to load subscription
       notifications.show({
@@ -255,6 +251,55 @@ export const Billing = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    setCancelling(true);
+    try {
+      await apiClient.cancelSubscription();
+      notifications.show({
+        title: 'Subscription Cancelled',
+        message:
+          'Your subscription has been cancelled. You can still access your account and customer data, but SMS sending is disabled.',
+        color: 'yellow',
+      });
+      setCancelModalOpen(false);
+      await loadSubscription();
+      await refetch();
+    } catch (error: any) {
+      notifications.show({
+        title: 'Error',
+        message: error.message || 'Failed to cancel subscription',
+        color: 'red',
+      });
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      await apiClient.deleteAccount();
+      notifications.show({
+        title: 'Account Deleted',
+        message: 'Your account has been deleted. You will be logged out shortly.',
+        color: 'red',
+      });
+      setDeleteModalOpen(false);
+      // Redirect to login after a short delay
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 2000);
+    } catch (error: any) {
+      notifications.show({
+        title: 'Error',
+        message: error.message || 'Failed to delete account',
+        color: 'red',
+      });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -600,8 +645,127 @@ export const Billing = () => {
               </Stack>
             </Tabs.Panel>
           </Tabs>
+
+          {/* Danger Zone */}
+          {accessStatus === 'active' && accountStatus !== 'deleted' && accountStatus !== null && (
+            <>
+              <Divider my="xl" />
+              <div>
+                <Title order={3} className="text-xl font-bold mb-4 text-white">
+                  Account Management
+                </Title>
+                <Stack gap="md">
+                  <div className="p-4 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
+                    <div className="mb-4">
+                      <Text className="font-semibold text-white mb-2">Cancel Subscription</Text>
+                      <Text size="sm" className="text-gray-400 mb-4">
+                        Cancel your subscription to stop billing. You'll keep access to your account
+                        and customer data, but SMS sending will be disabled.
+                      </Text>
+                      <Button
+                        variant="light"
+                        color="yellow"
+                        leftSection={<IconX size={16} />}
+                        onClick={() => setCancelModalOpen(true)}
+                        disabled={accountStatus === 'cancelled'}
+                      >
+                        {accountStatus === 'cancelled'
+                          ? 'Subscription Already Cancelled'
+                          : 'Cancel Subscription'}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-red-900/20 rounded-lg border border-red-800/50">
+                    <div>
+                      <Text className="font-semibold text-white mb-2">Delete Account</Text>
+                      <Text size="sm" className="text-gray-400 mb-4">
+                        Permanently delete your account and all associated data. This action cannot
+                        be undone.
+                      </Text>
+                      <Button
+                        variant="light"
+                        color="red"
+                        leftSection={<IconTrash size={16} />}
+                        onClick={() => setDeleteModalOpen(true)}
+                        disabled={false}
+                      >
+                        Delete Account
+                      </Button>
+                    </div>
+                  </div>
+                </Stack>
+              </div>
+            </>
+          )}
         </>
       )}
+
+      {/* Cancel Subscription Modal */}
+      <Modal
+        opened={cancelModalOpen}
+        onClose={() => setCancelModalOpen(false)}
+        title="Cancel Subscription"
+        centered
+      >
+        <Stack gap="md">
+          <Text size="sm" className="text-gray-300">
+            Are you sure you want to cancel your subscription? This will:
+          </Text>
+          <ul className="list-disc list-inside space-y-2 text-sm text-gray-300 ml-2">
+            <li>Stop all future billing</li>
+            <li>Disable SMS sending immediately</li>
+            <li>Keep your account and customer data accessible</li>
+            <li>Allow you to reactivate your subscription later</li>
+          </ul>
+          <div className="flex gap-3 mt-4">
+            <Button variant="light" onClick={() => setCancelModalOpen(false)} fullWidth>
+              Keep Subscription
+            </Button>
+            <Button
+              color="yellow"
+              onClick={handleCancelSubscription}
+              loading={cancelling}
+              fullWidth
+            >
+              Cancel Subscription
+            </Button>
+          </div>
+        </Stack>
+      </Modal>
+
+      {/* Delete Account Modal */}
+      <Modal
+        opened={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        title="Delete Account"
+        centered
+      >
+        <Stack gap="md">
+          <Alert color="red" icon={<IconAlertCircle size={16} />}>
+            <Text size="sm" className="text-gray-300">
+              This action cannot be undone. All your data will be permanently deleted.
+            </Text>
+          </Alert>
+          <Text size="sm" className="text-gray-300">
+            Deleting your account will permanently remove:
+          </Text>
+          <ul className="list-disc list-inside space-y-2 text-sm text-gray-300 ml-2">
+            <li>All customer data</li>
+            <li>All SMS messages and history</li>
+            <li>Your account settings and preferences</li>
+            <li>Your subscription and billing information</li>
+          </ul>
+          <div className="flex gap-3 mt-4">
+            <Button variant="light" onClick={() => setDeleteModalOpen(false)} fullWidth>
+              Keep Account
+            </Button>
+            <Button color="red" onClick={handleDeleteAccount} loading={deleting} fullWidth>
+              Delete Account
+            </Button>
+          </div>
+        </Stack>
+      </Modal>
     </Paper>
   );
 };

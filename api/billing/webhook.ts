@@ -35,30 +35,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // Get raw body for webhook signature verification
-  // In Vercel, req.body should be the raw body as Buffer or string
-  let body: string | Buffer;
+  // Vercel automatically parses JSON, so we need to get the raw body
+  let body: string;
 
-  if (Buffer.isBuffer(req.body)) {
-    body = req.body;
+  // Try multiple methods to get raw body
+  if (typeof (req as any).rawBody === 'string') {
+    // Vercel sometimes provides rawBody
+    body = (req as any).rawBody;
+  } else if (Buffer.isBuffer(req.body)) {
+    body = req.body.toString('utf8');
   } else if (typeof req.body === 'string') {
-    body = Buffer.from(req.body, 'utf8');
+    body = req.body;
+  } else if (req.body && typeof req.body === 'object') {
+    // Body was parsed as JSON - reconstruct it
+    // IMPORTANT: This may fail signature verification if whitespace/key order differs
+    // For production, consider using a middleware to capture raw body
+    body = JSON.stringify(req.body);
   } else {
-    // If body was parsed as JSON (shouldn't happen, but handle it)
-    console.error('[Webhook] Body was parsed as JSON - this should not happen');
+    console.error('[Webhook] Unable to get request body');
     return res.status(400).json({ error: 'Invalid request body format' });
   }
 
   let event: Stripe.Event;
 
   try {
-    // constructEvent expects string, so convert Buffer to string
-    const bodyString = Buffer.isBuffer(body) ? body.toString('utf8') : body;
-    event = stripe.webhooks.constructEvent(bodyString, sig, webhookSecret);
+    event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
   } catch (err: any) {
+    // If signature verification fails, log details for debugging
     console.error('[Webhook] Signature verification failed:', err.message);
+    console.error('[Webhook] Error type:', err.type);
     console.error('[Webhook] Body type:', typeof req.body);
     console.error('[Webhook] Body is Buffer:', Buffer.isBuffer(req.body));
-    console.error('[Webhook] Signature header present:', !!sig);
+    console.error('[Webhook] Body length:', body?.length);
+    console.error('[Webhook] Has rawBody:', typeof (req as any).rawBody !== 'undefined');
+
+    // For debugging: if webhook secret is missing, that's the issue
+    if (!webhookSecret) {
+      return res.status(500).json({ error: 'STRIPE_WEBHOOK_SECRET not configured' });
+    }
+
     return res.status(400).json({ error: `Webhook signature verification failed: ${err.message}` });
   }
 

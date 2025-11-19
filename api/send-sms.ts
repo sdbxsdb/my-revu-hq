@@ -26,15 +26,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const auth = await authenticate(req as any);
     const { customerId } = sendSMSSchema.parse(req.body);
 
-    // Get user to check limit
+    // Get user to check limit and account status
     const { data: user, error: userError } = await supabase
       .from('users')
-      .select('sms_sent_this_month, business_name, review_links, sms_template')
+      .select(
+        'sms_sent_this_month, business_name, review_links, sms_template, account_status, access_status'
+      )
       .eq('id', auth.userId)
       .single();
 
     if (userError) throw userError;
     if (!user) throw new Error('User not found');
+
+    // Check if account is cancelled or deleted
+    if (user.account_status === 'cancelled' || user.account_status === 'deleted') {
+      return res.status(403).json({
+        error:
+          'Your subscription has been cancelled. Please reactivate your subscription to send SMS messages.',
+      });
+    }
+
+    // Check if access is active
+    if (user.access_status !== 'active') {
+      return res.status(403).json({
+        error: 'Your subscription is not active. Please set up payment to send SMS messages.',
+      });
+    }
 
     // Check monthly limit
     const sentThisMonth = user.sms_sent_this_month || 0;

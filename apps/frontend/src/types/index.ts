@@ -11,6 +11,7 @@ export interface User {
   access_status?: 'active' | 'inactive' | 'past_due' | 'canceled'; // Our app's access status, not Stripe's
   payment_method?: 'card' | 'direct_debit';
   current_period_end?: string;
+  account_status?: 'active' | 'cancelled' | 'deleted'; // Account lifecycle status
   created_at?: string;
   updated_at?: string;
 }

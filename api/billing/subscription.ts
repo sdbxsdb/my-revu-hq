@@ -38,7 +38,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { data: user } = await supabase
       .from('users')
       .select(
-        'stripe_customer_id, stripe_subscription_id, access_status, payment_method, current_period_end'
+        'stripe_customer_id, stripe_subscription_id, access_status, payment_method, current_period_end, account_status'
       )
       .eq('id', auth.userId)
       .single<{
@@ -47,6 +47,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         access_status: string | null;
         payment_method: string | null;
         current_period_end: string | null;
+        account_status: string | null;
       }>();
 
     if (!user) {
@@ -87,6 +88,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       nextBillingDate: user.current_period_end || undefined,
       cardLast4,
       cardBrand,
+      accountStatus: user.account_status as 'active' | 'cancelled' | 'deleted' | null,
     });
   } catch (error: any) {
     if (error.message === 'Unauthorized') {
