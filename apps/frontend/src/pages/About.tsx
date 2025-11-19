@@ -196,6 +196,20 @@ export const About = () => {
               </a>
             </Text>
           </section>
+
+          <Divider />
+
+          <section className="text-center">
+            <Text size="sm" className="text-gray-400">
+              <a href="/privacy" className="text-teal-400 hover:text-teal-300 hover:underline">
+                Privacy Policy
+              </a>
+              {' • '}
+              <a href="/terms" className="text-teal-400 hover:text-teal-300 hover:underline">
+                Terms and Conditions
+              </a>
+            </Text>
+          </section>
         </Stack>
       </Paper>
     </Container>
