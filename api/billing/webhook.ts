@@ -80,13 +80,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // Get raw body for webhook signature verification
-  let bodyString: string;
+  let bodyString: string = '';
   try {
     bodyString = await getRawBody(req);
     console.log('[Webhook] Got raw body, length:', bodyString.length);
   } catch (error: any) {
     console.error('[Webhook] Error getting raw body:', error);
-    return res.status(400).json({ error: 'Invalid request body format' });
+    // If we can't get raw body, try to use parsed body as fallback
+    if (req.body && typeof req.body === 'object') {
+      console.warn('[Webhook] Using parsed body as fallback');
+      bodyString = JSON.stringify(req.body);
+    } else {
+      return res.status(400).json({ error: 'Invalid request body format' });
+    }
   }
 
   let event: Stripe.Event;
@@ -103,6 +109,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Allow skipping signature verification in development/testing
     // Set ALLOW_UNVERIFIED_WEBHOOKS=true in Vercel environment variables for testing
     const allowUnverified = process.env.ALLOW_UNVERIFIED_WEBHOOKS === 'true';
+
+    console.log('[Webhook] allowUnverified flag:', allowUnverified);
+    console.log('[Webhook] isReconstructed:', isReconstructed);
+    console.log('[Webhook] Environment variables check:', {
+      ALLOW_UNVERIFIED_WEBHOOKS: process.env.ALLOW_UNVERIFIED_WEBHOOKS,
+      NODE_ENV: process.env.NODE_ENV,
+    });
 
     if (isReconstructed && allowUnverified) {
       // If body was parsed and we're allowing unverified webhooks, construct event from parsed body
@@ -126,8 +139,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // In production or if it's not a parsing issue, fail
       console.error('[Webhook] Signature verification failed:', err.message);
       console.error('[Webhook] Error type:', err.type);
-      console.error('[Webhook] Body string length:', bodyString?.length);
-      console.error('[Webhook] Body string preview:', bodyString?.substring(0, 100));
+      console.error('[Webhook] Body string length:', bodyString?.length || 0);
+      if (bodyString) {
+        console.error('[Webhook] Body string preview:', bodyString.substring(0, 100));
+      }
 
       // For debugging: if webhook secret is missing, that's the issue
       if (!webhookSecret) {
