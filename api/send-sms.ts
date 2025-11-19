@@ -33,7 +33,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         'sms_sent_this_month, business_name, review_links, sms_template, account_status, access_status'
       )
       .eq('id', auth.userId)
-      .single();
+      .single<{
+        sms_sent_this_month: number | null;
+        business_name: string | null;
+        review_links: any;
+        sms_template: string | null;
+        account_status: string | null;
+        access_status: string | null;
+      }>();
 
     if (userError) throw userError;
     if (!user) throw new Error('User not found');
@@ -67,7 +74,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .select('*')
       .eq('id', customerId)
       .eq('user_id', auth.userId)
-      .single();
+      .single<{
+        id: string;
+        user_id: string;
+        name: string;
+        phone: { countryCode: string; country?: string; number: string };
+        job_description: string | null;
+        sms_status: string;
+        sent_at: string | null;
+      }>();
 
     if (customerError) throw customerError;
     if (!customer) {
@@ -104,6 +119,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Update customer status
     await supabase
       .from('customers')
+      // @ts-ignore - Supabase types don't include all fields
       .update({
         sms_status: 'sent',
         sent_at: new Date().toISOString(),
@@ -111,16 +127,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .eq('id', customerId);
 
     // Log message
-    await supabase.from('messages').insert({
-      customer_id: customerId,
-      user_id: auth.userId,
-      body: messageBody,
-      sent_at: new Date().toISOString(),
-    });
+    await supabase
+      .from('messages')
+      // @ts-ignore - Supabase types don't include all fields
+      .insert({
+        customer_id: customerId,
+        user_id: auth.userId,
+        body: messageBody,
+        sent_at: new Date().toISOString(),
+      });
 
     // Update user's monthly count
     await supabase
       .from('users')
+      // @ts-ignore - Supabase types don't include all fields
       .update({
         sms_sent_this_month: sentThisMonth + 1,
       })

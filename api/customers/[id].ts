@@ -50,6 +50,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const { data, error } = await supabase
         .from('customers')
+        // @ts-ignore - Supabase types don't include all fields
         .update(updateData)
         .eq('id', id)
         .eq('user_id', auth.userId)

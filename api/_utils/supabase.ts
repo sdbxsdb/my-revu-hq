@@ -18,7 +18,7 @@ function getSupabaseClient() {
 
 let supabaseClient: ReturnType<typeof createClient> | null = null;
 
-export const supabase = new Proxy({} as ReturnType<typeof createClient>, {
+export const supabase = new Proxy({} as any, {
   get(_target, prop) {
     if (!supabaseClient) {
       supabaseClient = getSupabaseClient();

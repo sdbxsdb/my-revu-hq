@@ -55,6 +55,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Create user profile if it doesn't exist
         const { data: newUser, error: createError } = await supabase
           .from('users')
+          // @ts-ignore - Supabase types don't include all fields
           .insert({
             id: auth.userId,
             email: auth.userEmail,
@@ -83,6 +84,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const { data, error } = await supabase
         .from('users')
+        // @ts-ignore - Supabase types don't include all fields
         .update(validated)
         .eq('id', auth.userId)
         .select()
