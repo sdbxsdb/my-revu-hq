@@ -226,6 +226,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 stripe_subscription_id: subscription.id,
                 access_status: subscription.status === 'active' ? 'active' : 'inactive',
                 payment_method: 'card',
+                subscription_start_date: subscription.created
+                  ? new Date(subscription.created * 1000).toISOString()
+                  : null,
                 current_period_end: (subscription as any).current_period_end
                   ? new Date((subscription as any).current_period_end * 1000).toISOString()
                   : null,
@@ -266,6 +269,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     ? 'canceled'
                     : 'inactive',
             payment_method: 'card',
+            subscription_start_date: subscription.created
+              ? new Date(subscription.created * 1000).toISOString()
+              : null,
             current_period_end: (subscription as any).current_period_end
               ? new Date((subscription as any).current_period_end * 1000).toISOString()
               : null,
@@ -314,6 +320,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             .update({
               access_status: 'active',
               payment_method: 'direct_debit',
+              subscription_start_date: invoice.created
+                ? new Date(invoice.created * 1000).toISOString()
+                : null,
               current_period_end: invoice.period_end
                 ? new Date(invoice.period_end * 1000).toISOString()
                 : null,

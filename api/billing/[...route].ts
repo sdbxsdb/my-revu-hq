@@ -84,7 +84,7 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
     const { data: user } = await supabase
       .from('users')
       .select(
-        'stripe_customer_id, stripe_subscription_id, access_status, payment_method, current_period_end, account_status'
+        'stripe_customer_id, stripe_subscription_id, access_status, payment_method, current_period_end, account_status, subscription_start_date'
       )
       .eq('id', auth.userId)
       .single<{
@@ -94,6 +94,7 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
         payment_method: string | null;
         current_period_end: string | null;
         account_status: string | null;
+        subscription_start_date: string | null;
       }>();
 
     if (!user) {
@@ -114,24 +115,79 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
     // Determine payment type based on subscription_id
     let cardLast4: string | undefined;
     let cardBrand: string | undefined;
+    let subscriptionStartDate: string | undefined;
+    let currentPeriodStart: string | undefined;
+    let currentPeriodEnd: string | undefined;
 
     if (user.stripe_subscription_id) {
-      // Card payment: Get card details from Stripe to display
-      const subscription = await stripe.subscriptions.retrieve(user.stripe_subscription_id);
-      const paymentMethod = subscription.default_payment_method
-        ? await stripe.paymentMethods.retrieve(subscription.default_payment_method as string)
-        : null;
+      // Card payment: Get card details and subscription info from Stripe
+      try {
+        const subscription = await stripe.subscriptions.retrieve(user.stripe_subscription_id);
 
-      if (paymentMethod?.type === 'card' && paymentMethod.card) {
-        cardLast4 = paymentMethod.card.last4;
-        cardBrand = paymentMethod.card.brand;
+        // Get subscription dates
+        subscriptionStartDate = subscription.created
+          ? new Date(subscription.created * 1000).toISOString()
+          : user.subscription_start_date || undefined;
+        currentPeriodStart = subscription.current_period_start
+          ? new Date(subscription.current_period_start * 1000).toISOString()
+          : undefined;
+        currentPeriodEnd = subscription.current_period_end
+          ? new Date(subscription.current_period_end * 1000).toISOString()
+          : undefined;
+
+        // Get card details if available
+        if (subscription.default_payment_method) {
+          try {
+            const paymentMethod = await stripe.paymentMethods.retrieve(
+              subscription.default_payment_method as string
+            );
+
+            if (paymentMethod?.type === 'card' && paymentMethod.card) {
+              cardLast4 = paymentMethod.card.last4;
+              cardBrand = paymentMethod.card.brand;
+              console.log('[Subscription API] Card details retrieved:', {
+                last4: cardLast4,
+                brand: cardBrand,
+              });
+            }
+          } catch (pmError: any) {
+            console.error('[Subscription API] Error retrieving payment method:', pmError.message);
+          }
+        } else {
+          console.log('[Subscription API] No default_payment_method on subscription');
+        }
+      } catch (stripeError: any) {
+        console.error(
+          '[Subscription API] Error retrieving subscription from Stripe:',
+          stripeError.message
+        );
+        // Fallback to database values
+        subscriptionStartDate = user.subscription_start_date || undefined;
+        currentPeriodEnd = user.current_period_end || undefined;
       }
+    } else {
+      // For invoice payments, use dates from database
+      subscriptionStartDate = user.subscription_start_date || undefined;
+      currentPeriodEnd = user.current_period_end || undefined;
     }
+
+    console.log('[Subscription API] Returning subscription data:', {
+      accessStatus: user.access_status,
+      paymentMethod: user.payment_method,
+      subscriptionStartDate,
+      currentPeriodStart,
+      currentPeriodEnd,
+      cardLast4,
+      cardBrand,
+    });
 
     return res.json({
       accessStatus: user.access_status,
       paymentMethod: user.payment_method as 'card' | 'direct_debit' | null,
-      nextBillingDate: user.current_period_end || undefined,
+      nextBillingDate: currentPeriodEnd || user.current_period_end || undefined,
+      subscriptionStartDate,
+      currentPeriodStart,
+      currentPeriodEnd,
       cardLast4,
       cardBrand,
       accountStatus: user.account_status as 'active' | 'cancelled' | 'deleted' | null,

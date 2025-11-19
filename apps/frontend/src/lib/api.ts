@@ -103,6 +103,9 @@ export const apiClient = {
     accessStatus: 'active' | 'inactive' | 'past_due' | 'canceled';
     paymentMethod: 'card' | 'direct_debit' | null;
     nextBillingDate?: string;
+    subscriptionStartDate?: string;
+    currentPeriodStart?: string;
+    currentPeriodEnd?: string;
     cardLast4?: string;
     cardBrand?: string;
     accountStatus?: 'active' | 'cancelled' | 'deleted' | null;

@@ -11,7 +11,6 @@ import {
   Badge,
   Skeleton,
   Modal,
-  Divider,
 } from '@mantine/core';
 import {
   IconCreditCard,
@@ -63,6 +62,8 @@ export const Billing = () => {
   const [nextBillingDate, setNextBillingDate] = useState<string | undefined>(
     hasPaid ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : undefined
   );
+  const [subscriptionStartDate, setSubscriptionStartDate] = useState<string | undefined>(undefined);
+  const [currentPeriodStart, setCurrentPeriodStart] = useState<string | undefined>(undefined);
   const [cardLast4, setCardLast4] = useState<string | undefined>(hasPaid ? '4242' : undefined);
   const [cardBrand, setCardBrand] = useState<string | undefined>(hasPaid ? 'visa' : undefined);
   const [accountStatus, setAccountStatus] = useState<'active' | 'cancelled' | 'deleted' | null>(
@@ -72,6 +73,28 @@ export const Billing = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  // Local testing toggles - only in dev mode
+  const [localTestPaid, setLocalTestPaid] = useState(false);
+  const [localTestPaymentMethod, setLocalTestPaymentMethod] = useState<
+    'card' | 'direct_debit' | null
+  >(null);
+  const isPaid = accessStatus === 'active' || localTestPaid;
+  const displayPaymentMethod = localTestPaymentMethod || paymentMethod;
+
+  // For local testing, add test dates if none exist
+  const displaySubscriptionStartDate =
+    subscriptionStartDate ||
+    (localTestPaid ? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() : undefined);
+  const displayCurrentPeriodStart =
+    currentPeriodStart ||
+    (localTestPaid ? new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString() : undefined);
+  const displayNextBillingDate =
+    nextBillingDate ||
+    (localTestPaid ? new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString() : undefined);
+  const displayCardLast4 =
+    cardLast4 || (localTestPaid && displayPaymentMethod === 'card' ? '4242' : cardLast4);
+  const displayCardBrand =
+    cardBrand || (localTestPaid && displayPaymentMethod === 'card' ? 'visa' : cardBrand);
 
   // Detect country from IP geolocation first
   useEffect(() => {
@@ -172,11 +195,27 @@ export const Billing = () => {
       setAccessStatus(subscription.accessStatus);
       setPaymentMethod(subscription.paymentMethod);
       setNextBillingDate(subscription.nextBillingDate);
+      setSubscriptionStartDate(subscription.subscriptionStartDate);
+      setCurrentPeriodStart(subscription.currentPeriodStart);
       setCardLast4(subscription.cardLast4);
       setCardBrand(subscription.cardBrand);
       setAccountStatus(subscription.accountStatus || 'active');
+
+      // Debug logging in dev mode
+      if (import.meta.env.DEV) {
+        console.log('[Billing] Subscription data loaded:', {
+          accessStatus: subscription.accessStatus,
+          paymentMethod: subscription.paymentMethod,
+          subscriptionStartDate: subscription.subscriptionStartDate,
+          currentPeriodStart: subscription.currentPeriodStart,
+          nextBillingDate: subscription.nextBillingDate,
+          cardLast4: subscription.cardLast4,
+          cardBrand: subscription.cardBrand,
+        });
+      }
     } catch (error: any) {
       // Failed to load subscription
+      console.error('[Billing] Error loading subscription:', error);
       notifications.show({
         title: 'Error',
         message: 'Failed to load subscription information',
@@ -195,7 +234,7 @@ export const Billing = () => {
 
   const handleSubscribe = async () => {
     // Prevent setting up card if invoice/direct debit is already active
-    if (accessStatus === 'active' && paymentMethod === 'direct_debit') {
+    if (isPaid && paymentMethod === 'direct_debit') {
       notifications.show({
         title: 'Payment Method Already Active',
         message:
@@ -223,7 +262,7 @@ export const Billing = () => {
 
   const handleRequestInvoice = async () => {
     // Prevent setting up invoice if card payment is already active
-    if (accessStatus === 'active' && paymentMethod === 'card') {
+    if (isPaid && displayPaymentMethod === 'card') {
       notifications.show({
         title: 'Payment Method Already Active',
         message:
@@ -312,46 +351,358 @@ export const Billing = () => {
         <p className="text-sm text-gray-400">Manage your subscription and payment methods</p>
       </div>
 
+      {/* Local Testing Toggle - Remove in production */}
+      {import.meta.env.DEV && (
+        <div className="mb-4 p-3 bg-yellow-900/20 border border-yellow-800/50 rounded-lg">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Text size="sm" className="text-yellow-300">
+                🧪 Local Testing Mode
+              </Text>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={localTestPaid}
+                  onChange={(e) => setLocalTestPaid(e.target.checked)}
+                  className="w-4 h-4"
+                />
+                <Text size="sm" className="text-yellow-300">
+                  Simulate Paid Status
+                </Text>
+              </label>
+            </div>
+            {localTestPaid && (
+              <div className="flex items-center gap-3">
+                <Text size="xs" className="text-yellow-300">
+                  Payment Method:
+                </Text>
+                <select
+                  value={localTestPaymentMethod || ''}
+                  onChange={(e) =>
+                    setLocalTestPaymentMethod(
+                      (e.target.value as 'card' | 'direct_debit' | '') || null
+                    )
+                  }
+                  className="px-2 py-1 bg-[#1a1a1a] border border-[#2a2a2a] rounded text-yellow-300 text-xs"
+                >
+                  <option value="">Use DB Value</option>
+                  <option value="card">Card</option>
+                  <option value="direct_debit">Invoice/Direct Debit</option>
+                </select>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {accountLoading || loadingSubscription || loadingPrices || loadingCountry ? (
         <div className="space-y-6">
           <Skeleton height={40} width="60%" />
           <Skeleton height={100} />
           <Skeleton height={200} />
         </div>
-      ) : (
-        <>
-          {/* Current Subscription Status */}
-          {accessStatus === 'active' && (
-            <Alert
-              icon={<IconCheck size={16} />}
-              title="Active Subscription"
-              color="teal"
-              className="mb-6"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      ) : isPaid ? (
+        /* Active Subscription View */
+        <div className="space-y-6">
+          {/* Subscription Status Banner */}
+          <Alert
+            icon={<IconCheck size={16} />}
+            title="Active Subscription"
+            color="teal"
+            className="mb-6"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div>
+                <Text size="sm" className="text-gray-300">
+                  Your subscription is active and you have full access to all features.
+                  {displayNextBillingDate && (
+                    <>
+                      {' '}
+                      Next billing date:{' '}
+                      {new Date(displayNextBillingDate).toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                      })}
+                    </>
+                  )}
+                </Text>
+              </div>
+              <Badge color="teal" size="lg">
+                {formatPrice(currencyInfo.price, currencyInfo.currency)}/month
+              </Badge>
+            </div>
+          </Alert>
+
+          {/* Subscription Details Card */}
+          <Paper shadow="sm" p="md" className="bg-[#2a2a2a]/50 border border-[#2a2a2a]">
+            <Title order={3} className="text-xl font-bold mb-4 text-white">
+              Subscription Details
+            </Title>
+            <Stack gap="md">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Text size="sm" className="text-gray-300">
-                    Your subscription is active.
-                    {nextBillingDate && (
-                      <>
-                        {' '}
-                        Next billing date:{' '}
-                        {new Date(nextBillingDate).toLocaleDateString('en-GB', {
+                  <Text size="sm" className="text-gray-400 mb-1">
+                    Plan
+                  </Text>
+                  <Text className="font-semibold text-white">
+                    {formatPrice(currencyInfo.price, currencyInfo.currency)}/month
+                  </Text>
+                </div>
+                <div>
+                  <Text size="sm" className="text-gray-400 mb-1">
+                    Status
+                  </Text>
+                  <Badge
+                    color={
+                      accountStatus === 'cancelled'
+                        ? 'yellow'
+                        : accessStatus === 'active'
+                          ? 'teal'
+                          : 'gray'
+                    }
+                  >
+                    {accountStatus === 'cancelled'
+                      ? 'Cancelled'
+                      : accessStatus === 'active'
+                        ? 'Active'
+                        : accessStatus}
+                  </Badge>
+                </div>
+                {displayPaymentMethod && (
+                  <div>
+                    <Text size="sm" className="text-gray-400 mb-1">
+                      Payment Method
+                    </Text>
+                    <Text className="font-semibold text-white capitalize">
+                      {displayPaymentMethod === 'card'
+                        ? 'Credit/Debit Card'
+                        : 'Invoice/Direct Debit'}
+                    </Text>
+                  </div>
+                )}
+                {displaySubscriptionStartDate && (
+                  <div>
+                    <Text size="sm" className="text-gray-400 mb-1">
+                      Started
+                    </Text>
+                    <Text className="font-semibold text-white">
+                      {new Date(displaySubscriptionStartDate).toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                      })}
+                    </Text>
+                  </div>
+                )}
+                {displayCurrentPeriodStart && (
+                  <div>
+                    <Text size="sm" className="text-gray-400 mb-1">
+                      Current Period Start
+                    </Text>
+                    <Text className="font-semibold text-white">
+                      {new Date(displayCurrentPeriodStart).toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                      })}
+                    </Text>
+                  </div>
+                )}
+                {displayNextBillingDate && (
+                  <div>
+                    <Text size="sm" className="text-gray-400 mb-1">
+                      Next Billing Date
+                    </Text>
+                    <Text className="font-semibold text-white">
+                      {new Date(displayNextBillingDate).toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                      })}
+                    </Text>
+                  </div>
+                )}
+              </div>
+
+              {/* Payment Method Details */}
+              {displayPaymentMethod === 'card' && displayCardLast4 ? (
+                <div className="pt-4 border-t border-[#2a2a2a]">
+                  <Text size="sm" className="text-gray-400 mb-2">
+                    Payment Card
+                  </Text>
+                  <div className="flex items-center gap-3 mb-4">
+                    <CardBrandIcon brand={displayCardBrand} size={32} />
+                    <div>
+                      <Text className="font-semibold text-white">
+                        •••• •••• •••• {displayCardLast4}
+                      </Text>
+                      <Text size="xs" className="text-gray-400">
+                        Automatically charged monthly
+                      </Text>
+                    </div>
+                  </div>
+                  <div>
+                    <Button variant="light" size="sm" fullWidth>
+                      Update Payment Method
+                    </Button>
+                  </div>
+                </div>
+              ) : paymentMethod === 'direct_debit' ? (
+                <div className="pt-4 border-t border-[#2a2a2a]">
+                  <Text size="sm" className="text-gray-400 mb-2">
+                    Payment Method
+                  </Text>
+                  <div className="flex items-center gap-3 mb-4">
+                    <IconBuildingBank size={32} className="text-teal-400" />
+                    <div>
+                      <Text className="font-semibold text-white">Invoice / Direct Debit</Text>
+                      <Text size="xs" className="text-gray-400">
+                        Monthly invoices sent to your email
+                      </Text>
+                    </div>
+                  </div>
+                  {displayNextBillingDate && (
+                    <div className="mb-4 p-3 bg-[#1a1a1a] rounded-lg">
+                      <Text size="xs" className="text-gray-400 mb-1">
+                        Next Invoice Date
+                      </Text>
+                      <Text className="font-semibold text-white">
+                        {new Date(displayNextBillingDate).toLocaleDateString('en-GB', {
                           day: 'numeric',
                           month: 'long',
                           year: 'numeric',
                         })}
+                      </Text>
+                    </div>
+                  )}
+                  <div className="mb-3">
+                    <Text size="xs" className="text-gray-400 mb-2">
+                      Payment Information
+                    </Text>
+                    <ul className="list-none space-y-1 text-xs text-gray-300">
+                      <li className="flex items-start gap-2">
+                        <IconCheck size={14} className="text-teal-400 mt-0.5 flex-shrink-0" />
+                        <span>Invoices sent via email</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <IconCheck size={14} className="text-teal-400 mt-0.5 flex-shrink-0" />
+                        <span>Pay by bank transfer or direct debit</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <IconCheck size={14} className="text-teal-400 mt-0.5 flex-shrink-0" />
+                        <span>Net 30 payment terms available</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <div>
+                    <Button variant="light" size="sm" fullWidth>
+                      Update Payment Details
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Features Included */}
+              <div className="pt-4 border-t border-[#2a2a2a]">
+                <Text size="sm" className="text-gray-400 mb-3">
+                  Your subscription includes:
+                </Text>
+                <ul className="list-none space-y-2">
+                  <li className="flex items-start gap-2 text-sm text-gray-300">
+                    <IconCheck size={16} className="text-teal-400 mt-0.5 flex-shrink-0" />
+                    <span>100 SMS messages per month</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-sm text-gray-300">
+                    <IconCheck size={16} className="text-teal-400 mt-0.5 flex-shrink-0" />
+                    <span>Unlimited customers</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-sm text-gray-300">
+                    <IconCheck size={16} className="text-teal-400 mt-0.5 flex-shrink-0" />
+                    <span>Automatic monthly billing</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-sm text-gray-300">
+                    <IconCheck size={16} className="text-teal-400 mt-0.5 flex-shrink-0" />
+                    <span>Cancel anytime</span>
+                  </li>
+                </ul>
+              </div>
+            </Stack>
+          </Paper>
+
+          {/* Account Management Section */}
+          <Paper shadow="sm" p="md" className="bg-[#2a2a2a]/50 border border-[#2a2a2a]">
+            <Title order={3} className="text-xl font-bold mb-4 text-white">
+              Account Management
+            </Title>
+            <Stack gap="md">
+              {/* Cancel Subscription - Different messaging for card vs invoice */}
+              <div className="p-4 bg-yellow-900/20 rounded-lg border border-yellow-800/50">
+                <div className="mb-4">
+                  <Text className="font-semibold text-white mb-2">
+                    {displayPaymentMethod === 'card'
+                      ? 'Cancel Subscription'
+                      : 'Cancel Payment Method'}
+                  </Text>
+                  <Text size="sm" className="text-gray-400 mb-4">
+                    {displayPaymentMethod === 'card' ? (
+                      <>
+                        Cancel your subscription to stop billing. You'll keep access to your account
+                        and customer data, but SMS sending will be disabled.
+                      </>
+                    ) : (
+                      <>
+                        Cancel your invoice/direct debit payment method. You'll keep access to your
+                        account and customer data, but SMS sending will be disabled. To switch to
+                        card payment, cancel this first and then set up a new subscription.
                       </>
                     )}
                   </Text>
+                  <Button
+                    variant="light"
+                    color="yellow"
+                    leftSection={<IconX size={16} />}
+                    onClick={() => setCancelModalOpen(true)}
+                    disabled={accountStatus === 'cancelled'}
+                    fullWidth
+                  >
+                    {accountStatus === 'cancelled'
+                      ? displayPaymentMethod === 'card'
+                        ? 'Subscription Already Cancelled'
+                        : 'Payment Method Already Cancelled'
+                      : displayPaymentMethod === 'card'
+                        ? 'Cancel Subscription'
+                        : 'Cancel Payment Method'}
+                  </Button>
                 </div>
-                <Badge color="teal" size="lg">
-                  {formatPrice(currencyInfo.price, currencyInfo.currency)}/month
-                </Badge>
               </div>
-            </Alert>
-          )}
 
+              {/* Delete Account */}
+              <div className="p-4 bg-red-900/20 rounded-lg border border-red-800/50">
+                <div>
+                  <Text className="font-semibold text-white mb-2">Delete Account</Text>
+                  <Text size="sm" className="text-gray-400 mb-4">
+                    Permanently delete your account and all associated data. This action cannot be
+                    undone.
+                  </Text>
+                  <Button
+                    variant="light"
+                    color="red"
+                    leftSection={<IconTrash size={16} />}
+                    onClick={() => setDeleteModalOpen(true)}
+                    disabled={accountStatus === 'deleted'}
+                    fullWidth
+                  >
+                    {accountStatus === 'deleted' ? 'Account Already Deleted' : 'Delete Account'}
+                  </Button>
+                </div>
+              </div>
+            </Stack>
+          </Paper>
+        </div>
+      ) : (
+        /* Payment Setup View */
+        <>
           <Tabs value={activeTab} onChange={setActiveTab}>
             <Tabs.List grow>
               <Tabs.Tab
@@ -383,7 +734,7 @@ export const Billing = () => {
                   </Text>
                 </div>
 
-                {accessStatus === 'active' && paymentMethod === 'card' ? (
+                {displayPaymentMethod === 'card' && isPaid ? (
                   <div className="p-4 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
                     <div className="flex items-center gap-4 mb-6">
                       <div className="flex-shrink-0">
@@ -409,7 +760,7 @@ export const Billing = () => {
                       Cancel Subscription
                     </Button>
                   </div>
-                ) : paymentMethod === 'direct_debit' && accessStatus === 'active' ? (
+                ) : paymentMethod === 'direct_debit' ? (
                   <Alert
                     icon={<IconAlertCircle size={16} />}
                     title="Invoice Payment Active"
@@ -530,7 +881,7 @@ export const Billing = () => {
                       size="lg"
                       onClick={handleSubscribe}
                       loading={loading}
-                      disabled={accessStatus === 'active' && paymentMethod === 'direct_debit'}
+                      disabled={paymentMethod !== null && paymentMethod !== 'card'}
                       className="font-semibold"
                     >
                       Subscribe with Card
@@ -577,7 +928,7 @@ export const Billing = () => {
                       Cancel Payment Method
                     </Button>
                   </div>
-                ) : paymentMethod === 'card' ? (
+                ) : displayPaymentMethod === 'card' ? (
                   <Alert
                     icon={<IconAlertCircle size={16} />}
                     title="Card Payment Active"
@@ -631,7 +982,9 @@ export const Billing = () => {
                       variant="light"
                       onClick={handleRequestInvoice}
                       loading={loading}
-                      disabled={accessStatus === 'active' && paymentMethod === 'card'}
+                      disabled={
+                        displayPaymentMethod !== null && displayPaymentMethod !== 'direct_debit'
+                      }
                       className="font-semibold"
                     >
                       Request Invoice Setup
@@ -645,59 +998,6 @@ export const Billing = () => {
               </Stack>
             </Tabs.Panel>
           </Tabs>
-
-          {/* Danger Zone */}
-          {accessStatus === 'active' && accountStatus !== 'deleted' && accountStatus !== null && (
-            <>
-              <Divider my="xl" />
-              <div>
-                <Title order={3} className="text-xl font-bold mb-4 text-white">
-                  Account Management
-                </Title>
-                <Stack gap="md">
-                  <div className="p-4 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
-                    <div className="mb-4">
-                      <Text className="font-semibold text-white mb-2">Cancel Subscription</Text>
-                      <Text size="sm" className="text-gray-400 mb-4">
-                        Cancel your subscription to stop billing. You'll keep access to your account
-                        and customer data, but SMS sending will be disabled.
-                      </Text>
-                      <Button
-                        variant="light"
-                        color="yellow"
-                        leftSection={<IconX size={16} />}
-                        onClick={() => setCancelModalOpen(true)}
-                        disabled={accountStatus === 'cancelled'}
-                      >
-                        {accountStatus === 'cancelled'
-                          ? 'Subscription Already Cancelled'
-                          : 'Cancel Subscription'}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-red-900/20 rounded-lg border border-red-800/50">
-                    <div>
-                      <Text className="font-semibold text-white mb-2">Delete Account</Text>
-                      <Text size="sm" className="text-gray-400 mb-4">
-                        Permanently delete your account and all associated data. This action cannot
-                        be undone.
-                      </Text>
-                      <Button
-                        variant="light"
-                        color="red"
-                        leftSection={<IconTrash size={16} />}
-                        onClick={() => setDeleteModalOpen(true)}
-                        disabled={false}
-                      >
-                        Delete Account
-                      </Button>
-                    </div>
-                  </div>
-                </Stack>
-              </div>
-            </>
-          )}
         </>
       )}
 
