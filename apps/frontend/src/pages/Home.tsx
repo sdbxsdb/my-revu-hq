@@ -34,7 +34,6 @@ export const Home = () => {
                     size="lg"
                     leftSection={<IconLogin size={20} />}
                     onClick={() => navigate('/login')}
-                    className="!bg-teal-600 hover:!bg-teal-700"
                   >
                     Get Started
                   </Button>
@@ -115,7 +114,6 @@ export const Home = () => {
                     size="lg"
                     leftSection={<IconLogin size={20} />}
                     onClick={() => navigate('/login')}
-                    className="!bg-teal-600 hover:!bg-teal-700"
                   >
                     Create Your Account
                   </Button>

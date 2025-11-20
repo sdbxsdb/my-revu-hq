@@ -64,8 +64,9 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
     // This prevents 401 errors
     try {
       await syncSession();
-      // Give cookies a moment to be set
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      // Give cookies more time to be set and propagated
+      // In development with proxy, cookies might need extra time
+      await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (err) {
       console.error('Session sync failed:', err);
     }

@@ -199,12 +199,16 @@ export const useAuth = () => {
         throw error;
       }
 
-      // Sync session in background (don't wait for it)
+      // Wait for session sync to complete before returning
+      // This ensures cookies are set before navigation
       if (data.session) {
-        syncSession().catch((syncError) => {
-          // Session sync failure is non-fatal
+        try {
+          await syncSession();
+        } catch (syncError) {
+          // Session sync failure is non-fatal, but log it
           console.error('Session sync failed:', syncError);
-        });
+          // Still return the session - the retry logic in API interceptor will handle it
+        }
       }
 
       return data.session;

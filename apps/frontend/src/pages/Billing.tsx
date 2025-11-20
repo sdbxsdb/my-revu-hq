@@ -354,24 +354,22 @@ export const Billing = () => {
             color="teal"
             className="mb-6"
           >
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <div>
-                <Text size="sm" className="text-gray-300">
-                  Your subscription is active and you have full access to all features.
-                  {displayNextBillingDate && (
-                    <>
-                      {' '}
-                      Next billing date:{' '}
-                      {new Date(displayNextBillingDate).toLocaleDateString('en-GB', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                      })}
-                    </>
-                  )}
-                </Text>
-              </div>
-              <Badge color="teal" size="lg">
+            <div className="flex flex-col gap-2">
+              <Text size="sm" className="text-gray-300">
+                Your subscription is active and you have full access to all features.
+                {displayNextBillingDate && (
+                  <>
+                    {' '}
+                    Next billing date:{' '}
+                    {new Date(displayNextBillingDate).toLocaleDateString('en-GB', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    })}
+                  </>
+                )}
+              </Text>
+              <Badge color="teal" size="lg" className="self-start">
                 {formatPrice(currencyInfo.price, currencyInfo.currency)}/month
               </Badge>
             </div>
@@ -489,7 +487,7 @@ export const Billing = () => {
                     <Button
                       variant="light"
                       size="sm"
-                      fullWidth
+                      className="max-w-xs lg:max-w-sm w-full lg:w-auto"
                       onClick={async () => {
                         try {
                           setLoading(true);
@@ -562,7 +560,7 @@ export const Billing = () => {
                     <Button
                       variant="light"
                       size="sm"
-                      fullWidth
+                      className="max-w-xs lg:max-w-sm w-full lg:w-auto"
                       onClick={async () => {
                         try {
                           setLoading(true);
@@ -647,7 +645,7 @@ export const Billing = () => {
                     leftSection={<IconX size={16} />}
                     onClick={() => setCancelModalOpen(true)}
                     disabled={accountStatus === 'cancelled'}
-                    fullWidth
+                    className="max-w-xs lg:max-w-sm w-full lg:w-auto"
                   >
                     {accountStatus === 'cancelled'
                       ? displayPaymentMethod === 'card'
@@ -674,7 +672,7 @@ export const Billing = () => {
                     leftSection={<IconTrash size={16} />}
                     onClick={() => setDeleteModalOpen(true)}
                     disabled={accountStatus === 'deleted'}
-                    fullWidth
+                    className="max-w-xs lg:max-w-sm w-full lg:w-auto"
                   >
                     {accountStatus === 'deleted' ? 'Account Already Deleted' : 'Delete Account'}
                   </Button>
@@ -731,7 +729,11 @@ export const Billing = () => {
                       </div>
                     </div>
                     <div className="mb-4">
-                      <Button variant="light" size="md" fullWidth>
+                      <Button
+                        variant="light"
+                        size="md"
+                        className="max-w-xs lg:max-w-sm w-full lg:w-auto"
+                      >
                         Update Card
                       </Button>
                     </div>
@@ -739,7 +741,12 @@ export const Billing = () => {
                       Secure payment powered by Stripe. Your card details are never stored on our
                       servers.
                     </Text>
-                    <Button variant="subtle" color="red" size="sm" fullWidth>
+                    <Button
+                      variant="subtle"
+                      color="red"
+                      size="sm"
+                      className="max-w-xs lg:max-w-sm w-full lg:w-auto"
+                    >
                       Cancel Subscription
                     </Button>
                   </div>
@@ -860,12 +867,11 @@ export const Billing = () => {
                     )}
 
                     <Button
-                      fullWidth
                       size="lg"
                       onClick={handleSubscribe}
                       loading={loading}
                       disabled={paymentMethod !== null && paymentMethod !== 'card'}
-                      className="font-semibold"
+                      className="font-semibold max-w-xs lg:max-w-sm w-full lg:w-auto"
                     >
                       Subscribe with Card
                     </Button>
@@ -903,11 +909,20 @@ export const Billing = () => {
                       </div>
                     </div>
                     <div className="mb-4">
-                      <Button variant="light" size="md" fullWidth>
+                      <Button
+                        variant="light"
+                        size="md"
+                        className="max-w-xs lg:max-w-sm w-full lg:w-auto"
+                      >
                         Update Details
                       </Button>
                     </div>
-                    <Button variant="subtle" color="red" size="sm" fullWidth>
+                    <Button
+                      variant="subtle"
+                      color="red"
+                      size="sm"
+                      className="max-w-xs lg:max-w-sm w-full lg:w-auto"
+                    >
                       Cancel Payment Method
                     </Button>
                   </div>
@@ -960,7 +975,6 @@ export const Billing = () => {
                     </div>
 
                     <Button
-                      fullWidth
                       size="lg"
                       variant="light"
                       onClick={handleRequestInvoice}
@@ -968,7 +982,7 @@ export const Billing = () => {
                       disabled={
                         displayPaymentMethod !== null && displayPaymentMethod !== 'direct_debit'
                       }
-                      className="font-semibold"
+                      className="font-semibold max-w-xs lg:max-w-sm w-full lg:w-auto"
                     >
                       Request Invoice Setup
                     </Button>

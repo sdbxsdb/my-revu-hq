@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { Customer, User } from '@/types';
+import { supabase } from './supabase';
 
 // In production, API routes are on the same domain (Vercel serverless functions)
 // In development, use Vercel dev server (port 3000) or empty string to use Vite proxy
@@ -9,6 +10,30 @@ const api = axios.create({
   baseURL: API_URL,
   withCredentials: true,
 });
+
+// Add request interceptor to include auth token in header for development
+// This works around cookie issues with Vite proxy in development
+api.interceptors.request.use(
+  async (config) => {
+    // In development, cookies don't work well with the proxy, so use Authorization header
+    if (import.meta.env.DEV || !API_URL) {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          config.headers.Authorization = `Bearer ${session.access_token}`;
+        }
+      } catch (error) {
+        // If we can't get session, continue without token
+      }
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 // Add retry logic for 401 errors (session might still be syncing)
 api.interceptors.response.use(

@@ -433,7 +433,7 @@ export const AccountSetup = () => {
                         { name: '', url: '' },
                       ]);
                     }}
-                    className="self-start"
+                    className="self-end"
                   >
                     Add Review Link
                   </Button>

@@ -7,10 +7,17 @@ export interface AuthUser {
 }
 
 export async function authenticate(req: VercelRequest): Promise<AuthUser> {
-  // Get token from cookie or Authorization header
+  // Get token from Authorization header first (works in development with proxy)
+  // Then fall back to cookie (works in production)
+  const authHeader = req.headers.authorization;
+  const tokenFromHeader = authHeader?.replace('Bearer ', '');
+
   const cookies = req.headers.cookie || '';
   const cookieMatch = cookies.match(/access_token=([^;]+)/);
-  const token = cookieMatch?.[1] || req.headers.authorization?.replace('Bearer ', '');
+  const tokenFromCookie = cookieMatch?.[1];
+
+  // Prefer header token (development) over cookie (production)
+  const token = tokenFromHeader || tokenFromCookie;
 
   if (!token) {
     throw new Error('Unauthorized');

@@ -17,6 +17,8 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:3000', // Vercel dev server
         changeOrigin: true,
+        cookieDomainRewrite: 'localhost', // Ensure cookies work in development
+        secure: false, // Allow self-signed certificates if needed
       },
     },
   },

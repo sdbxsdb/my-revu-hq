@@ -27,7 +27,7 @@ export const Login = () => {
   const [passwordError, setPasswordError] = useState('');
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<boolean>(false);
-  const [mode, setMode] = useState<'password' | 'magic-link' | 'signup'>('signup');
+  const [mode, setMode] = useState<'password' | 'magic-link' | 'signup'>('password');
   const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [pendingAction, setPendingAction] = useState<'signup' | 'oauth' | 'magic-link' | null>(
@@ -337,6 +337,7 @@ export const Login = () => {
         <Stack gap="md">
           {/* OAuth and Magic Link - Both work for sign up and sign in */}
           <Button
+            type="button"
             leftSection={
               <img
                 src="/assets/logos/googlelogo.png"
@@ -356,6 +357,7 @@ export const Login = () => {
           </Button>
 
           <Button
+            type="button"
             variant="light"
             fullWidth
             onClick={(e) => {
