@@ -98,7 +98,7 @@ export const Home = () => {
                     Simple Pricing
                   </Title>
                   <Text size="xs" className="text-gray-400">
-                    Unlimited customers, 100 SMS/month, one low fee
+                    Plans starting from £4.99/month. Unlimited customers, flexible SMS limits
                   </Text>
                 </div>
               </div>

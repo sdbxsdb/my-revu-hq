@@ -343,16 +343,18 @@ async function handleCreateCheckoutSession(req: VercelRequest, res: VercelRespon
       return res.status(500).json({ error: 'Stripe not configured' });
     }
 
-    // Get currency from request body, default to GBP
+    // Get currency and tier from request body, default to GBP and 'pro'
     const currency = (req.body?.currency as string) || 'GBP';
+    const tier = (req.body?.tier as string) || 'pro'; // starter, pro, business
 
-    // Get the appropriate price ID based on currency
-    const priceIdEnvVar = `STRIPE_PRICE_ID_${currency}`;
-    const priceId = process.env[priceIdEnvVar] || process.env.STRIPE_PRICE_ID;
+    // Get the appropriate price ID based on tier and currency
+    // Format: STRIPE_PRICE_ID_{TIER}_{CURRENCY} (e.g., STRIPE_PRICE_ID_STARTER_GBP)
+    const priceIdEnvVar = `STRIPE_PRICE_ID_${tier.toUpperCase()}_${currency}`;
+    const priceId = process.env[priceIdEnvVar];
 
     if (!priceId) {
       return res.status(500).json({
-        error: `Price ID not configured for currency ${currency}. Please set ${priceIdEnvVar} or STRIPE_PRICE_ID.`,
+        error: `Price ID not configured for tier ${tier} and currency ${currency}. Please set ${priceIdEnvVar}.`,
       });
     }
 

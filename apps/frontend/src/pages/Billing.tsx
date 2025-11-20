@@ -34,6 +34,7 @@ import {
   type Currency,
 } from '@/lib/currency';
 import '@/lib/currency-debug'; // Load debug utility in dev
+import { PRICING_PLANS, type PricingTier, formatPlanPrice, getPlanById } from '@/lib/pricing';
 
 export const Billing = () => {
   const { hasPaid } = usePayment();
@@ -41,6 +42,7 @@ export const Billing = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string | null>('subscription');
+  const [selectedTier, setSelectedTier] = useState<PricingTier>('pro');
   const [loading, setLoading] = useState(false);
   const [loadingSubscription, setLoadingSubscription] = useState(true);
   const [loadingPrices, setLoadingPrices] = useState(true);
@@ -219,7 +221,7 @@ export const Billing = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasPaid]);
 
-  const handleSubscribe = async () => {
+  const handleSubscribe = async (tier: PricingTier = 'pro') => {
     // Prevent setting up card if invoice/direct debit is already active
     if (isPaid && paymentMethod === 'direct_debit') {
       notifications.show({
@@ -233,7 +235,7 @@ export const Billing = () => {
 
     setLoading(true);
     try {
-      const response = await apiClient.createCheckoutSession(selectedCurrency);
+      const response = await apiClient.createCheckoutSession(selectedCurrency, tier);
       window.location.href = response.url;
     } catch (error: any) {
       // Failed to create checkout session
@@ -592,7 +594,7 @@ export const Billing = () => {
                 <ul className="list-none space-y-2">
                   <li className="flex items-start gap-2 text-sm text-gray-300">
                     <IconCheck size={16} className="text-teal-400 mt-0.5 flex-shrink-0" />
-                    <span>100 SMS messages per month</span>
+                    <span>SMS messages based on your plan</span>
                   </li>
                   <li className="flex items-start gap-2 text-sm text-gray-300">
                     <IconCheck size={16} className="text-teal-400 mt-0.5 flex-shrink-0" />
@@ -707,13 +709,149 @@ export const Billing = () => {
               <Stack gap="lg">
                 <div>
                   <Title order={3} className="text-xl font-bold mb-2 text-white">
-                    Payment Type: Card
+                    Choose Your Plan
                   </Title>
                   <Text size="sm" className="text-gray-400 mb-4">
-                    Set up automatic monthly billing with a credit or debit card. Perfect for small
-                    businesses and individuals.
+                    Select a plan that fits your business needs. All plans include unlimited
+                    customers and can be cancelled anytime.
                   </Text>
                 </div>
+
+                {/* Tier Selection Buttons */}
+                <div className="grid grid-cols-2 gap-2 mb-6">
+                  {PRICING_PLANS.filter((plan) => plan.id !== 'enterprise').map((plan) => (
+                    <div key={plan.id} className="relative">
+                      <Button
+                        variant={selectedTier === plan.id ? 'filled' : 'outline'}
+                        color={selectedTier === plan.id ? 'teal' : 'gray'}
+                        onClick={() => setSelectedTier(plan.id)}
+                        className="font-semibold w-full"
+                      >
+                        {plan.name} - {formatPlanPrice(plan.price, selectedCurrency)}
+                      </Button>
+                      {plan.popular && (
+                        <Badge color="teal" size="sm" className="absolute -top-2 -right-2">
+                          Popular
+                        </Badge>
+                      )}
+                    </div>
+                  ))}
+                  <Button
+                    variant={selectedTier === 'enterprise' ? 'filled' : 'outline'}
+                    color={selectedTier === 'enterprise' ? 'teal' : 'gray'}
+                    onClick={() => setSelectedTier('enterprise')}
+                    className="font-semibold w-full"
+                  >
+                    Enterprise - Custom
+                  </Button>
+                </div>
+
+                {/* Selected Tier Details */}
+                {selectedTier !== 'enterprise' ? (
+                  (() => {
+                    const plan = getPlanById(selectedTier);
+                    if (!plan) return null;
+                    return (
+                      <Paper
+                        shadow="sm"
+                        p="md"
+                        className={`bg-[#2a2a2a]/50 border ${
+                          plan.popular ? 'border-teal-500 border-2' : 'border-[#2a2a2a]'
+                        } relative`}
+                      >
+                        {plan.popular && (
+                          <Badge
+                            color="teal"
+                            className="absolute -top-3 left-1/2 transform -translate-x-1/2"
+                          >
+                            Most Popular
+                          </Badge>
+                        )}
+                        <Stack gap="sm">
+                          <div>
+                            <Title order={4} className="text-lg font-bold text-white mb-1">
+                              {plan.name}
+                            </Title>
+                            <Text size="sm" className="text-gray-400 mb-3">
+                              {plan.description}
+                            </Text>
+                            <div className="mb-4">
+                              <Text className="text-3xl font-bold text-white">
+                                {formatPlanPrice(plan.price, selectedCurrency)}
+                              </Text>
+                              <Text size="sm" className="text-gray-400">
+                                per month
+                              </Text>
+                            </div>
+                          </div>
+                          <ul className="list-none space-y-2 mb-4">
+                            {plan.features.map((feature, idx) => {
+                              const isSMSFeature = feature.includes('SMS messages per month');
+                              return (
+                                <li
+                                  key={idx}
+                                  className={`flex items-center gap-2 ${
+                                    isSMSFeature
+                                      ? 'text-base font-semibold text-teal-400'
+                                      : 'text-sm text-gray-300'
+                                  }`}
+                                >
+                                  <IconCheck size={16} className="text-teal-400 flex-shrink-0" />
+                                  <span>{feature}</span>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                          <Button
+                            size="md"
+                            fullWidth
+                            onClick={() => handleSubscribe(plan.id)}
+                            loading={loading}
+                            disabled={isPaid && displayPaymentMethod !== 'card'}
+                            className="font-semibold"
+                          >
+                            {isPaid && displayPaymentMethod === 'card'
+                              ? 'Current Plan'
+                              : 'Choose Plan'}
+                          </Button>
+                        </Stack>
+                      </Paper>
+                    );
+                  })()
+                ) : (
+                  <Paper shadow="sm" p="md" className="bg-[#2a2a2a]/50 border border-[#2a2a2a]">
+                    <Stack gap="sm">
+                      <div>
+                        <Title order={4} className="text-lg font-bold text-white mb-1">
+                          Enterprise
+                        </Title>
+                        <Text size="sm" className="text-gray-400 mb-3">
+                          Custom solutions for large organizations
+                        </Text>
+                      </div>
+                      <ul className="list-none space-y-2 mb-4">
+                        {PRICING_PLANS.find((p) => p.id === 'enterprise')?.features.map(
+                          (feature, idx) => (
+                            <li key={idx} className="flex items-start gap-2 text-sm text-gray-300">
+                              <IconCheck size={16} className="text-teal-400 mt-0.5 flex-shrink-0" />
+                              <span>{feature}</span>
+                            </li>
+                          )
+                        )}
+                      </ul>
+                      <Button
+                        variant="light"
+                        size="md"
+                        fullWidth
+                        component="a"
+                        href="mailto:myrevuhq@gmail.com?subject=Enterprise Plan Inquiry"
+                        className="font-semibold"
+                      >
+                        Contact Us to Discuss
+                      </Button>
+                    </Stack>
+                  </Paper>
+                )}
 
                 {displayPaymentMethod === 'card' && isPaid ? (
                   <div className="p-4 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
@@ -767,120 +905,7 @@ export const Billing = () => {
                       </Text>
                     )}
                   </Alert>
-                ) : (
-                  <div className="p-4 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
-                    <div className="mb-4">
-                      <Text className="text-2xl font-bold text-white mb-1">
-                        {formatPrice(currencyInfo.price, currencyInfo.currency)}
-                      </Text>
-                      <Text size="sm" className="text-gray-400">
-                        per month
-                      </Text>
-                    </div>
-                    <ul className="list-none space-y-2 mb-6">
-                      <li className="flex items-start gap-2 text-sm text-gray-300">
-                        <IconCheck size={16} className="text-teal-400 mt-0.5 flex-shrink-0" />
-                        <span>100 SMS messages per month</span>
-                      </li>
-                      <li className="flex items-start gap-2 text-sm text-gray-300">
-                        <IconCheck size={16} className="text-teal-400 mt-0.5 flex-shrink-0" />
-                        <span>Unlimited customers</span>
-                      </li>
-                      <li className="flex items-start gap-2 text-sm text-gray-300">
-                        <IconCheck size={16} className="text-teal-400 mt-0.5 flex-shrink-0" />
-                        <span>Automatic monthly billing</span>
-                      </li>
-                      <li className="flex items-start gap-2 text-sm text-gray-300">
-                        <IconCheck size={16} className="text-teal-400 mt-0.5 flex-shrink-0" />
-                        <span>Cancel anytime</span>
-                      </li>
-                    </ul>
-
-                    {/* Currency Selector Tabs */}
-                    {!loadingPrices && (
-                      <div className="mb-4">
-                        <div className="flex gap-2 mb-2">
-                          <button
-                            type="button"
-                            onClick={() => allPrices.GBP && setSelectedCurrency('GBP')}
-                            disabled={!allPrices.GBP}
-                            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${
-                              selectedCurrency === 'GBP'
-                                ? 'bg-[rgb(9,146,104)] text-white shadow-lg'
-                                : allPrices.GBP
-                                  ? 'bg-[#2a2a2a] text-gray-400 hover:text-white hover:bg-[#333333]'
-                                  : 'bg-[#1a1a1a] text-gray-600 cursor-not-allowed opacity-50'
-                            }`}
-                          >
-                            <div className="flex flex-col items-center gap-0.5">
-                              <span className="text-sm font-semibold">GBP</span>
-                              <span className="text-xs opacity-90">
-                                {allPrices.GBP ? `£${allPrices.GBP.amount.toFixed(2)}` : 'N/A'}
-                              </span>
-                            </div>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => allPrices.EUR && setSelectedCurrency('EUR')}
-                            disabled={!allPrices.EUR}
-                            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${
-                              selectedCurrency === 'EUR'
-                                ? 'bg-[rgb(9,146,104)] text-white shadow-lg'
-                                : allPrices.EUR
-                                  ? 'bg-[#2a2a2a] text-gray-400 hover:text-white hover:bg-[#333333]'
-                                  : 'bg-[#1a1a1a] text-gray-600 cursor-not-allowed opacity-50'
-                            }`}
-                          >
-                            <div className="flex flex-col items-center gap-0.5">
-                              <span className="text-sm font-semibold">EUR</span>
-                              <span className="text-xs opacity-90">
-                                {allPrices.EUR ? `€${allPrices.EUR.amount.toFixed(2)}` : 'N/A'}
-                              </span>
-                            </div>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => allPrices.USD && setSelectedCurrency('USD')}
-                            disabled={!allPrices.USD}
-                            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${
-                              selectedCurrency === 'USD'
-                                ? 'bg-[rgb(9,146,104)] text-white shadow-lg'
-                                : allPrices.USD
-                                  ? 'bg-[#2a2a2a] text-gray-400 hover:text-white hover:bg-[#333333]'
-                                  : 'bg-[#1a1a1a] text-gray-600 cursor-not-allowed opacity-50'
-                            }`}
-                          >
-                            <div className="flex flex-col items-center gap-0.5">
-                              <span className="text-sm font-semibold">USD</span>
-                              <span className="text-xs opacity-90">
-                                {allPrices.USD ? `$${allPrices.USD.amount.toFixed(2)}` : 'N/A'}
-                              </span>
-                            </div>
-                          </button>
-                        </div>
-                        {selectedCurrency === detectedCurrency.currency && (
-                          <Text size="xs" className="text-teal-400 text-center">
-                            Auto-detected for your location
-                          </Text>
-                        )}
-                      </div>
-                    )}
-
-                    <Button
-                      size="lg"
-                      onClick={handleSubscribe}
-                      loading={loading}
-                      disabled={paymentMethod !== null && paymentMethod !== 'card'}
-                      className="font-semibold max-w-xs lg:max-w-sm w-full lg:w-auto"
-                    >
-                      Subscribe with Card
-                    </Button>
-                    <Text size="xs" className="text-gray-500 text-center mt-3">
-                      Secure payment powered by Stripe. Your card details are never stored on our
-                      servers.
-                    </Text>
-                  </div>
-                )}
+                ) : null}
               </Stack>
             </Tabs.Panel>
 

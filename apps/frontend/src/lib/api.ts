@@ -152,8 +152,8 @@ export const apiClient = {
     await api.post('/api/billing/delete-account');
   },
 
-  createCheckoutSession: async (currency?: string): Promise<{ url: string }> => {
-    const { data } = await api.post('/api/billing/create-checkout-session', { currency });
+  createCheckoutSession: async (currency?: string, tier?: string): Promise<{ url: string }> => {
+    const { data } = await api.post('/api/billing/create-checkout-session', { currency, tier });
     return data;
   },
 

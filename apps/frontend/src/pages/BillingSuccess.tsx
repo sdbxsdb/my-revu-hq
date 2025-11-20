@@ -44,7 +44,7 @@ export const BillingSuccess = () => {
                 <li>Add and manage customers</li>
                 <li>Send review requests via SMS</li>
                 <li>Monitor and track all your review links in one place</li>
-                <li>Send 100 SMS messages per month</li>
+                <li>Access all premium features based on your plan</li>
               </ul>
             </Alert>
 

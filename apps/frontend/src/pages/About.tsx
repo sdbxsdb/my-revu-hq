@@ -80,8 +80,8 @@ export const About = () => {
                     Simple Pricing
                   </Title>
                   <Text size="sm" className="text-gray-300">
-                    Unlimited customers, 100 SMS per month, one low fee. No hidden costs, no
-                    surprises.
+                    Plans starting from £4.99/month. Unlimited customers, flexible SMS limits. No
+                    hidden costs, no surprises.
                   </Text>
                 </div>
               </div>
