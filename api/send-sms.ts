@@ -1,9 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { z } from 'zod';
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { supabase } from './_utils/supabase';
 import { sendSMS } from './_utils/twilio';
 import { authenticate } from './_utils/auth';
 import { setCorsHeaders } from './_utils/response';
+import { normalizeToE164 } from './_utils/phone';
 
 const sendSMSSchema = z.object({
   customerId: z.string().uuid(),
@@ -111,9 +113,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // Send SMS - phone.number should already be in E.164 format
-    const phoneNumber = customer.phone.number;
-    const result = await sendSMS(phoneNumber, messageBody);
+    // Convert phone number to E.164 format for Twilio using libphonenumber-js
+    // This handles all countries properly: UK, Ireland, USA, Canada, etc.
+    const countryCode = customer.phone.countryCode || customer.phone.country;
+
+    const phoneNumber = normalizeToE164(customer.phone.number, countryCode);
+
+    if (!phoneNumber) {
+      return res.status(400).json({
+        error: 'Invalid phone number format. Please check the phone number and try again.',
+      });
+    }
+
+    // Get ISO country code for sender ID selection (GB, IE, US, CA, etc.)
+    // Extract it from the E.164 number
+    const parsed = parsePhoneNumberFromString(phoneNumber);
+    const isoCountryCode = parsed?.country || countryCode;
+
+    // Pass ISO country code to determine appropriate sender ID
+    const result = await sendSMS(phoneNumber, messageBody, isoCountryCode);
 
     // Update customer status
     await supabase

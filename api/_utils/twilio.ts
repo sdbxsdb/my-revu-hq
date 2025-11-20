@@ -22,13 +22,35 @@ function getTwilioClient() {
 
 export const sendSMS = async (
   to: string,
-  body: string
+  body: string,
+  countryCode?: string
 ): Promise<{ sid: string; status: string }> => {
   try {
     const client = getTwilioClient();
 
-    const from =
-      process.env.TWILIO_ALPHANUMERIC_SENDER_ID || process.env.TWILIO_PHONE_NUMBER || 'myrevuhq';
+    // Determine sender ID based on country
+    // UK and Ireland: Use alphanumeric sender ID "MyRevuHq" (not MEF protected, can use dynamically)
+    // USA/Canada: Use phone number (requires A2P 10DLC registration)
+    // Other countries: Use alphanumeric if available, otherwise phone number
+
+    let from: string;
+
+    if (countryCode === 'GB' || countryCode === 'IE') {
+      // UK and Ireland: Use alphanumeric sender ID
+      from = process.env.TWILIO_ALPHANUMERIC_SENDER_ID || 'MyRevuHq';
+    } else if (countryCode === 'US' || countryCode === 'CA') {
+      // USA/Canada: Must use phone number (A2P 10DLC required)
+      from = process.env.TWILIO_PHONE_NUMBER || process.env.TWILIO_US_PHONE_NUMBER || '';
+      if (!from) {
+        throw new Error(
+          'TWILIO_PHONE_NUMBER or TWILIO_US_PHONE_NUMBER must be set for USA/Canada messaging'
+        );
+      }
+    } else {
+      // Other countries: Try alphanumeric first, fall back to phone number
+      from =
+        process.env.TWILIO_ALPHANUMERIC_SENDER_ID || process.env.TWILIO_PHONE_NUMBER || 'MyRevuHq';
+    }
 
     const message = await client.messages.create({
       body,
