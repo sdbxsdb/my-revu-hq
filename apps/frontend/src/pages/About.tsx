@@ -1,4 +1,4 @@
-import { Paper, Title, Text, Container, Stack, Divider, List, ThemeIcon } from '@mantine/core';
+import { Paper, Title, Text, Container, Stack, Divider, ThemeIcon } from '@mantine/core';
 import {
   IconCheck,
   IconMessageCircle,

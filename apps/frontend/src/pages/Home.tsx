@@ -1,16 +1,5 @@
+import { Paper, Title, Text, Button, Stack, Divider, ThemeIcon, Container } from '@mantine/core';
 import {
-  Paper,
-  Title,
-  Text,
-  Button,
-  Stack,
-  Divider,
-  List,
-  ThemeIcon,
-  Container,
-} from '@mantine/core';
-import {
-  IconCheck,
   IconMessageCircle,
   IconUsers,
   IconLink,
