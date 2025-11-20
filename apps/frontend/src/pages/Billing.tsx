@@ -1002,16 +1002,28 @@ export const Billing = () => {
             <li>Allow you to reactivate your subscription later</li>
           </ul>
           <div className="flex gap-3 mt-4">
-            <Button variant="light" onClick={() => setCancelModalOpen(false)} fullWidth>
-              Keep Subscription
+            <Button
+              variant="light"
+              onClick={() => setCancelModalOpen(false)}
+              fullWidth
+              className="!h-auto !min-h-[3.5rem]"
+            >
+              <div className="flex flex-col leading-tight py-1">
+                <span>Keep</span>
+                <span>Subscription</span>
+              </div>
             </Button>
             <Button
               color="yellow"
               onClick={handleCancelSubscription}
               loading={cancelling}
               fullWidth
+              className="!h-auto !min-h-[3.5rem]"
             >
-              Cancel Subscription
+              <div className="flex flex-col leading-tight py-1">
+                <span>Cancel</span>
+                <span>Subscription</span>
+              </div>
             </Button>
           </div>
         </Stack>

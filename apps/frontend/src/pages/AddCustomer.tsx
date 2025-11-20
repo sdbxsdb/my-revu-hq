@@ -21,7 +21,7 @@ import { usePayment } from '@/contexts/PaymentContext';
 import { IconAlertCircle } from '@tabler/icons-react';
 
 export const AddCustomer = () => {
-  const { hasPaid } = usePayment();
+  const { hasPaid, loading: paymentLoading } = usePayment();
   const [loadingSendNow, setLoadingSendNow] = useState(false);
   const [loadingSendLater, setLoadingSendLater] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
@@ -191,7 +191,7 @@ export const AddCustomer = () => {
         <p className="text-sm text-gray-400">Add a new customer and send them a review request</p>
       </div>
 
-      {!hasPaid && (
+      {!paymentLoading && !hasPaid && (
         <Alert
           icon={<IconAlertCircle size={16} />}
           title="Payment Required to Send Messages"
@@ -297,8 +297,12 @@ export const AddCustomer = () => {
 
           <div className="flex flex-col gap-3 mt-8 pt-6 border-t border-[#2a2a2a]">
             <Tooltip
-              label="Payment required to send SMS messages"
-              disabled={hasPaid}
+              label={
+                paymentLoading
+                  ? 'Loading payment status...'
+                  : 'Payment required to send SMS messages'
+              }
+              disabled={paymentLoading || hasPaid}
               position="top"
               withArrow
             >
@@ -312,7 +316,7 @@ export const AddCustomer = () => {
                 size="md"
                 className="w-full font-semibold !py-4 !h-auto min-h-[3.5rem]"
                 fullWidth
-                disabled={!hasPaid || loadingSendLater}
+                disabled={paymentLoading || !hasPaid || loadingSendLater}
               >
                 <div className="flex flex-col items-center gap-0.5">
                   <span>Add Customer</span>

@@ -6,6 +6,8 @@ import {
   IconLogout,
   IconCreditCard,
   IconInfoCircle,
+  IconHome,
+  IconLogin,
 } from '@tabler/icons-react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -16,13 +18,27 @@ interface SidebarProps {
 export const Sidebar = ({ onClose }: SidebarProps) => {
   const { signOut, user } = useAuth();
 
-  const navItems = [
-    { to: '/about', label: 'About', icon: IconInfoCircle },
+  // Always show About
+  const publicNavItems = [{ to: '/about', label: 'About', icon: IconInfoCircle }];
+
+  // Show Home and Login if not logged in
+  const unauthenticatedNavItems = [
+    { to: '/', label: 'Home', icon: IconHome },
+    { to: '/login', label: 'Login', icon: IconLogin },
+  ];
+
+  // Show protected routes if logged in
+  const protectedNavItems = [
     { to: '/customers/add', label: 'Add Customer', icon: IconUserPlus },
     { to: '/customers', label: 'Customer List', icon: IconList },
     { to: '/account', label: 'SMS Setup', icon: IconDeviceMobile },
     { to: '/billing', label: 'Billing', icon: IconCreditCard },
   ];
+
+  // Combine nav items based on auth state
+  const navItems = user
+    ? [...publicNavItems, ...protectedNavItems]
+    : [...publicNavItems, ...unauthenticatedNavItems];
 
   const handleNavClick = () => {
     // Close sidebar on mobile when a link is clicked
@@ -44,35 +60,33 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
         <p className="text-xs text-gray-400">Review Management</p>
       </div>
 
-      {user && (
-        <nav className="flex-1 space-y-2">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.to === '/customers'}
-                onClick={handleNavClick}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium ${
-                    isActive
-                      ? 'bg-[rgb(9,146,104)] text-white shadow-lg shadow-[rgba(9,146,104,0.3)]'
-                      : 'text-gray-400 hover:bg-[#2a2a2a] hover:text-white'
-                  }`
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-                    <span>{item.label}</span>
-                  </>
-                )}
-              </NavLink>
-            );
-          })}
-        </nav>
-      )}
+      <nav className="flex-1 space-y-2">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.to === '/customers' || item.to === '/'}
+              onClick={handleNavClick}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium ${
+                  isActive
+                    ? 'bg-[rgb(9,146,104)] text-white shadow-lg shadow-[rgba(9,146,104,0.3)]'
+                    : 'text-gray-400 hover:bg-[#2a2a2a] hover:text-white'
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                  <span>{item.label}</span>
+                </>
+              )}
+            </NavLink>
+          );
+        })}
+      </nav>
 
       {/* Legal links footer */}
       <div className="mt-auto pt-4 border-t border-[#2a2a2a]">
@@ -115,16 +129,6 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
             <span>Logout</span>
           </button>
         </div>
-      )}
-
-      {!user && (
-        <Link
-          to="/login"
-          onClick={handleNavClick}
-          className="flex items-center justify-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-[#2a2a2a] hover:text-teal-400 transition-all duration-200 font-medium"
-        >
-          <span>Login</span>
-        </Link>
       )}
     </div>
   );

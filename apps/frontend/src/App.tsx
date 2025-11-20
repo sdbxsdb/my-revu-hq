@@ -14,6 +14,7 @@ import { CustomerList } from '@/pages/CustomerList';
 import { Terms } from '@/pages/Terms';
 import { Privacy } from '@/pages/Privacy';
 import { About } from '@/pages/About';
+import { Home } from '@/pages/Home';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -70,9 +71,10 @@ function App() {
       <AccountProvider>
         <PaymentProvider>
           <Routes>
-            <Route path="/login" element={<Login />} />
             <Route element={<Layout />}>
               {/* Public pages with navigation */}
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
               <Route path="/about" element={<About />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
@@ -85,7 +87,6 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              <Route path="/" element={<Navigate to="/about" replace />} />
               <Route path="/home" element={<Navigate to="/about" replace />} />
               <Route path="/account" element={<AccountSetup />} />
               <Route path="/billing" element={<Billing />} />

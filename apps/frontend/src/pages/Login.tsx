@@ -27,7 +27,7 @@ export const Login = () => {
   const [passwordError, setPasswordError] = useState('');
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<boolean>(false);
-  const [mode, setMode] = useState<'password' | 'magic-link' | 'signup'>('password');
+  const [mode, setMode] = useState<'password' | 'magic-link' | 'signup'>('signup');
   const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [pendingAction, setPendingAction] = useState<'signup' | 'oauth' | 'magic-link' | null>(
@@ -99,7 +99,7 @@ export const Login = () => {
       const session = await signInWithPassword(email, password);
       if (session) {
         // Success - navigate immediately
-        navigate('/');
+        navigate('/customers');
       } else {
         // No session returned - this shouldn't happen, but handle it
         notifications.show({
@@ -133,8 +133,10 @@ export const Login = () => {
     return true;
   };
 
-  const handleSignUpClick = (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate passwords first
     if (!validatePasswords()) {
       notifications.show({
         title: 'Error',
@@ -143,12 +145,13 @@ export const Login = () => {
       });
       return;
     }
+
     // Show terms modal first
     setPendingAction('signup');
     setTermsModalOpen(true);
   };
 
-  const handleSignUp = async () => {
+  const executeSignUp = async () => {
     if (!termsAgreed) {
       notifications.show({
         title: 'Terms Required',
@@ -257,7 +260,7 @@ export const Login = () => {
     }
   };
 
-  const handleAgreeAndContinue = () => {
+  const handleAgreeAndContinue = async () => {
     if (!termsAgreed) {
       notifications.show({
         title: 'Terms Required',
@@ -269,7 +272,7 @@ export const Login = () => {
 
     // Execute the pending action
     if (pendingAction === 'signup') {
-      handleSignUp();
+      executeSignUp();
     } else if (pendingAction === 'oauth') {
       executeGoogleOAuth();
     } else if (pendingAction === 'magic-link') {
@@ -290,7 +293,7 @@ export const Login = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: `${window.location.origin}/customers`,
         },
       });
       if (error) {
@@ -320,23 +323,19 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-start justify-center bg-gray-950 p-4 pt-6 pb-6">
-      <Paper shadow="xl" p="md" className="w-full max-w-md mt-4">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <img
-              src="/assets/logos/myrevuhq.png"
-              alt="MyRevuHQ"
-              className="h-16 w-auto object-contain"
-            />
-          </div>
+    <div className="flex items-start justify-center py-4">
+      <Paper shadow="xl" p="md" className="w-full max-w-md">
+        <div className="text-center mb-6">
           <Text c="dimmed" size="sm" ta="center" className="text-gray-400">
-            Sign in to your account
+            Sign in or create your account
+          </Text>
+          <Text size="xs" ta="center" className="text-gray-500 mt-1">
+            New users will have an account created automatically
           </Text>
         </div>
 
         <Stack gap="md">
-          {/* OAuth Button */}
+          {/* OAuth and Magic Link - Both work for sign up and sign in */}
           <Button
             leftSection={
               <img
@@ -356,113 +355,29 @@ export const Login = () => {
             Continue with Google
           </Button>
 
+          <Button
+            variant="light"
+            fullWidth
+            onClick={(e) => {
+              e.preventDefault();
+              setMode('magic-link');
+            }}
+            leftSection={<IconMail size={18} />}
+            className="border border-teal-600/30 hover:bg-teal-600/10 !h-11"
+          >
+            Continue with Magic Link
+          </Button>
+
+          <Alert color="blue" className="bg-blue-900/20 border-blue-700/30">
+            <Text size="xs" className="text-gray-300">
+              <strong>What's a magic link?</strong> We'll send you an email with a special link.
+              Click it to sign in and sign up instantly—no password needed!
+            </Text>
+          </Alert>
+
           <Divider label="OR" labelPosition="center" className="my-2" />
 
-          {/* Password Login Section */}
-          {mode === 'password' && (
-            <div>
-              <form onSubmit={handlePasswordLogin}>
-                <Stack gap="md">
-                  <TextInput
-                    label="Email"
-                    placeholder="your@email.com"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    leftSection={<IconMail size={16} />}
-                  />
-                  <TextInput
-                    label="Password"
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    leftSection={<IconLock size={16} />}
-                  />
-                  <Button
-                    type="submit"
-                    fullWidth
-                    loading={loading}
-                    leftSection={<IconLock size={18} />}
-                  >
-                    Sign In
-                  </Button>
-                  <Divider label="OR" labelPosition="center" />
-                  <Button
-                    variant="light"
-                    fullWidth
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setMode('magic-link');
-                    }}
-                    leftSection={<IconMail size={18} />}
-                    className="border border-teal-600/30 hover:bg-teal-600/10"
-                  >
-                    Sign in with Magic Link
-                  </Button>
-                  <div className="text-center">
-                    <Button
-                      variant="subtle"
-                      size="xs"
-                      onClick={() => setMode('signup')}
-                      className="text-gray-400 hover:text-white"
-                    >
-                      Create new account
-                    </Button>
-                  </div>
-                </Stack>
-              </form>
-            </div>
-          )}
-
-          {/* Magic Link Section */}
-          {mode === 'magic-link' && (
-            <div>
-              <form onSubmit={handleMagicLink}>
-                <Stack gap="md">
-                  <div>
-                    <TextInput
-                      label="Email"
-                      placeholder="your@email.com"
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      leftSection={<IconMail size={16} />}
-                    />
-                    <Alert color="blue" mt="xs" className="bg-blue-900/20 border-blue-700/30">
-                      <Text size="xs" className="text-gray-300">
-                        <strong>What's a magic link?</strong> We'll send you an email with a special
-                        link. Just click it to sign in instantly - no password needed! It's secure
-                        and convenient.
-                      </Text>
-                    </Alert>
-                  </div>
-                  <Button
-                    type="submit"
-                    fullWidth
-                    loading={loading}
-                    leftSection={<IconMail size={18} />}
-                  >
-                    Send Magic Link
-                  </Button>
-                  <div className="text-center">
-                    <Button
-                      variant="subtle"
-                      size="xs"
-                      onClick={() => setMode('password')}
-                      className="text-gray-400 hover:text-white"
-                    >
-                      Use password instead
-                    </Button>
-                  </div>
-                </Stack>
-              </form>
-            </div>
-          )}
-
-          {/* Sign Up Section */}
+          {/* Sign Up Section - Show First */}
           {mode === 'signup' && (
             <div>
               <form onSubmit={handleSignUp}>
@@ -521,30 +436,135 @@ export const Login = () => {
                         {showConfirmPassword ? <IconEyeOff size={18} /> : <IconEye size={18} />}
                       </button>
                     }
-                    error={
-                      passwordError && password !== confirmPassword && confirmPassword
-                        ? passwordError
-                        : undefined
-                    }
+                    error={passwordError ? passwordError : undefined}
                   />
                   <Button
-                    type="button"
+                    type="submit"
                     fullWidth
                     loading={loading}
                     leftSection={<IconLock size={18} />}
-                    onClick={handleSignUpClick}
                   >
                     Create Account
                   </Button>
-                  <div className="text-center">
-                    <Button
-                      variant="subtle"
-                      size="xs"
-                      onClick={() => setMode('password')}
-                      className="text-gray-400 hover:text-white"
-                    >
-                      Already have an account? Sign in
-                    </Button>
+                  <div className="text-center pt-2">
+                    <Text size="sm" className="text-gray-400">
+                      Already have an account?{' '}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMode('password');
+                          setPassword('');
+                          setConfirmPassword('');
+                          setPasswordError('');
+                        }}
+                        className="text-teal-400 hover:text-teal-300 underline font-medium"
+                      >
+                        Sign in
+                      </button>
+                    </Text>
+                  </div>
+                </Stack>
+              </form>
+            </div>
+          )}
+
+          {/* Password Login Section */}
+          {mode === 'password' && (
+            <div>
+              <form onSubmit={handlePasswordLogin}>
+                <Stack gap="md">
+                  <TextInput
+                    label="Email"
+                    placeholder="your@email.com"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    leftSection={<IconMail size={16} />}
+                  />
+                  <TextInput
+                    label="Password"
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    leftSection={<IconLock size={16} />}
+                  />
+                  <Button
+                    type="submit"
+                    fullWidth
+                    loading={loading}
+                    leftSection={<IconLock size={18} />}
+                  >
+                    Sign In
+                  </Button>
+                  <div className="text-center pt-2">
+                    <Text size="sm" className="text-gray-400">
+                      Don't have an account?{' '}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMode('signup');
+                          setPassword('');
+                          setConfirmPassword('');
+                          setPasswordError('');
+                        }}
+                        className="text-teal-400 hover:text-teal-300 underline font-medium"
+                      >
+                        Create account
+                      </button>
+                    </Text>
+                  </div>
+                </Stack>
+              </form>
+            </div>
+          )}
+
+          {/* Magic Link Section */}
+          {mode === 'magic-link' && (
+            <div>
+              <form onSubmit={handleMagicLink}>
+                <Stack gap="md">
+                  <TextInput
+                    label="Email"
+                    placeholder="your@email.com"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    leftSection={<IconMail size={16} />}
+                  />
+                  <Button
+                    type="submit"
+                    fullWidth
+                    loading={loading}
+                    leftSection={<IconMail size={18} />}
+                  >
+                    Send Magic Link
+                  </Button>
+                  <div className="text-center pt-2 space-y-2">
+                    <Text size="sm" className="text-gray-400">
+                      Prefer password?{' '}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMode('signup');
+                        }}
+                        className="text-teal-400 hover:text-teal-300 underline font-medium"
+                      >
+                        Sign up with password
+                      </button>
+                      {' or '}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMode('password');
+                        }}
+                        className="text-teal-400 hover:text-teal-300 underline font-medium"
+                      >
+                        sign in with password
+                      </button>
+                    </Text>
                   </div>
                 </Stack>
               </form>

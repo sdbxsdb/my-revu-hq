@@ -90,6 +90,11 @@
       height: 100svh; /* Small viewport height - accounts for mobile browser UI */
       height: 100vh; /* Fallback for older browsers */
     }
+
+    /* Add extra padding-bottom to sidebar on mobile to account for Chrome's bottom address bar */
+    .sidebar-mobile-height > * {
+      padding-bottom: calc(1.5rem + max(env(safe-area-inset-bottom, 0), 80px)) !important;
+    }
   }
 
   /* Terms modal - full height on mobile, scrollable text area */

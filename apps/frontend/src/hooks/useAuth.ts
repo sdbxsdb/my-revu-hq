@@ -59,12 +59,12 @@ export const useAuth = () => {
           }
         });
 
-        // Navigate to home after successful auth
+        // Navigate to customers page after successful auth
         // Handle SIGNED_IN (new login), TOKEN_REFRESHED (token refresh), and INITIAL_SESSION (page load with existing session)
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
-          // If we're on the login page and have a session, navigate away
+          // If we're on the login page and have a session, navigate to customers
           if (window.location.pathname === '/login') {
-            navigate('/');
+            navigate('/customers');
           }
         }
       } else {
@@ -175,7 +175,7 @@ export const useAuth = () => {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/`,
+        emailRedirectTo: `${window.location.origin}/customers`,
       },
     });
     if (error) throw error;

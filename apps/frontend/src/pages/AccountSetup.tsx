@@ -44,7 +44,7 @@ const isValidUrl = (url: string): boolean => {
 };
 
 export const AccountSetup = () => {
-  const { hasPaid } = usePayment();
+  const { hasPaid, loading: paymentLoading } = usePayment();
   const { account, loading: accountLoading, refetch } = useAccount();
   const [loading, setLoading] = useState(false);
 
@@ -280,7 +280,7 @@ export const AccountSetup = () => {
         <p className="text-sm text-gray-400">Manage your business information and SMS template</p>
       </div>
 
-      {!hasPaid && (
+      {!paymentLoading && !hasPaid && (
         <Alert
           icon={<IconAlertCircle size={16} />}
           title="Payment Required"

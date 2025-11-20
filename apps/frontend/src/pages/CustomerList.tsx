@@ -32,7 +32,7 @@ import { usePayment } from '@/contexts/PaymentContext';
 import { IconAlertCircle, IconTrash } from '@tabler/icons-react';
 
 export const CustomerList = () => {
-  const { hasPaid } = usePayment();
+  const { hasPaid, loading: paymentLoading } = usePayment();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -603,7 +603,7 @@ export const CustomerList = () => {
                 Manage your customers and review requests
               </p>
             </div>
-            {!hasPaid && (
+            {!paymentLoading && !hasPaid && (
               <Alert
                 icon={<IconAlertCircle size={16} />}
                 title="Payment Required"
@@ -785,13 +785,15 @@ export const CustomerList = () => {
                           onClick={() => handleSendAgain(customer.id)}
                           radius="md"
                           className="font-medium"
-                          disabled={!hasPaid || !isPhoneValid(customer.phone)}
+                          disabled={paymentLoading || !hasPaid || !isPhoneValid(customer.phone)}
                           title={
-                            !hasPaid
-                              ? 'Payment required to send SMS messages'
-                              : !isPhoneValid(customer.phone)
-                                ? getPhoneError(customer.phone) || 'Invalid phone number'
-                                : ''
+                            paymentLoading
+                              ? 'Loading payment status...'
+                              : !hasPaid
+                                ? 'Payment required to send SMS messages'
+                                : !isPhoneValid(customer.phone)
+                                  ? getPhoneError(customer.phone) || 'Invalid phone number'
+                                  : ''
                           }
                         >
                           {customer.sms_status === 'sent'
@@ -869,13 +871,15 @@ export const CustomerList = () => {
                       onClick={() => handleSendAgain(customer.id)}
                       radius="md"
                       className="font-medium"
-                      disabled={!hasPaid || !phoneValid}
+                      disabled={paymentLoading || !hasPaid || !phoneValid}
                       title={
-                        !hasPaid
-                          ? 'Payment required to send SMS messages'
-                          : !phoneValid
-                            ? phoneError || 'Invalid phone number'
-                            : ''
+                        paymentLoading
+                          ? 'Loading payment status...'
+                          : !hasPaid
+                            ? 'Payment required to send SMS messages'
+                            : !phoneValid
+                              ? phoneError || 'Invalid phone number'
+                              : ''
                       }
                     >
                       {customer.sms_status === 'sent' ? 'Request Review Again' : 'Request Review'}
