@@ -87,3 +87,12 @@ export function formatPlanPrice(price: number, currency: 'GBP' | 'EUR' | 'USD'):
   const symbols = { GBP: '£', EUR: '€', USD: '$' };
   return `${symbols[currency]}${price.toFixed(2)}`;
 }
+
+/**
+ * Get SMS monthly limit based on subscription tier
+ */
+export function getSmsLimitFromTier(tier: PricingTier | null | undefined): number {
+  if (!tier) return 0;
+  const plan = getPlanById(tier);
+  return plan?.smsLimit || 0;
+}

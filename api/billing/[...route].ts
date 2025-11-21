@@ -81,7 +81,7 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
     const { data: user, error: userError } = await supabase
       .from('users')
       .select(
-        'email, stripe_customer_id, stripe_subscription_id, payment_status, payment_method, current_period_end, subscription_start_date'
+        'email, stripe_customer_id, stripe_subscription_id, payment_status, payment_method, current_period_end, subscription_start_date, subscription_tier'
       )
       .eq('id', auth.userId)
       .single<{
@@ -92,6 +92,7 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
         payment_method: string | null;
         current_period_end: string | null;
         subscription_start_date: string | null;
+        subscription_tier: string | null;
       }>();
 
     // Try to get account_lifecycle_status separately if the column exists
@@ -185,6 +186,12 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
       cardLast4,
       cardBrand,
       accountStatus: accountLifecycleStatus,
+      subscriptionTier: user.subscription_tier as
+        | 'starter'
+        | 'pro'
+        | 'business'
+        | 'enterprise'
+        | null,
     };
 
     return res.json(responseData);

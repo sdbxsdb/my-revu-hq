@@ -11,7 +11,23 @@ const sendSMSSchema = z.object({
   customerId: z.string().uuid(),
 });
 
-const SMS_MONTHLY_LIMIT = 100;
+/**
+ * Get SMS monthly limit based on subscription tier
+ */
+function getSmsLimitFromTier(tier: string | null | undefined): number {
+  switch (tier) {
+    case 'starter':
+      return 20;
+    case 'pro':
+      return 50;
+    case 'business':
+      return 100;
+    case 'enterprise':
+      return 999999; // Effectively unlimited
+    default:
+      return 0; // No tier = no access
+  }
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Handle CORS preflight
@@ -32,7 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { data: user, error: userError } = await supabase
       .from('users')
       .select(
-        'sms_sent_this_month, business_name, review_links, sms_template, account_lifecycle_status, payment_status'
+        'sms_sent_this_month, business_name, review_links, sms_template, account_lifecycle_status, payment_status, subscription_tier'
       )
       .eq('id', auth.userId)
       .single<{
@@ -42,6 +58,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         sms_template: string | null;
         account_lifecycle_status: string | null;
         payment_status: string | null;
+        subscription_tier: string | null;
       }>();
 
     if (userError) throw userError;
@@ -61,11 +78,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // Check monthly limit
+    // Check monthly limit based on tier
+    const smsLimit = getSmsLimitFromTier(user.subscription_tier);
     const sentThisMonth = user.sms_sent_this_month || 0;
-    if (sentThisMonth >= SMS_MONTHLY_LIMIT) {
+
+    if (smsLimit === 0) {
+      return res.status(403).json({
+        error: 'No active subscription. Please set up a subscription to send SMS messages.',
+      });
+    }
+
+    if (sentThisMonth >= smsLimit) {
       return res.status(429).json({
-        error: `Monthly SMS limit of ${SMS_MONTHLY_LIMIT} reached`,
+        error: `Monthly SMS limit of ${smsLimit} reached. You've sent ${sentThisMonth} of ${smsLimit} messages this month.`,
       });
     }
 

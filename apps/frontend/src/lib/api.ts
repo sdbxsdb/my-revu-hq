@@ -134,6 +134,7 @@ export const apiClient = {
     cardLast4?: string;
     cardBrand?: string;
     accountStatus?: 'active' | 'cancelled' | 'deleted' | null;
+    subscriptionTier?: 'starter' | 'pro' | 'business' | 'enterprise' | null;
   }> => {
     const { data } = await api.get('/api/billing/subscription');
     return data;

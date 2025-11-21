@@ -14,6 +14,33 @@ try {
   // Stripe not initialized - will fail gracefully
 }
 
+/**
+ * Determine subscription tier from Stripe price ID
+ * Checks environment variables to match price ID to tier
+ */
+function getTierFromPriceId(
+  priceId: string | null | undefined
+): 'starter' | 'pro' | 'business' | 'enterprise' | null {
+  if (!priceId) return null;
+
+  // Check all tier/currency combinations
+  const tiers: Array<'starter' | 'pro' | 'business'> = ['starter', 'pro', 'business'];
+  const currencies = ['GBP', 'EUR', 'USD'];
+
+  for (const tier of tiers) {
+    for (const currency of currencies) {
+      const envVar = `STRIPE_PRICE_ID_${tier.toUpperCase()}_${currency}`;
+      const envPriceId = process.env[envVar];
+      if (envPriceId === priceId) {
+        return tier;
+      }
+    }
+  }
+
+  // If no match found, return null (will be handled as no tier)
+  return null;
+}
+
 // Helper function to get raw body from request
 async function getRawBody(req: VercelRequest): Promise<string> {
   // Method 1: Check if rawBody is available (Vercel-specific)
@@ -198,10 +225,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     .eq('id', userByEmail.id);
                 }
 
+                // Extract price ID and determine tier
+                const priceId = subscription.items.data[0]?.price?.id || null;
+                const tier = getTierFromPriceId(priceId);
+
                 // Update subscription details
                 // If subscription is active and account was cancelled, reactivate it
                 const updateData: any = {
                   stripe_subscription_id: subscription.id,
+                  stripe_price_id: priceId,
+                  subscription_tier: tier,
                   payment_status: subscription.status === 'active' ? 'active' : 'inactive',
                   payment_method: 'card',
                   current_period_end: (subscription as any).current_period_end
@@ -226,10 +259,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               }
             }
           } else if (checkoutUser) {
+            // Extract price ID and determine tier
+            const priceId = subscription.items.data[0]?.price?.id || null;
+            const tier = getTierFromPriceId(priceId);
+
             // Update subscription details
             // If subscription is active and account was cancelled, reactivate it
             const updateData: any = {
               stripe_subscription_id: subscription.id,
+              stripe_price_id: priceId,
+              subscription_tier: tier,
               payment_status: subscription.status === 'active' ? 'active' : 'inactive',
               payment_method: 'card',
               subscription_start_date: subscription.created
@@ -271,8 +310,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .single<{ id: string; account_lifecycle_status: string | null }>();
 
       if (subUser) {
+        // Extract price ID and determine tier
+        const priceId = subscription.items.data[0]?.price?.id || null;
+        const tier = getTierFromPriceId(priceId);
+
         const updateData: any = {
           stripe_subscription_id: subscription.id,
+          stripe_price_id: priceId,
+          subscription_tier: tier,
           payment_status:
             subscription.status === 'active'
               ? 'active'

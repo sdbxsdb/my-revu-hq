@@ -63,6 +63,9 @@ export const Billing = () => {
   const [accountStatus, setAccountStatus] = useState<'active' | 'cancelled' | 'deleted' | null>(
     null
   );
+  const [subscriptionTier, setSubscriptionTier] = useState<
+    'starter' | 'pro' | 'business' | 'enterprise' | null
+  >(null);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -148,6 +151,7 @@ export const Billing = () => {
       setCardLast4(subscription.cardLast4);
       setCardBrand(subscription.cardBrand);
       setAccountStatus(subscription.accountStatus || 'active');
+      setSubscriptionTier(subscription.subscriptionTier || null);
     } catch (error: any) {
       // Failed to load subscription
       notifications.show({
@@ -334,6 +338,11 @@ export const Billing = () => {
                     Plan
                   </Text>
                   <Text className="font-semibold text-white">Active Subscription</Text>
+                  {subscriptionTier && (
+                    <Text size="sm" className="text-teal-400 mt-1 capitalize">
+                      {getPlanById(subscriptionTier)?.name || subscriptionTier} Plan
+                    </Text>
+                  )}
                 </div>
                 <div>
                   <Text size="sm" className="text-gray-400 mb-1">
