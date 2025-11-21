@@ -26,14 +26,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // Try RPC function first, fallback to direct UPDATE if it fails
     let resetSuccess = false;
+    let methodUsed = 'none';
 
     // Attempt 1: Use RPC function
     const { error: rpcError } = await supabase.rpc('reset_monthly_sms_count');
 
     if (!rpcError) {
       resetSuccess = true;
+      methodUsed = 'rpc-function';
+      console.log('[Cron] Successfully reset via RPC function');
     } else {
       console.warn('[Cron] RPC function failed, trying direct UPDATE:', rpcError);
+      console.warn('[Cron] RPC error details:', JSON.stringify(rpcError, null, 2));
 
       // Attempt 2: Direct UPDATE query (more reliable)
       const { error: updateError, count } = await supabase
@@ -44,14 +48,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (updateError) {
         console.error('[Cron] Direct UPDATE also failed:', updateError);
+        console.error('[Cron] Update error details:', JSON.stringify(updateError, null, 2));
         return res.status(500).json({
           error: 'Failed to reset monthly SMS counts',
-          rpcError: rpcError.message,
+          rpcError: rpcError?.message || 'Unknown RPC error',
           updateError: updateError.message,
+          rpcErrorCode: rpcError?.code,
+          updateErrorCode: updateError.code,
         });
       }
 
       resetSuccess = true;
+      methodUsed = 'direct-update';
       console.log(`[Cron] Reset ${count || 0} user(s) via direct UPDATE`);
     }
 
