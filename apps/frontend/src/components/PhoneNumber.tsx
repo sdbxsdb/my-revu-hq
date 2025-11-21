@@ -32,6 +32,7 @@ interface PhoneNumberProps extends Omit<TextInputProps, 'onChange' | 'value'> {
   onChange?: (value: string | undefined) => void;
   onCountryChange?: (country: CountryCode | undefined) => void;
   defaultCountry?: CountryCode;
+  country?: CountryCode; // Controlled country prop
 }
 
 export const PhoneNumber = forwardRef<HTMLInputElement, PhoneNumberProps>(
@@ -41,6 +42,7 @@ export const PhoneNumber = forwardRef<HTMLInputElement, PhoneNumberProps>(
       onChange,
       onCountryChange,
       defaultCountry = 'GB',
+      country: controlledCountry,
       error,
       label,
       description,
@@ -48,7 +50,9 @@ export const PhoneNumber = forwardRef<HTMLInputElement, PhoneNumberProps>(
     },
     ref
   ) => {
-    const [country, setCountry] = useState<CountryCode>(defaultCountry);
+    // Use controlled country if provided, otherwise use internal state
+    const [internalCountry, setInternalCountry] = useState<CountryCode>(defaultCountry);
+    const country = controlledCountry !== undefined ? controlledCountry : internalCountry;
     const [phoneValue, setPhoneValue] = useState<string>(value || '');
 
     // Update phone value when value prop changes (e.g., when editing)
@@ -58,16 +62,27 @@ export const PhoneNumber = forwardRef<HTMLInputElement, PhoneNumberProps>(
 
     // Update country when defaultCountry prop changes (e.g., when editing a customer)
     useEffect(() => {
-      if (defaultCountry) {
-        setCountry(defaultCountry);
+      if (defaultCountry && controlledCountry === undefined) {
+        setInternalCountry(defaultCountry);
         onCountryChange?.(defaultCountry);
       }
-    }, [defaultCountry, onCountryChange]);
+    }, [defaultCountry, onCountryChange, controlledCountry]);
+
+    // Sync internal state when controlled country changes
+    useEffect(() => {
+      if (controlledCountry !== undefined && controlledCountry !== country) {
+        setInternalCountry(controlledCountry);
+      }
+    }, [controlledCountry]);
 
     const handleCountryChange = (newCountry: string | null) => {
       if (newCountry) {
         const countryCode = newCountry as CountryCode;
-        setCountry(countryCode);
+        // Only update internal state if not controlled
+        if (controlledCountry === undefined) {
+          setInternalCountry(countryCode);
+        }
+        // Always notify parent
         onCountryChange?.(countryCode);
 
         // Re-validate the phone number with the new country

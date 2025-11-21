@@ -232,6 +232,7 @@ export const AddCustomer = () => {
             </label>
             <PhoneNumber
               value={form.values.phoneNumber}
+              country={selectedCountry}
               onChange={(value) => {
                 form.setFieldValue('phoneNumber', value);
                 // Validate immediately when typing - use current country from ref
