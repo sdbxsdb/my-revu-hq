@@ -48,6 +48,7 @@ export const CustomerList = () => {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [sendingCustomerId, setSendingCustomerId] = useState<string | null>(null);
   const limit = 10;
 
   const [phoneError, setPhoneError] = useState<string | null>(null);
@@ -429,6 +430,7 @@ export const CustomerList = () => {
       return;
     }
 
+    setSendingCustomerId(customerId);
     try {
       await apiClient.sendSMS(customerId);
       // Refresh SMS usage after sending
@@ -445,6 +447,8 @@ export const CustomerList = () => {
         message: error.message || 'Failed to send SMS',
         color: 'red',
       });
+    } finally {
+      setSendingCustomerId(null);
     }
   };
 
@@ -836,9 +840,38 @@ export const CustomerList = () => {
                     </Table.Td>
                     <Table.Td className="text-gray-400">{customer.job_description || '-'}</Table.Td>
                     <Table.Td>
-                      <Badge color={customer.sms_status === 'sent' ? 'green' : 'orange'}>
-                        {customer.sms_status === 'sent' ? 'Sent' : 'Not Sent'}
-                      </Badge>
+                      <div className="flex flex-col gap-1">
+                        <Badge color={customer.sms_status === 'sent' ? 'green' : 'orange'}>
+                          {customer.sms_status === 'sent' ? 'Sent' : 'Not Sent'}
+                        </Badge>
+                        {(() => {
+                          const requestCount = customer.sms_request_count || 0;
+                          const isOptedOut = customer.opt_out || false;
+                          const isLimitReached = requestCount >= 3;
+                          if (isOptedOut) {
+                            return (
+                              <Text size="xs" className="text-red-400">
+                                Opted Out
+                              </Text>
+                            );
+                          }
+                          if (isLimitReached) {
+                            return (
+                              <Text size="xs" className="text-yellow-400">
+                                Limit Reached (3/3)
+                              </Text>
+                            );
+                          }
+                          if (requestCount > 0) {
+                            return (
+                              <Text size="xs" className="text-gray-400">
+                                {requestCount}/3 requests
+                              </Text>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
                     </Table.Td>
                     <Table.Td className="text-gray-400">{formatDate(customer.sent_at)}</Table.Td>
                     <Table.Td>
@@ -852,27 +885,56 @@ export const CustomerList = () => {
                         >
                           Edit
                         </Button>
-                        <Button
-                          size="sm"
-                          variant={customer.sms_status === 'sent' ? 'light' : 'filled'}
-                          onClick={() => handleSendAgain(customer.id)}
-                          radius="md"
-                          className="font-medium"
-                          disabled={paymentLoading || !hasPaid || !isPhoneValid(customer.phone)}
-                          title={
-                            paymentLoading
-                              ? 'Loading payment status...'
-                              : !hasPaid
-                                ? 'Payment required to send SMS messages'
-                                : !isPhoneValid(customer.phone)
-                                  ? getPhoneError(customer.phone) || 'Invalid phone number'
-                                  : ''
-                          }
-                        >
-                          {customer.sms_status === 'sent'
-                            ? 'Request Review Again'
-                            : 'Request Review'}
-                        </Button>
+                        {(() => {
+                          const requestCount = customer.sms_request_count || 0;
+                          const isOptedOut = customer.opt_out || false;
+                          const isLimitReached = requestCount >= 3;
+                          const isSending = sendingCustomerId === customer.id;
+                          const isDisabled =
+                            paymentLoading ||
+                            !hasPaid ||
+                            !isPhoneValid(customer.phone) ||
+                            isOptedOut ||
+                            isLimitReached ||
+                            isSending;
+
+                          const getButtonText = () => {
+                            if (isLimitReached) return 'Limit Reached (3/3)';
+                            if (isOptedOut) return 'Opted Out';
+                            if (isSending) return 'Sending...';
+                            const countText = requestCount > 0 ? ` (${requestCount}/3)` : '';
+                            return customer.sms_status === 'sent'
+                              ? `Request Review Again${countText}`
+                              : `Request Review${countText}`;
+                          };
+
+                          const getTooltip = () => {
+                            if (paymentLoading) return 'Loading payment status...';
+                            if (!hasPaid) return 'Payment required to send SMS messages';
+                            if (!isPhoneValid(customer.phone))
+                              return getPhoneError(customer.phone) || 'Invalid phone number';
+                            if (isOptedOut)
+                              return 'This customer has opted out of receiving messages';
+                            if (isLimitReached)
+                              return 'Maximum of 3 review requests allowed per customer. Limit reached.';
+                            return '';
+                          };
+
+                          return (
+                            <Button
+                              size="sm"
+                              variant={customer.sms_status === 'sent' ? 'light' : 'filled'}
+                              onClick={() => handleSendAgain(customer.id)}
+                              radius="md"
+                              className="font-medium"
+                              disabled={isDisabled}
+                              loading={isSending}
+                              title={getTooltip()}
+                            >
+                              {getButtonText()}
+                            </Button>
+                          );
+                        })()}
                       </div>
                     </Table.Td>
                   </Table.Tr>
@@ -928,6 +990,26 @@ export const CustomerList = () => {
                       {customer.job_description}
                     </div>
                   )}
+                  {(() => {
+                    const requestCount = customer.sms_request_count || 0;
+                    const isOptedOut = customer.opt_out || false;
+                    const isLimitReached = requestCount >= 3;
+                    return (
+                      (isLimitReached || isOptedOut) && (
+                        <Alert
+                          color={isOptedOut ? 'red' : 'yellow'}
+                          icon={<IconAlertCircle size={16} />}
+                          className="mb-4"
+                        >
+                          <Text size="sm" className="text-gray-300">
+                            {isOptedOut
+                              ? 'This customer has opted out of receiving SMS messages.'
+                              : `Maximum of 3 review requests reached (${requestCount}/3). No more messages can be sent to this customer.`}
+                          </Text>
+                        </Alert>
+                      )
+                    );
+                  })()}
                   <div className="flex justify-between items-center pt-4 border-t border-[#2a2a2a]">
                     <Button
                       size="xs"
@@ -938,25 +1020,54 @@ export const CustomerList = () => {
                     >
                       Edit
                     </Button>
-                    <Button
-                      size="sm"
-                      variant={customer.sms_status === 'sent' ? 'light' : 'filled'}
-                      onClick={() => handleSendAgain(customer.id)}
-                      radius="md"
-                      className="font-medium"
-                      disabled={paymentLoading || !hasPaid || !phoneValid}
-                      title={
-                        paymentLoading
-                          ? 'Loading payment status...'
-                          : !hasPaid
-                            ? 'Payment required to send SMS messages'
-                            : !phoneValid
-                              ? phoneError || 'Invalid phone number'
-                              : ''
-                      }
-                    >
-                      {customer.sms_status === 'sent' ? 'Request Review Again' : 'Request Review'}
-                    </Button>
+                    {(() => {
+                      const requestCount = customer.sms_request_count || 0;
+                      const isOptedOut = customer.opt_out || false;
+                      const isLimitReached = requestCount >= 3;
+                      const isSending = sendingCustomerId === customer.id;
+                      const isDisabled =
+                        paymentLoading ||
+                        !hasPaid ||
+                        !phoneValid ||
+                        isOptedOut ||
+                        isLimitReached ||
+                        isSending;
+
+                      const getButtonText = () => {
+                        if (isLimitReached) return 'Limit Reached (3/3)';
+                        if (isOptedOut) return 'Opted Out';
+                        if (isSending) return 'Sending...';
+                        const countText = requestCount > 0 ? ` (${requestCount}/3)` : '';
+                        return customer.sms_status === 'sent'
+                          ? `Request Review Again${countText}`
+                          : `Request Review${countText}`;
+                      };
+
+                      const getTooltip = () => {
+                        if (paymentLoading) return 'Loading payment status...';
+                        if (!hasPaid) return 'Payment required to send SMS messages';
+                        if (!phoneValid) return phoneError || 'Invalid phone number';
+                        if (isOptedOut) return 'This customer has opted out of receiving messages';
+                        if (isLimitReached)
+                          return 'Maximum of 3 review requests allowed per customer. Limit reached.';
+                        return '';
+                      };
+
+                      return (
+                        <Button
+                          size="sm"
+                          variant={customer.sms_status === 'sent' ? 'light' : 'filled'}
+                          onClick={() => handleSendAgain(customer.id)}
+                          radius="md"
+                          className="font-medium"
+                          disabled={isDisabled}
+                          loading={isSending}
+                          title={getTooltip()}
+                        >
+                          {getButtonText()}
+                        </Button>
+                      );
+                    })()}
                   </div>
                 </Paper>
               );

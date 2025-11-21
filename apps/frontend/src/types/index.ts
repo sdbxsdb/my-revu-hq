@@ -29,6 +29,8 @@ export interface Customer {
   job_description?: string;
   sms_status: 'sent' | 'pending';
   sent_at?: string;
+  sms_request_count?: number;
+  opt_out?: boolean;
 }
 
 export interface Message {

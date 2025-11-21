@@ -108,11 +108,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         job_description: string | null;
         sms_status: string;
         sent_at: string | null;
+        sms_request_count: number | null;
+        opt_out: boolean | null;
       }>();
 
     if (customerError) throw customerError;
     if (!customer) {
       return res.status(404).json({ error: 'Customer not found' });
+    }
+
+    // Check if customer has opted out
+    if (customer.opt_out) {
+      return res.status(403).json({
+        error:
+          'This customer has opted out of receiving SMS messages. Please contact them directly if you need to reach them.',
+      });
+    }
+
+    // Check if customer has reached the 3-message limit
+    const requestCount = customer.sms_request_count || 0;
+    if (requestCount >= 3) {
+      return res.status(403).json({
+        error:
+          'Maximum of 3 review request messages allowed per customer. This limit has been reached for this customer.',
+      });
     }
 
     // Build SMS message
@@ -158,13 +177,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Pass ISO country code to determine appropriate sender ID
     const result = await sendSMS(phoneNumber, messageBody, isoCountryCode);
 
-    // Update customer status
+    // Update customer status and increment request count
+    const newRequestCount = requestCount + 1;
     await supabase
       .from('customers')
       // @ts-ignore - Supabase types don't include all fields
       .update({
         sms_status: 'sent',
         sent_at: new Date().toISOString(),
+        sms_request_count: newRequestCount,
       })
       .eq('id', customerId);
 
