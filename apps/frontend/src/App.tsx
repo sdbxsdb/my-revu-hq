@@ -15,6 +15,7 @@ import { Terms } from '@/pages/Terms';
 import { Privacy } from '@/pages/Privacy';
 import { About } from '@/pages/About';
 import { Home } from '@/pages/Home';
+import { ResetPassword } from '@/pages/ResetPassword';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -75,6 +76,7 @@ function App() {
               {/* Public pages with navigation */}
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/about" element={<About />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />

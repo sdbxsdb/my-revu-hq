@@ -29,6 +29,9 @@ export const Login = () => {
   const [oauthLoading, setOauthLoading] = useState<boolean>(false);
   const [mode, setMode] = useState<'password' | 'magic-link' | 'signup'>('password');
   const [termsModalOpen, setTermsModalOpen] = useState(false);
+  const [forgotPasswordModalOpen, setForgotPasswordModalOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetEmailSent, setResetEmailSent] = useState(false);
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [pendingAction, setPendingAction] = useState<'signup' | 'oauth' | 'magic-link' | null>(
     null
@@ -286,6 +289,42 @@ export const Login = () => {
     setTermsModalOpen(true);
   };
 
+  const handleForgotPassword = async () => {
+    if (!resetEmail || !resetEmail.includes('@')) {
+      notifications.show({
+        title: 'Error',
+        message: 'Please enter a valid email address',
+        color: 'red',
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+
+      setResetEmailSent(true);
+      notifications.show({
+        title: 'Check your email',
+        message: 'We sent you a password reset link. Click it to set a new password.',
+        color: 'teal',
+        autoClose: 10000,
+      });
+    } catch (error: any) {
+      notifications.show({
+        title: 'Error',
+        message: error.message || 'Failed to send password reset email',
+        color: 'red',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const executeGoogleOAuth = async () => {
     setOauthLoading(true);
     setTermsModalOpen(false);
@@ -484,14 +523,28 @@ export const Login = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     leftSection={<IconMail size={16} />}
                   />
-                  <TextInput
-                    label="Password"
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    leftSection={<IconLock size={16} />}
-                  />
+                  <div>
+                    <TextInput
+                      label="Password"
+                      type="password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      leftSection={<IconLock size={16} />}
+                    />
+                    <div className="text-right mt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setResetEmail(email);
+                          setForgotPasswordModalOpen(true);
+                        }}
+                        className="text-sm text-teal-400 hover:text-teal-300 underline"
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
+                  </div>
                   <Button
                     type="submit"
                     fullWidth
@@ -721,6 +774,72 @@ export const Login = () => {
               </Button>
             </div>
           </div>
+        </Stack>
+      </Modal>
+
+      {/* Forgot Password Modal */}
+      <Modal
+        opened={forgotPasswordModalOpen}
+        onClose={() => {
+          setForgotPasswordModalOpen(false);
+          setResetEmailSent(false);
+          setResetEmail('');
+        }}
+        title="Reset Password"
+        centered
+      >
+        <Stack gap="md">
+          {!resetEmailSent ? (
+            <>
+              <Text size="sm" className="text-gray-300">
+                Enter your email address and we'll send you a link to reset your password.
+              </Text>
+              <TextInput
+                label="Email"
+                placeholder="your@email.com"
+                type="email"
+                required
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                leftSection={<IconMail size={16} />}
+              />
+              <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                <Button
+                  variant="light"
+                  onClick={() => {
+                    setForgotPasswordModalOpen(false);
+                    setResetEmailSent(false);
+                    setResetEmail('');
+                  }}
+                  fullWidth
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleForgotPassword} loading={loading} fullWidth>
+                  Send Reset Link
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <Alert color="teal" icon={<IconMail size={16} />}>
+                <Text size="sm" className="text-gray-300">
+                  We've sent a password reset link to <strong>{resetEmail}</strong>. Check your
+                  email and click the link to set a new password.
+                </Text>
+              </Alert>
+              <Button
+                onClick={() => {
+                  setForgotPasswordModalOpen(false);
+                  setResetEmailSent(false);
+                  setResetEmail('');
+                }}
+                fullWidth
+              >
+                Close
+              </Button>
+            </>
+          )}
         </Stack>
       </Modal>
     </div>
