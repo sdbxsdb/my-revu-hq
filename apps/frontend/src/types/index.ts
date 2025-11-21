@@ -5,6 +5,7 @@ export interface User {
   review_links?: Array<{ name: string; url: string }>; // Array of review links
   sms_template?: string;
   sms_sent_this_month?: number;
+  sms_sent_total?: number;
   // Billing & Subscription fields
   stripe_customer_id?: string;
   stripe_subscription_id?: string;

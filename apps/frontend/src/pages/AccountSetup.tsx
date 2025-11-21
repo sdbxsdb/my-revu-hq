@@ -25,6 +25,7 @@ import {
 import { apiClient } from '@/lib/api';
 import { usePayment } from '@/contexts/PaymentContext';
 import { useAccount } from '@/contexts/AccountContext';
+import { getSmsLimitFromTier, type PricingTier } from '@/lib/pricing';
 
 // Helper function to validate URL
 const isValidUrl = (url: string): boolean => {
@@ -47,6 +48,8 @@ export const AccountSetup = () => {
   const { hasPaid, loading: paymentLoading } = usePayment();
   const { account, loading: accountLoading, refetch } = useAccount();
   const [loading, setLoading] = useState(false);
+  const [subscriptionTier, setSubscriptionTier] = useState<PricingTier | null>(null);
+  const [loadingSubscription, setLoadingSubscription] = useState(true);
 
   // Show loading skeleton only while actively loading account data
   // Don't show skeleton if we have account data (even if form hasn't populated yet)
@@ -103,6 +106,23 @@ export const AccountSetup = () => {
 
   // Track if form has been populated to prevent re-population
   const formPopulatedRef = useRef(false);
+
+  // Load subscription tier for SMS limit display
+  useEffect(() => {
+    const loadSubscription = async () => {
+      try {
+        const subscription = await apiClient.getSubscription().catch(() => null);
+        if (subscription?.subscriptionTier) {
+          setSubscriptionTier(subscription.subscriptionTier);
+        }
+      } catch (error) {
+        // Failed to load subscription - continue without it
+      } finally {
+        setLoadingSubscription(false);
+      }
+    };
+    loadSubscription();
+  }, []);
 
   useEffect(() => {
     if (account && !formPopulatedRef.current) {
@@ -279,6 +299,65 @@ export const AccountSetup = () => {
         </Title>
         <p className="text-sm text-gray-400">Manage your business information and SMS template</p>
       </div>
+
+      {/* SMS Usage Display */}
+      {!loadingSubscription &&
+        account &&
+        (account.sms_sent_this_month !== undefined || account.sms_sent_total !== undefined) && (
+          <div className="mb-6 p-4 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
+            <Text size="sm" className="text-gray-400 mb-3 font-medium">
+              SMS Usage
+            </Text>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Monthly Usage */}
+              {subscriptionTier && account.sms_sent_this_month !== undefined && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <Text size="sm" className="text-gray-400">
+                      This Month
+                    </Text>
+                    <Text size="sm" className="font-semibold text-white">
+                      {account.sms_sent_this_month} / {getSmsLimitFromTier(subscriptionTier)}
+                    </Text>
+                  </div>
+                  {(() => {
+                    const limit = getSmsLimitFromTier(subscriptionTier);
+                    const percentage = limit > 0 ? (account.sms_sent_this_month / limit) * 100 : 0;
+                    const isWarning = percentage >= 80;
+                    const isDanger = percentage >= 100;
+
+                    return (
+                      <div className="h-2 bg-[#2a2a2a] rounded-full overflow-hidden">
+                        <div
+                          className={`h-full transition-all ${
+                            isDanger ? 'bg-red-500' : isWarning ? 'bg-yellow-500' : 'bg-teal-500'
+                          }`}
+                          style={{ width: `${Math.min(percentage, 100)}%` }}
+                        />
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+              {/* Total Usage */}
+              {account.sms_sent_total !== undefined && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <Text size="sm" className="text-gray-400">
+                      All Time
+                    </Text>
+                    <Text size="sm" className="font-semibold text-white">
+                      {account.sms_sent_total.toLocaleString()} sent
+                    </Text>
+                  </div>
+                  <Text size="xs" className="text-gray-500">
+                    Total SMS messages sent since account creation
+                  </Text>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
       {!paymentLoading && !hasPaid && (
         <Alert

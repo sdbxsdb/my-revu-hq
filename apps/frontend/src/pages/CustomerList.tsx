@@ -30,11 +30,15 @@ import {
 import { parsePhoneNumberFromString, isValidPhoneNumber } from 'libphonenumber-js';
 import { usePayment } from '@/contexts/PaymentContext';
 import { IconAlertCircle, IconTrash } from '@tabler/icons-react';
+import { getSmsLimitFromTier, type PricingTier } from '@/lib/pricing';
 
 export const CustomerList = () => {
   const { hasPaid, loading: paymentLoading } = usePayment();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [smsSent, setSmsSent] = useState<number | null>(null);
+  const [subscriptionTier, setSubscriptionTier] = useState<PricingTier | null>(null);
+  const [loadingUsage, setLoadingUsage] = useState(true);
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -74,7 +78,25 @@ export const CustomerList = () => {
 
   useEffect(() => {
     loadCustomers();
+    loadSmsUsage();
   }, [page, statusFilter, searchQuery]);
+
+  const loadSmsUsage = async () => {
+    try {
+      setLoadingUsage(true);
+      const [account, subscription] = await Promise.all([
+        apiClient.getAccount(),
+        apiClient.getSubscription().catch(() => null), // Don't fail if subscription endpoint fails
+      ]);
+
+      setSmsSent(account.sms_sent_this_month || 0);
+      setSubscriptionTier(subscription?.subscriptionTier || null);
+    } catch (error) {
+      // Failed to load usage data - continue without it
+    } finally {
+      setLoadingUsage(false);
+    }
+  };
 
   const loadCustomers = async () => {
     setLoading(true);
@@ -409,6 +431,8 @@ export const CustomerList = () => {
 
     try {
       await apiClient.sendSMS(customerId);
+      // Refresh SMS usage after sending
+      await loadSmsUsage();
       notifications.show({
         title: 'Success',
         message: 'SMS sent successfully',
@@ -630,6 +654,55 @@ export const CustomerList = () => {
               </Alert>
             )}
           </div>
+
+          {/* SMS Usage Display */}
+          {!loadingUsage && smsSent !== null && subscriptionTier && (
+            <div className="p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Text size="sm" className="text-gray-400">
+                    SMS Usage:
+                  </Text>
+                  <Text size="sm" className="font-semibold text-white">
+                    {smsSent} / {getSmsLimitFromTier(subscriptionTier)}
+                  </Text>
+                  <Text size="xs" className="text-gray-500">
+                    this month
+                  </Text>
+                </div>
+                {(() => {
+                  const limit = getSmsLimitFromTier(subscriptionTier);
+                  const percentage = limit > 0 ? (smsSent / limit) * 100 : 0;
+                  const isWarning = percentage >= 80;
+                  const isDanger = percentage >= 100;
+
+                  return (
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 sm:w-32 h-2 bg-[#2a2a2a] rounded-full overflow-hidden">
+                        <div
+                          className={`h-full transition-all ${
+                            isDanger ? 'bg-red-500' : isWarning ? 'bg-yellow-500' : 'bg-teal-500'
+                          }`}
+                          style={{ width: `${Math.min(percentage, 100)}%` }}
+                        />
+                      </div>
+                      {isDanger && (
+                        <Text size="xs" className="text-red-400 font-medium">
+                          Limit reached
+                        </Text>
+                      )}
+                      {isWarning && !isDanger && (
+                        <Text size="xs" className="text-yellow-400 font-medium">
+                          Approaching limit
+                        </Text>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+          )}
+
           <Button component={Link} to="/customers/add" size="md" className="font-medium w-full">
             {customers.length === 0 && !loading ? 'Add First Customer' : 'Add Customer'}
           </Button>

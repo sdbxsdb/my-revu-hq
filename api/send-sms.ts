@@ -179,12 +179,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         sent_at: new Date().toISOString(),
       });
 
-    // Update user's monthly count
+    // Update user's monthly count and total count
+    const { data: currentUser } = await supabase
+      .from('users')
+      .select('sms_sent_total')
+      .eq('id', auth.userId)
+      .single<{ sms_sent_total: number | null }>();
+
+    const currentTotal = currentUser?.sms_sent_total || 0;
+
     await supabase
       .from('users')
       // @ts-ignore - Supabase types don't include all fields
       .update({
         sms_sent_this_month: sentThisMonth + 1,
+        sms_sent_total: currentTotal + 1,
       })
       .eq('id', auth.userId);
 
