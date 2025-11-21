@@ -660,6 +660,57 @@ export const Billing = () => {
                   </Text>
                 </div>
 
+                {/* Currency Selection Buttons */}
+                <div className="flex gap-1.5 mb-3">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCurrency('GBP')}
+                    className={`flex-1 lg:flex-none px-2 py-1 rounded text-xs transition-all ${
+                      selectedCurrency === 'GBP'
+                        ? 'bg-[rgb(9,146,104)] text-white'
+                        : 'bg-[#2a2a2a] text-gray-400 hover:text-white hover:bg-[#333333]'
+                    }`}
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      <span className="text-xs font-semibold">GBP</span>
+                      <span className="text-sm">£</span>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCurrency('EUR')}
+                    className={`flex-1 lg:flex-none px-2 py-1 rounded text-xs transition-all ${
+                      selectedCurrency === 'EUR'
+                        ? 'bg-[rgb(9,146,104)] text-white'
+                        : 'bg-[#2a2a2a] text-gray-400 hover:text-white hover:bg-[#333333]'
+                    }`}
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      <span className="text-xs font-semibold">EUR</span>
+                      <span className="text-sm">€</span>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCurrency('USD')}
+                    className={`flex-1 lg:flex-none px-2 py-1 rounded text-xs transition-all ${
+                      selectedCurrency === 'USD'
+                        ? 'bg-[rgb(9,146,104)] text-white'
+                        : 'bg-[#2a2a2a] text-gray-400 hover:text-white hover:bg-[#333333]'
+                    }`}
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      <span className="text-xs font-semibold">USD</span>
+                      <span className="text-sm">$</span>
+                    </div>
+                  </button>
+                </div>
+                {detectedCurrency && selectedCurrency === detectedCurrency && (
+                  <Text size="xs" className="text-teal-400 text-center mb-3 -mt-4">
+                    Auto-detected for your location
+                  </Text>
+                )}
+
                 {/* Tier Selection Buttons */}
                 <div className="grid grid-cols-2 gap-2 mb-3">
                   {PRICING_PLANS.filter((plan) => plan.id !== 'enterprise').map((plan) => {
@@ -674,7 +725,10 @@ export const Billing = () => {
                           className="font-semibold w-full"
                           disabled={!stripePrice}
                         >
-                          {plan.name} - {displayPrice}
+                          <div className="flex flex-col items-center gap-0.5">
+                            <span>{plan.name}</span>
+                            <span className="text-xs">{displayPrice}</span>
+                          </div>
                         </Button>
                         {plan.popular && (
                           <Badge color="teal" size="sm" className="absolute -top-2 -right-2">
@@ -690,60 +744,12 @@ export const Billing = () => {
                     onClick={() => setSelectedTier('enterprise')}
                     className="font-semibold w-full"
                   >
-                    Enterprise - Custom
+                    <div className="flex flex-col items-center gap-0.5">
+                      <span>Enterprise</span>
+                      <span className="text-xs">Custom</span>
+                    </div>
                   </Button>
                 </div>
-
-                {/* Currency Selection Buttons */}
-                <div className="flex gap-2 mb-1 justify-center">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedCurrency('GBP')}
-                    className={`flex-1 lg:flex-none lg:w-20 px-4 py-2 rounded-lg font-medium transition-all ${
-                      selectedCurrency === 'GBP'
-                        ? 'bg-[rgb(9,146,104)] text-white shadow-lg'
-                        : 'bg-[#2a2a2a] text-gray-400 hover:text-white hover:bg-[#333333]'
-                    }`}
-                  >
-                    <div className="flex flex-col items-center gap-0.5">
-                      <span className="text-sm font-semibold">GBP</span>
-                      <span className="text-xs opacity-90">£</span>
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedCurrency('EUR')}
-                    className={`flex-1 lg:flex-none lg:w-20 px-4 py-2 rounded-lg font-medium transition-all ${
-                      selectedCurrency === 'EUR'
-                        ? 'bg-[rgb(9,146,104)] text-white shadow-lg'
-                        : 'bg-[#2a2a2a] text-gray-400 hover:text-white hover:bg-[#333333]'
-                    }`}
-                  >
-                    <div className="flex flex-col items-center gap-0.5">
-                      <span className="text-sm font-semibold">EUR</span>
-                      <span className="text-xs opacity-90">€</span>
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedCurrency('USD')}
-                    className={`flex-1 lg:flex-none lg:w-20 px-4 py-2 rounded-lg font-medium transition-all ${
-                      selectedCurrency === 'USD'
-                        ? 'bg-[rgb(9,146,104)] text-white shadow-lg'
-                        : 'bg-[#2a2a2a] text-gray-400 hover:text-white hover:bg-[#333333]'
-                    }`}
-                  >
-                    <div className="flex flex-col items-center gap-0.5">
-                      <span className="text-sm font-semibold">USD</span>
-                      <span className="text-xs opacity-90">$</span>
-                    </div>
-                  </button>
-                </div>
-                {detectedCurrency && selectedCurrency === detectedCurrency && (
-                  <Text size="xs" className="text-teal-400 text-center mb-4 -mt-4">
-                    Auto-detected for your location
-                  </Text>
-                )}
 
                 {/* Selected Tier Details */}
                 {selectedTier !== 'enterprise' ? (
