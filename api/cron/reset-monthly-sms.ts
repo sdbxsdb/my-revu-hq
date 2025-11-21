@@ -24,21 +24,60 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Call the database function to reset monthly counts
-    const { error } = await supabase.rpc('reset_monthly_sms_count');
+    // Try RPC function first, fallback to direct UPDATE if it fails
+    let resetSuccess = false;
 
-    if (error) {
-      console.error('[Cron] Error resetting monthly SMS counts:', error);
-      return res.status(500).json({ error: 'Failed to reset monthly SMS counts' });
+    // Attempt 1: Use RPC function
+    const { error: rpcError } = await supabase.rpc('reset_monthly_sms_count');
+
+    if (!rpcError) {
+      resetSuccess = true;
+    } else {
+      console.warn('[Cron] RPC function failed, trying direct UPDATE:', rpcError);
+
+      // Attempt 2: Direct UPDATE query (more reliable)
+      const { error: updateError, count } = await supabase
+        .from('users')
+        // @ts-ignore - Supabase types don't include all fields
+        .update({ sms_sent_this_month: 0 })
+        .neq('sms_sent_this_month', 0); // Only update non-zero values
+
+      if (updateError) {
+        console.error('[Cron] Direct UPDATE also failed:', updateError);
+        return res.status(500).json({
+          error: 'Failed to reset monthly SMS counts',
+          rpcError: rpcError.message,
+          updateError: updateError.message,
+        });
+      }
+
+      resetSuccess = true;
+      console.log(`[Cron] Reset ${count || 0} user(s) via direct UPDATE`);
     }
+
+    // Verify the reset worked
+    const { data: checkData, error: checkError } = await supabase
+      .from('users')
+      .select('id, sms_sent_this_month')
+      .neq('sms_sent_this_month', 0)
+      .limit(1);
 
     return res.json({
       success: true,
       message: 'Monthly SMS counts reset successfully',
       timestamp: new Date().toISOString(),
+      method: resetSuccess ? (rpcError ? 'direct-update' : 'rpc-function') : 'failed',
+      verification: checkError
+        ? 'Could not verify'
+        : checkData?.length === 0
+          ? 'Verified: All counts reset'
+          : `Warning: ${checkData?.length || 0} user(s) still have non-zero counts`,
     });
   } catch (error: any) {
     console.error('[Cron] Error in reset-monthly-sms:', error);
-    return res.status(500).json({ error: error.message || 'Internal server error' });
+    return res.status(500).json({
+      error: error.message || 'Internal server error',
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+    });
   }
 }
