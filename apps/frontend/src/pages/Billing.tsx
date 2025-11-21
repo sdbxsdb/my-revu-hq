@@ -295,36 +295,80 @@ export const Billing = () => {
           <Skeleton height={100} />
           <Skeleton height={200} />
         </div>
-      ) : isPaid ? (
+      ) : isPaid || accessStatus === 'past_due' ? (
         /* Active Subscription View */
         <div className="space-y-6">
+          {/* Payment Failure Warning Banner */}
+          {accessStatus === 'past_due' && (
+            <Alert
+              icon={<IconAlertCircle size={16} />}
+              title="Payment Failed"
+              color="red"
+              className="mb-6"
+            >
+              <div className="flex flex-col gap-3">
+                <Text size="sm" className="text-gray-300">
+                  Your payment could not be processed. Please update your payment method to continue
+                  using the service. SMS sending has been temporarily disabled until payment is
+                  resolved.
+                </Text>
+                <Button
+                  variant="light"
+                  color="red"
+                  size="sm"
+                  className="self-start"
+                  onClick={async () => {
+                    try {
+                      setLoading(true);
+                      const response = await apiClient.createPortalSession();
+                      window.location.href = response.url;
+                    } catch (error: any) {
+                      notifications.show({
+                        title: 'Error',
+                        message: error.message || 'Failed to open payment settings',
+                        color: 'red',
+                      });
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  loading={loading}
+                >
+                  Update Payment Method
+                </Button>
+              </div>
+            </Alert>
+          )}
+
           {/* Subscription Status Banner */}
-          <Alert
-            icon={<IconCheck size={16} />}
-            title="Active Subscription"
-            color="teal"
-            className="mb-6"
-          >
-            <div className="flex flex-col gap-2">
-              <Text size="sm" className="text-gray-300">
-                Your subscription is active and you have full access to all features.
-                {displayNextBillingDate && (
-                  <>
-                    {' '}
-                    Next billing date:{' '}
-                    {new Date(displayNextBillingDate).toLocaleDateString('en-GB', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                    })}
-                  </>
-                )}
-              </Text>
-              <Badge color="teal" size="lg" className="self-start">
-                Active Subscription
-              </Badge>
-            </div>
-          </Alert>
+          {accessStatus !== 'past_due' && (
+            <Alert
+              icon={<IconCheck size={16} />}
+              title="Active Subscription"
+              color="teal"
+              className="mb-6"
+            >
+              <div className="flex flex-col gap-2">
+                <Text size="sm" className="text-gray-300">
+                  Your subscription is active and you have full access to all features.
+                  {displayNextBillingDate && (
+                    <>
+                      {' '}
+                      Next billing date:{' '}
+                      {new Date(displayNextBillingDate).toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                      })}
+                    </>
+                  )}
+                </Text>
+                <Badge color="teal" size="lg" className="self-start">
+                  Active Subscription
+                </Badge>
+              </div>
+            </Alert>
+          )}
 
           {/* Subscription Details Card */}
           <Paper shadow="sm" p="md" className="bg-[#2a2a2a]/50 border border-[#2a2a2a]">

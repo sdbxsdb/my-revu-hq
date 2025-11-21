@@ -412,7 +412,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           stripe_subscription_id: string | null;
         }>();
 
-      if (failedUser && !failedUser.stripe_subscription_id) {
+      if (failedUser) {
+        // Update payment status to past_due for both invoice and subscription payments
         await supabase
           .from('users')
           // @ts-ignore - Supabase types don't include billing fields yet
