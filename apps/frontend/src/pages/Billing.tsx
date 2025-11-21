@@ -68,6 +68,8 @@ export const Billing = () => {
   >(null);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [changeTierModalOpen, setChangeTierModalOpen] = useState(false);
+  const [selectedNewTier, setSelectedNewTier] = useState<PricingTier | null>(null);
   const [cancelling, setCancelling] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const isPaid = accessStatus === 'active';
@@ -608,6 +610,78 @@ export const Billing = () => {
               </div>
             </Stack>
           </Paper>
+
+          {/* Change Plan Section */}
+          {displayPaymentMethod === 'card' && subscriptionTier && (
+            <Paper shadow="sm" p="md" className="bg-[#2a2a2a]/50 border border-[#2a2a2a]">
+              <Title order={3} className="text-xl font-bold mb-4 text-white">
+                Change Plan
+              </Title>
+              <Stack gap="md">
+                <Text size="sm" className="text-gray-400">
+                  You're currently on the{' '}
+                  <span className="font-semibold text-white capitalize">{subscriptionTier}</span>{' '}
+                  plan. You can upgrade or downgrade at any time. Changes are prorated automatically
+                  and your next invoice will reflect the adjustment.
+                </Text>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {PRICING_PLANS.filter((plan) => plan.id !== 'enterprise').map((plan) => {
+                    const stripePrice = stripePrices[plan.id]?.[selectedCurrency];
+                    const displayPrice = stripePrice?.formatted || 'Loading...';
+                    const isCurrentTier = subscriptionTier === plan.id;
+                    const isUpgrade =
+                      (subscriptionTier === 'starter' && plan.id === 'pro') ||
+                      (subscriptionTier === 'starter' && plan.id === 'business') ||
+                      (subscriptionTier === 'pro' && plan.id === 'business');
+
+                    return (
+                      <div
+                        key={plan.id}
+                        className={`p-4 rounded-lg border ${
+                          isCurrentTier
+                            ? 'bg-teal-900/20 border-teal-800/50'
+                            : 'bg-[#1a1a1a] border-[#2a2a2a] hover:border-[#333333]'
+                        }`}
+                      >
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center justify-between">
+                            <Text className="font-semibold text-white capitalize">{plan.name}</Text>
+                            {isCurrentTier && (
+                              <Badge size="sm" color="teal">
+                                Current
+                              </Badge>
+                            )}
+                          </div>
+                          <Text size="lg" className="font-bold text-white">
+                            {displayPrice}
+                          </Text>
+                          <Text size="xs" className="text-gray-400">
+                            {plan.smsLimit} SMS/month
+                          </Text>
+                          {!isCurrentTier && (
+                            <Button
+                              variant={isUpgrade ? 'filled' : 'outline'}
+                              color={isUpgrade ? 'teal' : 'gray'}
+                              size="sm"
+                              className="mt-2"
+                              onClick={() => {
+                                setSelectedNewTier(plan.id);
+                                setChangeTierModalOpen(true);
+                              }}
+                              disabled={!stripePrice}
+                            >
+                              {isUpgrade ? 'Upgrade' : 'Downgrade'}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Stack>
+            </Paper>
+          )}
 
           {/* Account Management Section */}
           <Paper shadow="sm" p="md" className="bg-[#2a2a2a]/50 border border-[#2a2a2a]">
@@ -1162,6 +1236,116 @@ export const Billing = () => {
               Delete Account
             </Button>
           </div>
+        </Stack>
+      </Modal>
+
+      {/* Change Tier Modal */}
+      <Modal
+        opened={changeTierModalOpen}
+        onClose={() => {
+          setChangeTierModalOpen(false);
+          setSelectedNewTier(null);
+        }}
+        title="Change Subscription Plan"
+        centered
+      >
+        <Stack gap="md">
+          {selectedNewTier &&
+            subscriptionTier &&
+            (() => {
+              const currentPlan = getPlanById(subscriptionTier);
+              const newPlan = getPlanById(selectedNewTier);
+              const isUpgrade =
+                (subscriptionTier === 'starter' && selectedNewTier === 'pro') ||
+                (subscriptionTier === 'starter' && selectedNewTier === 'business') ||
+                (subscriptionTier === 'pro' && selectedNewTier === 'business');
+              const currentPrice =
+                stripePrices[subscriptionTier]?.[selectedCurrency]?.formatted || 'Loading...';
+              const newPrice =
+                stripePrices[selectedNewTier]?.[selectedCurrency]?.formatted || 'Loading...';
+
+              return (
+                <>
+                  <Text size="sm" className="text-gray-300">
+                    {isUpgrade ? 'Upgrade' : 'Downgrade'} your subscription from{' '}
+                    <span className="font-semibold text-white">{currentPlan?.name}</span> to{' '}
+                    <span className="font-semibold text-white">{newPlan?.name}</span>?
+                  </Text>
+
+                  <div className="p-4 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
+                    <div className="flex justify-between items-center mb-2">
+                      <Text size="sm" className="text-gray-400">
+                        Current Plan
+                      </Text>
+                      <Text size="sm" className="font-semibold text-white">
+                        {currentPlan?.name} - {currentPrice}/month
+                      </Text>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <Text size="sm" className="text-gray-400">
+                        New Plan
+                      </Text>
+                      <Text size="sm" className="font-semibold text-teal-400">
+                        {newPlan?.name} - {newPrice}/month
+                      </Text>
+                    </div>
+                  </div>
+
+                  <Alert color={isUpgrade ? 'teal' : 'yellow'} icon={<IconAlertCircle size={16} />}>
+                    <Text size="sm" className="text-gray-300">
+                      {isUpgrade
+                        ? 'Your subscription will be upgraded immediately. You will be charged a prorated amount for the remainder of your billing cycle.'
+                        : 'Your subscription will be downgraded immediately. You will receive a prorated credit for the remainder of your billing cycle.'}
+                    </Text>
+                  </Alert>
+
+                  <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                    <Button
+                      variant="light"
+                      onClick={() => {
+                        setChangeTierModalOpen(false);
+                        setSelectedNewTier(null);
+                      }}
+                      fullWidth
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      color={isUpgrade ? 'teal' : 'gray'}
+                      onClick={async () => {
+                        if (!selectedNewTier) return;
+
+                        try {
+                          setLoading(true);
+                          await apiClient.changeTier(selectedNewTier, selectedCurrency);
+                          notifications.show({
+                            title: 'Success',
+                            message: `Successfully changed to ${newPlan?.name} plan. Your subscription will be updated shortly.`,
+                            color: 'green',
+                          });
+                          setChangeTierModalOpen(false);
+                          setSelectedNewTier(null);
+                          // Reload subscription data
+                          await loadSubscription();
+                        } catch (error: any) {
+                          notifications.show({
+                            title: 'Error',
+                            message: error.message || 'Failed to change plan',
+                            color: 'red',
+                          });
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      loading={loading}
+                      fullWidth
+                    >
+                      Confirm {isUpgrade ? 'Upgrade' : 'Downgrade'}
+                    </Button>
+                  </div>
+                </>
+              );
+            })()}
         </Stack>
       </Modal>
     </Paper>

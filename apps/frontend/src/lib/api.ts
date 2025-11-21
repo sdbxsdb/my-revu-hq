@@ -183,4 +183,13 @@ export const apiClient = {
     const { data } = await api.get('/api/geo/detect-country');
     return data;
   },
+
+  // Change subscription tier
+  changeTier: async (
+    tier: string,
+    currency?: string
+  ): Promise<{ success: boolean; message: string }> => {
+    const { data } = await api.post('/api/billing/change-tier', { tier, currency });
+    return data;
+  },
 };

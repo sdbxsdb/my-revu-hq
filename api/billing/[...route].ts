@@ -56,6 +56,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return handleCreatePortalSession(req, res);
     case 'prices':
       return handlePrices(req, res);
+    case 'change-tier':
+      return handleChangeTier(req, res);
     default:
       setCorsHeaders(res);
       return res.status(404).json({ error: 'Route not found', route: routePath });
@@ -616,5 +618,108 @@ async function handlePrices(req: VercelRequest, res: VercelResponse) {
   } catch (error: any) {
     setCorsHeaders(res);
     return res.status(500).json({ error: error.message });
+  }
+}
+
+// POST /api/billing/change-tier
+async function handleChangeTier(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'POST') {
+    setCorsHeaders(res);
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  setCorsHeaders(res);
+
+  try {
+    const auth = await authenticate(req as any);
+
+    if (!stripe) {
+      return res.status(500).json({ error: 'Stripe not configured' });
+    }
+
+    const { tier, currency } = req.body as { tier: string; currency?: string };
+
+    if (!tier || !['starter', 'pro', 'business'].includes(tier)) {
+      return res.status(400).json({ error: 'Invalid tier. Must be starter, pro, or business.' });
+    }
+
+    // Get user's current subscription
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('stripe_customer_id, stripe_subscription_id, stripe_price_id')
+      .eq('id', auth.userId)
+      .single<{
+        stripe_customer_id: string | null;
+        stripe_subscription_id: string | null;
+        stripe_price_id: string | null;
+      }>();
+
+    if (userError || !user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (!user.stripe_subscription_id) {
+      return res.status(400).json({
+        error: 'No active subscription found. Please create a subscription first.',
+      });
+    }
+
+    // Determine currency - use provided currency or detect from current subscription
+    let targetCurrency = currency;
+    if (!targetCurrency) {
+      // Try to get currency from current price ID
+      if (user.stripe_price_id) {
+        const currentPrice = await stripe.prices.retrieve(user.stripe_price_id);
+        targetCurrency = currentPrice.currency.toUpperCase();
+      } else {
+        // Fallback to GBP
+        targetCurrency = 'GBP';
+      }
+    }
+
+    // Get the new price ID
+    const priceIdEnvVar = `STRIPE_PRICE_ID_${tier.toUpperCase()}_${targetCurrency}`;
+    const newPriceId = process.env[priceIdEnvVar];
+
+    if (!newPriceId) {
+      return res.status(500).json({
+        error: `Price ID not configured for tier ${tier} and currency ${targetCurrency}. Please set ${priceIdEnvVar}.`,
+      });
+    }
+
+    // Check if user is already on this tier
+    if (user.stripe_price_id === newPriceId) {
+      return res.status(400).json({
+        error: `You are already on the ${tier} plan.`,
+      });
+    }
+
+    // Retrieve the subscription
+    const subscription = await stripe.subscriptions.retrieve(user.stripe_subscription_id);
+
+    // Update the subscription to the new price
+    // Stripe will automatically handle prorating
+    const updatedSubscription = await stripe.subscriptions.update(user.stripe_subscription_id, {
+      items: [
+        {
+          id: subscription.items.data[0].id,
+          price: newPriceId,
+        },
+      ],
+      proration_behavior: 'always_invoice', // Prorate and invoice immediately
+    });
+
+    return res.json({
+      success: true,
+      message: `Successfully changed to ${tier} plan`,
+      subscriptionId: updatedSubscription.id,
+      // The webhook will update the tier in the database automatically
+    });
+  } catch (error: any) {
+    setCorsHeaders(res);
+    if (error.message === 'Unauthorized') {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    return res.status(500).json({ error: error.message || 'Failed to change tier' });
   }
 }
