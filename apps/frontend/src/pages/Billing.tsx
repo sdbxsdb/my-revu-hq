@@ -25,16 +25,9 @@ import { notifications } from '@mantine/notifications';
 import { usePayment } from '@/contexts/PaymentContext';
 import { useAccount } from '@/contexts/AccountContext';
 import CardBrandIcon from '@/components/CardBrandIcon';
-import {
-  getCurrencyFromCountry,
-  detectCurrency,
-  formatPrice,
-  createCurrencyInfo,
-  type CurrencyInfo,
-  type Currency,
-} from '@/lib/currency';
+import { getCurrencyFromCountry, detectCurrency, type Currency } from '@/lib/currency';
 import '@/lib/currency-debug'; // Load debug utility in dev
-import { PRICING_PLANS, type PricingTier, formatPlanPrice, getPlanById } from '@/lib/pricing';
+import { PRICING_PLANS, type PricingTier, getPlanById } from '@/lib/pricing';
 
 export const Billing = () => {
   const { hasPaid } = usePayment();
@@ -47,14 +40,13 @@ export const Billing = () => {
   const [loadingSubscription, setLoadingSubscription] = useState(true);
   const [loadingPrices, setLoadingPrices] = useState(true);
   const [loadingCountry, setLoadingCountry] = useState(true);
-  const [detectedCurrency, setDetectedCurrency] = useState(() => detectCurrency()); // Fallback
-  const [selectedCurrency, setSelectedCurrency] = useState<Currency>('GBP'); // Will be updated when detected
-  const [allPrices, setAllPrices] = useState<
-    Record<string, { amount: number; currency: string; formatted: string }>
+  const [detectedCurrency, setDetectedCurrency] = useState<Currency | null>(null);
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency>(
+    () => detectCurrency().currency
+  ); // Will be updated when detected
+  const [stripePrices, setStripePrices] = useState<
+    Record<string, Record<string, { amount: number; currency: string; formatted: string }>>
   >({});
-  const [currencyInfo, setCurrencyInfo] = useState<CurrencyInfo>(() =>
-    createCurrencyInfo(detectedCurrency.currency, detectedCurrency.country)
-  );
   const [accessStatus, setAccessStatus] = useState<'active' | 'inactive' | 'past_due' | 'canceled'>(
     hasPaid ? 'active' : 'inactive'
   );
@@ -91,7 +83,7 @@ export const Billing = () => {
       try {
         const response = await apiClient.detectCountry();
         const currencyData = getCurrencyFromCountry(response.country);
-        setDetectedCurrency(currencyData);
+        setDetectedCurrency(currencyData.currency);
         setSelectedCurrency(currencyData.currency); // Set initial selected currency to detected
       } catch (error) {
         // Keep fallback currency
@@ -103,34 +95,12 @@ export const Billing = () => {
     detectUserCountry();
   }, []);
 
-  // Fetch prices from Stripe after country is detected
+  // Fetch prices from Stripe for all tiers and currencies
   useEffect(() => {
-    if (loadingCountry) return; // Wait for country detection
-
     const loadPrices = async () => {
       try {
         const { prices } = await apiClient.getPrices();
-        setAllPrices(prices); // Store all prices for currency selector
-
-        // Initialize currency info with selected currency's price (which should be detected currency)
-        // If detected currency price is available, use it; otherwise fallback to first available
-        const currentPrice = prices[selectedCurrency];
-        if (currentPrice) {
-          const country =
-            selectedCurrency === 'GBP' ? 'GB' : selectedCurrency === 'EUR' ? 'IE' : 'US';
-          setCurrencyInfo(createCurrencyInfo(selectedCurrency, country, currentPrice));
-        } else {
-          // Fallback to first available price
-          const availableCurrency = Object.keys(prices)[0] as Currency;
-          if (availableCurrency && prices[availableCurrency]) {
-            const country =
-              availableCurrency === 'GBP' ? 'GB' : availableCurrency === 'EUR' ? 'IE' : 'US';
-            setCurrencyInfo(
-              createCurrencyInfo(availableCurrency, country, prices[availableCurrency])
-            );
-            setSelectedCurrency(availableCurrency);
-          }
-        }
+        setStripePrices(prices);
       } catch (error) {
         // Failed to load prices
       } finally {
@@ -139,18 +109,7 @@ export const Billing = () => {
     };
 
     loadPrices();
-  }, [loadingCountry]);
-
-  // Update currency info when selected currency changes
-  useEffect(() => {
-    if (Object.keys(allPrices).length === 0) return; // Wait for prices to load
-
-    const priceData = allPrices[selectedCurrency];
-    if (priceData) {
-      const country = selectedCurrency === 'GBP' ? 'GB' : selectedCurrency === 'EUR' ? 'IE' : 'US';
-      setCurrencyInfo(createCurrencyInfo(selectedCurrency, country, priceData));
-    }
-  }, [selectedCurrency, allPrices]);
+  }, []);
 
   // Handle success query parameter from Stripe redirect
   useEffect(() => {
@@ -189,22 +148,8 @@ export const Billing = () => {
       setCardLast4(subscription.cardLast4);
       setCardBrand(subscription.cardBrand);
       setAccountStatus(subscription.accountStatus || 'active');
-
-      // Debug logging in dev mode
-      if (import.meta.env.DEV) {
-        console.log('[Billing] Subscription data loaded:', {
-          accessStatus: subscription.accessStatus,
-          paymentMethod: subscription.paymentMethod,
-          subscriptionStartDate: subscription.subscriptionStartDate,
-          currentPeriodStart: subscription.currentPeriodStart,
-          nextBillingDate: subscription.nextBillingDate,
-          cardLast4: subscription.cardLast4,
-          cardBrand: subscription.cardBrand,
-        });
-      }
     } catch (error: any) {
       // Failed to load subscription
-      console.error('[Billing] Error loading subscription:', error);
       notifications.show({
         title: 'Error',
         message: 'Failed to load subscription information',
@@ -372,7 +317,7 @@ export const Billing = () => {
                 )}
               </Text>
               <Badge color="teal" size="lg" className="self-start">
-                {formatPrice(currencyInfo.price, currencyInfo.currency)}/month
+                Active Subscription
               </Badge>
             </div>
           </Alert>
@@ -388,9 +333,7 @@ export const Billing = () => {
                   <Text size="sm" className="text-gray-400 mb-1">
                     Plan
                   </Text>
-                  <Text className="font-semibold text-white">
-                    {formatPrice(currencyInfo.price, currencyInfo.currency)}/month
-                  </Text>
+                  <Text className="font-semibold text-white">Active Subscription</Text>
                 </div>
                 <div>
                   <Text size="sm" className="text-gray-400 mb-1">
@@ -718,24 +661,29 @@ export const Billing = () => {
                 </div>
 
                 {/* Tier Selection Buttons */}
-                <div className="grid grid-cols-2 gap-2 mb-6">
-                  {PRICING_PLANS.filter((plan) => plan.id !== 'enterprise').map((plan) => (
-                    <div key={plan.id} className="relative">
-                      <Button
-                        variant={selectedTier === plan.id ? 'filled' : 'outline'}
-                        color={selectedTier === plan.id ? 'teal' : 'gray'}
-                        onClick={() => setSelectedTier(plan.id)}
-                        className="font-semibold w-full"
-                      >
-                        {plan.name} - {formatPlanPrice(plan.price, selectedCurrency)}
-                      </Button>
-                      {plan.popular && (
-                        <Badge color="teal" size="sm" className="absolute -top-2 -right-2">
-                          Popular
-                        </Badge>
-                      )}
-                    </div>
-                  ))}
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  {PRICING_PLANS.filter((plan) => plan.id !== 'enterprise').map((plan) => {
+                    const stripePrice = stripePrices[plan.id]?.[selectedCurrency];
+                    const displayPrice = stripePrice?.formatted || 'Loading...';
+                    return (
+                      <div key={plan.id} className="relative">
+                        <Button
+                          variant={selectedTier === plan.id ? 'filled' : 'outline'}
+                          color={selectedTier === plan.id ? 'teal' : 'gray'}
+                          onClick={() => setSelectedTier(plan.id)}
+                          className="font-semibold w-full"
+                          disabled={!stripePrice}
+                        >
+                          {plan.name} - {displayPrice}
+                        </Button>
+                        {plan.popular && (
+                          <Badge color="teal" size="sm" className="absolute -top-2 -right-2">
+                            Popular
+                          </Badge>
+                        )}
+                      </div>
+                    );
+                  })}
                   <Button
                     variant={selectedTier === 'enterprise' ? 'filled' : 'outline'}
                     color={selectedTier === 'enterprise' ? 'teal' : 'gray'}
@@ -745,6 +693,57 @@ export const Billing = () => {
                     Enterprise - Custom
                   </Button>
                 </div>
+
+                {/* Currency Selection Buttons */}
+                <div className="flex gap-2 mb-1 justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCurrency('GBP')}
+                    className={`flex-1 lg:flex-none lg:w-20 px-4 py-2 rounded-lg font-medium transition-all ${
+                      selectedCurrency === 'GBP'
+                        ? 'bg-[rgb(9,146,104)] text-white shadow-lg'
+                        : 'bg-[#2a2a2a] text-gray-400 hover:text-white hover:bg-[#333333]'
+                    }`}
+                  >
+                    <div className="flex flex-col items-center gap-0.5">
+                      <span className="text-sm font-semibold">GBP</span>
+                      <span className="text-xs opacity-90">£</span>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCurrency('EUR')}
+                    className={`flex-1 lg:flex-none lg:w-20 px-4 py-2 rounded-lg font-medium transition-all ${
+                      selectedCurrency === 'EUR'
+                        ? 'bg-[rgb(9,146,104)] text-white shadow-lg'
+                        : 'bg-[#2a2a2a] text-gray-400 hover:text-white hover:bg-[#333333]'
+                    }`}
+                  >
+                    <div className="flex flex-col items-center gap-0.5">
+                      <span className="text-sm font-semibold">EUR</span>
+                      <span className="text-xs opacity-90">€</span>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCurrency('USD')}
+                    className={`flex-1 lg:flex-none lg:w-20 px-4 py-2 rounded-lg font-medium transition-all ${
+                      selectedCurrency === 'USD'
+                        ? 'bg-[rgb(9,146,104)] text-white shadow-lg'
+                        : 'bg-[#2a2a2a] text-gray-400 hover:text-white hover:bg-[#333333]'
+                    }`}
+                  >
+                    <div className="flex flex-col items-center gap-0.5">
+                      <span className="text-sm font-semibold">USD</span>
+                      <span className="text-xs opacity-90">$</span>
+                    </div>
+                  </button>
+                </div>
+                {detectedCurrency && selectedCurrency === detectedCurrency && (
+                  <Text size="xs" className="text-teal-400 text-center mb-4 -mt-4">
+                    Auto-detected for your location
+                  </Text>
+                )}
 
                 {/* Selected Tier Details */}
                 {selectedTier !== 'enterprise' ? (
@@ -777,7 +776,13 @@ export const Billing = () => {
                             </Text>
                             <div className="mb-4">
                               <Text className="text-3xl font-bold text-white">
-                                {formatPlanPrice(plan.price, selectedCurrency)}
+                                {(() => {
+                                  const stripePrice = stripePrices[plan.id]?.[selectedCurrency];
+                                  if (!stripePrice) {
+                                    return 'Loading...';
+                                  }
+                                  return stripePrice.formatted;
+                                })()}
                               </Text>
                               <Text size="sm" className="text-gray-400">
                                 per month

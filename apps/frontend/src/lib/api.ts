@@ -169,9 +169,9 @@ export const apiClient = {
     return data;
   },
 
-  // Get prices for all currencies from Stripe
+  // Get prices for all tiers and currencies from Stripe
   getPrices: async (): Promise<{
-    prices: Record<string, { amount: number; currency: string; formatted: string }>;
+    prices: Record<string, Record<string, { amount: number; currency: string; formatted: string }>>;
   }> => {
     const { data } = await api.get('/api/billing/prices');
     return data;

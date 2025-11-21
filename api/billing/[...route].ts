@@ -40,11 +40,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  // Debug logging (remove in production if needed)
-  console.log('[Billing Route] URL:', req.url);
-  console.log('[Billing Route] Query route:', req.query.route);
-  console.log('[Billing Route] Parsed routePath:', routePath);
-
   // Route to appropriate handler
   switch (routePath) {
     case 'subscription':
@@ -63,7 +58,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return handlePrices(req, res);
     default:
       setCorsHeaders(res);
-      console.error('[Billing Route] Route not found:', routePath);
       return res.status(404).json({ error: 'Route not found', route: routePath });
   }
 }
@@ -76,18 +70,9 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    console.log('[Subscription API] ===== REQUEST RECEIVED =====');
-    console.log('[Subscription API] Request method:', req.method);
-    console.log('[Subscription API] Request URL:', req.url);
-
     const auth = await authenticate(req as any);
-    console.log('[Subscription API] ✅ User authenticated:', {
-      userId: auth.userId,
-      userEmail: auth.user?.email || 'N/A',
-    });
 
     if (!stripe) {
-      console.error('[Subscription API] Stripe not configured');
       return res.status(500).json({ error: 'Stripe not configured' });
     }
 
@@ -123,60 +108,23 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
           null;
       } catch (e) {
         // Column doesn't exist, that's okay - accountLifecycleStatus will remain null
-        console.log('[Subscription API] account_lifecycle_status column does not exist, skipping');
       }
     }
 
-    console.log('[Subscription API] ===== START SUBSCRIPTION CHECK =====');
-    console.log('[Subscription API] Authenticated User ID:', auth.userId);
-    console.log('[Subscription API] Database query result:', {
-      user: user
-        ? {
-            email: user.email,
-            stripe_customer_id: user.stripe_customer_id,
-            stripe_subscription_id: user.stripe_subscription_id,
-            payment_status: user.payment_status,
-            payment_method: user.payment_method,
-            current_period_end: user.current_period_end,
-            subscription_start_date: user.subscription_start_date,
-          }
-        : null,
-      accountLifecycleStatus,
-      error: userError,
-      hasUser: !!user,
-    });
-
     if (!user) {
-      console.log('[Subscription API] ❌ User not found in database - returning inactive');
-      console.log('[Subscription API] ===== END SUBSCRIPTION CHECK =====');
       return res.json({
         accessStatus: 'inactive',
         paymentMethod: null,
       });
     }
-
-    console.log('[Subscription API] ✅ User found in database');
-    console.log('[Subscription API] User email:', user.email);
-    console.log('[Subscription API] User payment_status:', user.payment_status);
-    console.log('[Subscription API] User payment_method:', user.payment_method);
-    console.log('[Subscription API] User stripe_subscription_id:', user.stripe_subscription_id);
 
     // If no payment status, return inactive
     if (!user.payment_status || user.payment_status === 'inactive') {
-      console.log(
-        '[Subscription API] ❌ User has inactive or missing payment_status:',
-        user.payment_status
-      );
-      console.log('[Subscription API] ===== END SUBSCRIPTION CHECK =====');
       return res.json({
         accessStatus: 'inactive',
         paymentMethod: null,
       });
     }
-
-    console.log(
-      '[Subscription API] ✅ User has active payment_status, proceeding to fetch Stripe data'
-    );
 
     // Determine payment type based on subscription_id
     let cardLast4: string | undefined;
@@ -187,20 +135,8 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
 
     if (user.stripe_subscription_id) {
       // Card payment: Get card details and subscription info from Stripe
-      console.log(
-        '[Subscription API] Fetching subscription from Stripe:',
-        user.stripe_subscription_id
-      );
       try {
         const subscription = await stripe.subscriptions.retrieve(user.stripe_subscription_id);
-        console.log('[Subscription API] Stripe subscription retrieved:', {
-          id: subscription.id,
-          status: subscription.status,
-          created: subscription.created,
-          current_period_start: subscription.current_period_start,
-          current_period_end: subscription.current_period_end,
-          default_payment_method: subscription.default_payment_method,
-        });
 
         // Get subscription dates
         subscriptionStartDate = subscription.created
@@ -213,76 +149,32 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
           ? new Date(subscription.current_period_end * 1000).toISOString()
           : undefined;
 
-        console.log('[Subscription API] Parsed subscription dates:', {
-          subscriptionStartDate,
-          currentPeriodStart,
-          currentPeriodEnd,
-        });
-
         // Get card details if available
         if (subscription.default_payment_method) {
-          console.log(
-            '[Subscription API] Fetching payment method:',
-            subscription.default_payment_method
-          );
           try {
             const paymentMethod = await stripe.paymentMethods.retrieve(
               subscription.default_payment_method as string
             );
-            console.log('[Subscription API] Payment method retrieved:', {
-              id: paymentMethod.id,
-              type: paymentMethod.type,
-              card: paymentMethod.card
-                ? {
-                    brand: paymentMethod.card.brand,
-                    last4: paymentMethod.card.last4,
-                    exp_month: paymentMethod.card.exp_month,
-                    exp_year: paymentMethod.card.exp_year,
-                  }
-                : null,
-            });
 
             if (paymentMethod?.type === 'card' && paymentMethod.card) {
               cardLast4 = paymentMethod.card.last4;
               cardBrand = paymentMethod.card.brand;
-              console.log('[Subscription API] Card details extracted:', {
-                last4: cardLast4,
-                brand: cardBrand,
-              });
-            } else {
-              console.log('[Subscription API] Payment method is not a card or has no card data');
             }
           } catch (pmError: any) {
-            console.error('[Subscription API] Error retrieving payment method:', {
-              message: pmError.message,
-              code: pmError.code,
-              type: pmError.type,
-            });
+            // Payment method retrieval failed
           }
-        } else {
-          console.log('[Subscription API] No default_payment_method on subscription');
         }
       } catch (stripeError: any) {
-        console.error('[Subscription API] Error retrieving subscription from Stripe:', {
-          message: stripeError.message,
-          code: stripeError.code,
-          type: stripeError.type,
-          subscription_id: user.stripe_subscription_id,
-        });
         // Fallback to database values
         subscriptionStartDate = user.subscription_start_date || undefined;
         currentPeriodEnd = user.current_period_end || undefined;
       }
     } else {
       // For invoice payments, use dates from database
-      console.log(
-        '[Subscription API] No stripe_subscription_id, using database values for invoice payment'
-      );
       subscriptionStartDate = user.subscription_start_date || undefined;
       currentPeriodEnd = user.current_period_end || undefined;
     }
 
-    // Consolidate all data for logging
     const responseData = {
       accessStatus: user.payment_status,
       paymentMethod: user.payment_method as 'card' | 'direct_debit' | null,
@@ -294,29 +186,6 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
       cardBrand,
       accountStatus: accountLifecycleStatus,
     };
-
-    // Comprehensive log with all user and subscription data
-    console.log('[Subscription API] ===== COMPLETE SUBSCRIPTION DATA =====');
-    console.log('[Subscription API] User ID:', auth.userId);
-    console.log('[Subscription API] User Email:', user.email || 'N/A');
-    console.log('[Subscription API] Database User Data:', {
-      stripe_customer_id: user.stripe_customer_id,
-      stripe_subscription_id: user.stripe_subscription_id,
-      payment_status: user.payment_status,
-      payment_method: user.payment_method,
-      current_period_end: user.current_period_end,
-      account_lifecycle_status: accountLifecycleStatus,
-      subscription_start_date: user.subscription_start_date,
-    });
-    console.log('[Subscription API] Stripe Subscription Data:', {
-      subscriptionStartDate,
-      currentPeriodStart,
-      currentPeriodEnd,
-      cardLast4,
-      cardBrand,
-    });
-    console.log('[Subscription API] Final Response Data:', responseData);
-    console.log('[Subscription API] =======================================');
 
     return res.json(responseData);
   } catch (error: any) {
@@ -474,9 +343,6 @@ async function handleCancelSubscription(req: VercelRequest, res: VercelResponse)
       } catch (stripeError: any) {
         // If subscription is already cancelled in Stripe, that's okay
         // We'll still update our database
-        if (!stripeError.message?.includes('No such subscription')) {
-          console.error('[Cancel Subscription] Stripe error:', stripeError);
-        }
       }
     }
 
@@ -542,9 +408,6 @@ async function handleDeleteAccount(req: VercelRequest, res: VercelResponse) {
         await stripe.subscriptions.cancel(user.stripe_subscription_id);
       } catch (stripeError: any) {
         // If subscription is already cancelled, that's okay
-        if (!stripeError.message?.includes('No such subscription')) {
-          console.error('[Delete Account] Stripe error:', stripeError);
-        }
       }
     }
 
@@ -695,46 +558,50 @@ async function handlePrices(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'Stripe not configured' });
     }
 
-    // Get price IDs from environment variables
-    const priceIds: Record<string, string> = {
-      GBP: process.env.STRIPE_PRICE_ID_GBP || process.env.STRIPE_PRICE_ID || '',
-      EUR: process.env.STRIPE_PRICE_ID_EUR || '',
-      USD: process.env.STRIPE_PRICE_ID_USD || '',
-    };
+    // Get price IDs for all tiers and currencies
+    const tiers = ['starter', 'pro', 'business'];
+    const currencies = ['GBP', 'EUR', 'USD'];
+    const prices: Record<
+      string,
+      Record<string, { amount: number; currency: string; formatted: string }>
+    > = {};
 
-    // Fetch prices from Stripe for all configured currencies
-    const prices: Record<string, { amount: number; currency: string; formatted: string }> = {};
+    for (const tier of tiers) {
+      prices[tier] = {};
+      for (const currency of currencies) {
+        const priceIdEnvVar = `STRIPE_PRICE_ID_${tier.toUpperCase()}_${currency}`;
+        const priceId = process.env[priceIdEnvVar];
 
-    for (const [currency, priceId] of Object.entries(priceIds)) {
-      if (!priceId) {
-        continue;
-      }
-
-      try {
-        const price = await stripe.prices.retrieve(priceId);
-
-        // Convert from cents to dollars/euros/pounds
-        const amount = price.unit_amount ? price.unit_amount / 100 : 0;
-
-        // Format price with currency symbol
-        let formatted = '';
-        if (currency === 'USD') {
-          formatted = `$${amount.toFixed(2)}`;
-        } else if (currency === 'EUR') {
-          formatted = `€${amount.toFixed(2)}`;
-        } else if (currency === 'GBP') {
-          formatted = `£${amount.toFixed(2)}`;
-        } else {
-          formatted = `${amount.toFixed(2)} ${currency}`;
+        if (!priceId) {
+          continue;
         }
 
-        prices[currency] = {
-          amount,
-          currency: price.currency.toUpperCase(),
-          formatted,
-        };
-      } catch (error: any) {
-        // Continue with other currencies - don't add to prices object if fetch fails
+        try {
+          const price = await stripe.prices.retrieve(priceId);
+
+          // Convert from cents to dollars/euros/pounds
+          const amount = price.unit_amount ? price.unit_amount / 100 : 0;
+
+          // Format price with currency symbol
+          let formatted = '';
+          if (currency === 'USD') {
+            formatted = `$${amount.toFixed(2)}`;
+          } else if (currency === 'EUR') {
+            formatted = `€${amount.toFixed(2)}`;
+          } else if (currency === 'GBP') {
+            formatted = `£${amount.toFixed(2)}`;
+          } else {
+            formatted = `${amount.toFixed(2)} ${currency}`;
+          }
+
+          prices[tier][currency] = {
+            amount,
+            currency: price.currency.toUpperCase(),
+            formatted,
+          };
+        } catch (error: any) {
+          // Continue with other prices - don't add to prices object if fetch fails
+        }
       }
     }
 

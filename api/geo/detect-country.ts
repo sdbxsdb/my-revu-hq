@@ -28,13 +28,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       (req.headers['x-real-ip'] as string) ||
       req.socket.remoteAddress;
 
-    // Log detection method for debugging
-    const detectionMethod = vercelCountry
-      ? 'Vercel header'
-      : cloudflareCountry
-        ? 'Cloudflare header'
-        : 'IP geolocation API';
-
     if (!countryCode) {
       // Fallback: Try to get from IP using a free service
       if (clientIp) {
@@ -71,9 +64,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const detectedCountry = countryCode.toUpperCase();
+    const detectionMethod = vercelCountry
+      ? 'vercel-header'
+      : cloudflareCountry
+        ? 'cloudflare-header'
+        : 'ip-geolocation';
     return res.json({
       country: detectedCountry,
-      method: detectionMethod.toLowerCase().replace(' ', '-'),
+      method: detectionMethod,
       ip: clientIp,
     });
   } catch (error: any) {
