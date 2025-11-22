@@ -707,9 +707,16 @@ export const CustomerList = () => {
             </div>
           )}
 
-          <Button component={Link} to="/customers/add" size="md" className="font-medium w-full">
-            {customers.length === 0 && !loading ? 'Add First Customer' : 'Add Customer'}
-          </Button>
+          <div className="w-full sm:flex sm:justify-end">
+            <Button
+              component={Link}
+              to="/customers/add"
+              size="md"
+              className="font-medium w-full sm:w-auto sm:max-w-xs"
+            >
+              {customers.length === 0 && !loading ? 'Add First Customer' : 'Add Customer'}
+            </Button>
+          </div>
           <Select
             placeholder="Filter by status"
             data={[

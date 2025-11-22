@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button, TextInput, Paper, Text, Stack, Title, Alert } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { supabase } from '@/lib/supabase';
 import { IconLock, IconEye, IconEyeOff, IconCheck } from '@tabler/icons-react';
 
 export const ResetPassword = () => {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

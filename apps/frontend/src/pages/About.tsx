@@ -12,15 +12,15 @@ export const About = () => {
     <Container size="md" py="xl">
       <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
         <Stack gap="lg">
-          <div className="text-center">
-            <Title order={1} className="text-white mb-4">
-              The Simple Way to Get More Reviews
+          <section className="text-center">
+            <Title order={1} className="text-white mb-3">
+              Essential for Any Business That Knows Reviews Matter
             </Title>
-            <Text size="lg" className="text-gray-300 mb-6">
-              Stop losing customers to competitors with better reviews. MyRevuHQ makes it effortless
-              to ask every customer for a review at the perfect time.
+            <Text size="sm" className="text-gray-300">
+              Whether you're a small business, tradesperson, or larger operation—if you know reviews
+              drive growth, MyRevuHQ is for you.
             </Text>
-          </div>
+          </section>
 
           <Divider />
 
@@ -86,18 +86,6 @@ export const About = () => {
                 </div>
               </div>
             </div>
-          </section>
-
-          <Divider />
-
-          <section className="text-center">
-            <Title order={2} size="h3" className="text-white mb-3">
-              Perfect for Any Business That Cares About Reviews
-            </Title>
-            <Text size="sm" className="text-gray-300">
-              Whether you're a small business, tradesperson, or larger operation—if you know reviews
-              drive growth, MyRevuHQ is for you.
-            </Text>
           </section>
 
           <Divider />

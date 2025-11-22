@@ -308,7 +308,7 @@ export const AccountSetup = () => {
             <Text size="sm" className="text-gray-400 mb-3 font-medium">
               SMS Usage
             </Text>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col sm:flex-col gap-4">
               {/* Monthly Usage */}
               {subscriptionTier && account.sms_sent_this_month !== undefined && (
                 <div>
@@ -651,56 +651,60 @@ export const AccountSetup = () => {
             </div>
 
             <div className="pt-6 border-t border-[#2a2a2a] mt-8">
-              {/* Checklist */}
-              <div className="mb-4">
-                <Stack gap="xs">
-                  <div className="flex items-center gap-2">
-                    {checklist.businessName ? (
-                      <IconCheck size={16} className="text-teal-400" />
-                    ) : (
-                      <IconXCircle size={16} className="text-gray-600" />
-                    )}
-                    <span
-                      className={`text-xs ${checklist.businessName ? 'text-gray-400' : 'text-gray-600'}`}
-                    >
-                      Business name
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {checklist.reviewLinks ? (
-                      <IconCheck size={16} className="text-teal-400" />
-                    ) : (
-                      <IconXCircle size={16} className="text-gray-600" />
-                    )}
-                    <span
-                      className={`text-xs ${checklist.reviewLinks ? 'text-gray-400' : 'text-gray-600'}`}
-                    >
-                      At least 1 review link (name and URL)
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {checklist.smsTemplate ? (
-                      <IconCheck size={16} className="text-teal-400" />
-                    ) : (
-                      <IconXCircle size={16} className="text-gray-600" />
-                    )}
-                    <span
-                      className={`text-xs ${checklist.smsTemplate ? 'text-gray-400' : 'text-gray-600'}`}
-                    >
-                      SMS template (at least 5 characters)
-                    </span>
-                  </div>
-                </Stack>
+              <div className="flex flex-col sm:items-end gap-4">
+                {/* Checklist */}
+                <div>
+                  <Stack gap="xs">
+                    <div className="flex items-center gap-2">
+                      {checklist.businessName ? (
+                        <IconCheck size={16} className="text-teal-400" />
+                      ) : (
+                        <IconXCircle size={16} className="text-gray-600" />
+                      )}
+                      <span
+                        className={`text-xs ${checklist.businessName ? 'text-gray-400' : 'text-gray-600'}`}
+                      >
+                        Business name
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {checklist.reviewLinks ? (
+                        <IconCheck size={16} className="text-teal-400" />
+                      ) : (
+                        <IconXCircle size={16} className="text-gray-600" />
+                      )}
+                      <span
+                        className={`text-xs ${checklist.reviewLinks ? 'text-gray-400' : 'text-gray-600'}`}
+                      >
+                        At least 1 review link (name and URL)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {checklist.smsTemplate ? (
+                        <IconCheck size={16} className="text-teal-400" />
+                      ) : (
+                        <IconXCircle size={16} className="text-gray-600" />
+                      )}
+                      <span
+                        className={`text-xs ${checklist.smsTemplate ? 'text-gray-400' : 'text-gray-600'}`}
+                      >
+                        SMS template (at least 5 characters)
+                      </span>
+                    </div>
+                  </Stack>
+                </div>
+                <div>
+                  <Button
+                    type="submit"
+                    loading={loading}
+                    disabled={!checklist.allValid}
+                    size="md"
+                    className="w-full sm:w-auto font-semibold px-8"
+                  >
+                    Save Settings
+                  </Button>
+                </div>
               </div>
-              <Button
-                type="submit"
-                loading={loading}
-                disabled={!checklist.allValid}
-                size="md"
-                className="w-full sm:w-auto font-semibold px-8"
-              >
-                Save Settings
-              </Button>
             </div>
           </Stack>
         </form>

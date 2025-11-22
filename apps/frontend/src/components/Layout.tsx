@@ -35,7 +35,7 @@ export const Layout = ({ children }: LayoutProps) => {
 
       {/* Sidebar */}
       <div
-        className={`fixed lg:static left-0 z-50 transform transition-transform duration-300 ease-in-out sidebar-mobile-height lg:h-auto ${
+        className={`fixed lg:fixed left-0 z-50 transform transition-transform duration-300 ease-in-out sidebar-mobile-height lg:h-screen ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
@@ -43,7 +43,7 @@ export const Layout = ({ children }: LayoutProps) => {
       </div>
 
       {/* Main content */}
-      <main className="flex-1 w-full lg:ml-0 bg-gray-950 min-h-screen">
+      <main className="flex-1 w-full lg:ml-64 bg-gray-950 min-h-screen">
         {/* Mobile header */}
         <div className="lg:hidden bg-[#141414] border-b border-[#2a2a2a] sticky top-0 z-30 p-4 flex items-center justify-between">
           <button
@@ -65,11 +65,6 @@ export const Layout = ({ children }: LayoutProps) => {
               {sidebarOpen ? <IconX size={24} /> : <IconMenu2 size={24} />}
             </button>
           )}
-        </div>
-
-        {/* Desktop header */}
-        <div className="hidden lg:flex bg-[#141414] border-b border-[#2a2a2a] sticky top-0 z-30 p-4">
-          {/* Empty header for desktop - can add content here if needed */}
         </div>
 
         {/* Page content */}
