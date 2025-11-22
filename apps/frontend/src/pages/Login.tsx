@@ -10,7 +10,6 @@ import {
   Alert,
   Modal,
   Checkbox,
-  ScrollArea,
   Title,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
@@ -769,46 +768,49 @@ export const Login = () => {
           blur: 3,
         }}
         classNames={{
-          content: 'bg-[#1a1a1a] text-white terms-modal-full-height',
+          content: 'bg-[#1a1a1a] text-white',
           header: 'bg-[#1a1a1a] text-white flex-shrink-0',
           title: 'text-white',
           close: 'text-gray-400 hover:bg-[#2a2a2a] hover:text-white',
-          body: 'p-0 flex flex-col flex-1 min-h-0',
+          body: 'p-0 flex flex-col',
         }}
       >
-        <Stack gap="md" className="flex-1 flex min-h-0 p-4">
-          <ScrollArea className="flex-1 min-h-0">
-            <Text size="sm" className="text-gray-300 whitespace-pre-line">
-              By creating an account or signing in, you agree to our Terms and Conditions and
-              Privacy Policy.
-              {'\n\n'}
-              Please review our terms before proceeding:
-              {'\n\n'}• You must be of legal age in your jurisdiction to use this service
-              {'\n'}• You are responsible for maintaining the security of your account
-              {'\n'}• You agree to use the service in compliance with all applicable laws
-              {'\n'}• We reserve the right to suspend or terminate accounts that violate our terms
-              {'\n\n'}
-              For the full Terms and Conditions, please visit:{' '}
-              <a
-                href="/terms"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-teal-400 hover:text-teal-300 underline"
-              >
-                Terms and Conditions
-              </a>
-              {'\n\n'}
-              For our Privacy Policy, please visit:{' '}
-              <a
-                href="/privacy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-teal-400 hover:text-teal-300 underline"
-              >
-                Privacy Policy
-              </a>
-            </Text>
-          </ScrollArea>
+        <Stack gap="md" className="p-4">
+          <Stack gap="md">
+            <div>
+              <Text size="sm" className="text-white font-semibold mb-2">
+                Your privacy matters:
+              </Text>
+              <Text size="sm" className="text-gray-300">
+                We use your email for authentication and account management. We don't share your
+                information with third parties, and you can delete your account at any time.
+              </Text>
+            </div>
+
+            <div>
+              <Text size="sm" className="text-gray-300">
+                By continuing, you agree to our{' '}
+                <a
+                  href="/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-teal-400 hover:text-teal-300 underline"
+                >
+                  Terms and Conditions
+                </a>{' '}
+                and{' '}
+                <a
+                  href="/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-teal-400 hover:text-teal-300 underline"
+                >
+                  Privacy Policy
+                </a>
+                . You can read the full details by clicking the links above.
+              </Text>
+            </div>
+          </Stack>
           <div className="flex-shrink-0 pt-4 border-t border-[#2a2a2a]">
             <Checkbox
               label={
