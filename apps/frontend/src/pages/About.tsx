@@ -1,13 +1,19 @@
-import { Paper, Title, Text, Container, Stack, Divider, ThemeIcon } from '@mantine/core';
+import { Paper, Title, Text, Container, Stack, Divider, ThemeIcon, Button } from '@mantine/core';
 import {
   IconCheck,
   IconMessageCircle,
   IconUsers,
   IconLink,
   IconChartBar,
+  IconLogin,
 } from '@tabler/icons-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 export const About = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
   return (
     <Container size="md" py="xl">
       <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
@@ -16,10 +22,19 @@ export const About = () => {
             <Title order={1} className="text-white mb-3">
               Essential for Any Business That Knows Reviews Matter
             </Title>
-            <Text size="sm" className="text-gray-300">
+            <Text size="sm" className="text-gray-300 mb-6">
               Whether you're a small business, tradesperson, or larger operation—if you know reviews
               drive growth, MyRevuHQ is for you.
             </Text>
+            {!user && (
+              <Button
+                size="lg"
+                leftSection={<IconLogin size={20} />}
+                onClick={() => navigate('/login')}
+              >
+                Get Started
+              </Button>
+            )}
           </section>
 
           <Divider />
@@ -161,12 +176,21 @@ export const About = () => {
           <Divider />
 
           <section className="text-center">
-            <Text size="sm" className="text-gray-300">
+            <Text size="sm" className="text-gray-300 mb-6">
               Questions? Contact us at{' '}
               <a href="mailto:myrevuhq@gmail.com" className="text-teal-400 hover:underline">
                 myrevuhq@gmail.com
               </a>
             </Text>
+            {!user && (
+              <Button
+                size="lg"
+                leftSection={<IconLogin size={20} />}
+                onClick={() => navigate('/login')}
+              >
+                Get Started
+              </Button>
+            )}
           </section>
 
           <Divider />

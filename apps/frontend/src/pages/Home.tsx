@@ -22,7 +22,7 @@ export const Home = () => {
             {/* Hero Section */}
             <div className="text-center">
               <Title order={1} className="text-white mb-4 text-2xl sm:text-3xl">
-                Reviews Never Stop Mattering
+                Reviews Always Matter
               </Title>
               <Text size="lg" className="text-gray-300 mb-6 text-base sm:text-lg">
                 Every satisfied customer is a potential 5-star review. MyRevuHQ makes it simple to

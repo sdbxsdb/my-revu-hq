@@ -11,10 +11,19 @@ import {
   Modal,
   Checkbox,
   ScrollArea,
+  Title,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useAuth } from '@/hooks/useAuth';
-import { IconMail, IconLock, IconEye, IconEyeOff } from '@tabler/icons-react';
+import {
+  IconMail,
+  IconLock,
+  IconEye,
+  IconEyeOff,
+  IconSparkles,
+  IconUserPlus,
+  IconLogin,
+} from '@tabler/icons-react';
 import { supabase } from '@/lib/supabase';
 import { apiClient } from '@/lib/api';
 
@@ -361,79 +370,150 @@ export const Login = () => {
     }
   };
 
+  const getModeTitle = () => {
+    switch (mode) {
+      case 'signup':
+        return 'Create New Account';
+      case 'password':
+        return 'Sign In';
+      case 'magic-link':
+        return 'Magic Link';
+      default:
+        return 'Sign in or create your account';
+    }
+  };
+
+  const getModeDescription = () => {
+    switch (mode) {
+      case 'signup':
+        return 'Create an account with email and password';
+      case 'password':
+        return 'Sign in with your email and password';
+      case 'magic-link':
+        return "We'll send you a link to sign in—no password needed!";
+      default:
+        return 'New users will have an account created automatically';
+    }
+  };
+
+  const getModeIcon = () => {
+    switch (mode) {
+      case 'signup':
+        return <IconUserPlus size={20} />;
+      case 'password':
+        return <IconLogin size={20} />;
+      case 'magic-link':
+        return <IconSparkles size={20} />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="flex items-start justify-center py-4">
       <Paper shadow="xl" p="md" className="w-full max-w-md">
         <div className="text-center mb-6">
-          <Text c="dimmed" size="sm" ta="center" className="text-gray-400">
-            Sign in or create your account
-          </Text>
-          <Text size="xs" ta="center" className="text-gray-500 mt-1">
-            New users will have an account created automatically
+          <div className="transition-all duration-300 mb-3">
+            {mode === 'password' || mode === 'signup' || mode === 'magic-link' ? (
+              <div className="flex items-center justify-center gap-2 mb-2">
+                {getModeIcon()}
+                <Title order={2} className="text-white text-xl font-semibold">
+                  {getModeTitle()}
+                </Title>
+              </div>
+            ) : (
+              <Text c="dimmed" size="sm" ta="center" className="text-gray-400">
+                Sign in or create your account
+              </Text>
+            )}
+          </div>
+          <Text
+            size="sm"
+            ta="center"
+            className={`transition-all duration-300 ${
+              mode === 'password' || mode === 'signup' || mode === 'magic-link'
+                ? 'text-teal-400 font-medium'
+                : 'text-gray-500'
+            }`}
+          >
+            {getModeDescription()}
           </Text>
         </div>
 
         <Stack gap="md">
           {/* OAuth and Magic Link - Both work for sign up and sign in */}
-          <Button
-            type="button"
-            leftSection={
-              <img
-                src="/assets/logos/googlelogo.png"
-                alt="Google"
-                className="h-5 w-5 object-contain"
-              />
-            }
-            variant="default"
-            fullWidth
-            onClick={handleGoogleOAuth}
-            loading={oauthLoading}
-            disabled={loading}
-            color="teal"
-            className="!font-medium !h-11"
-          >
-            Continue with Google
-          </Button>
+          {mode !== 'magic-link' && (
+            <>
+              <Button
+                type="button"
+                leftSection={
+                  <img
+                    src="/assets/logos/googlelogo.png"
+                    alt="Google"
+                    className="h-5 w-5 object-contain"
+                  />
+                }
+                variant="default"
+                fullWidth
+                onClick={handleGoogleOAuth}
+                loading={oauthLoading}
+                disabled={loading}
+                color="teal"
+                className="!font-medium !h-11"
+              >
+                Continue with Google
+              </Button>
 
-          <Button
-            type="button"
-            variant="light"
-            fullWidth
-            onClick={(e) => {
-              e.preventDefault();
-              setMode('magic-link');
-            }}
-            leftSection={<IconMail size={18} />}
-            className="border border-teal-600/30 hover:bg-teal-600/10 !h-11"
-          >
-            Continue with Magic Link
-          </Button>
+              <Button
+                type="button"
+                variant="light"
+                fullWidth
+                onClick={(e) => {
+                  e.preventDefault();
+                  setMode('magic-link');
+                }}
+                leftSection={<IconMail size={18} />}
+                className="border border-teal-600/30 hover:bg-teal-600/10 !h-11 transition-all"
+              >
+                Continue with Magic Link
+              </Button>
 
-          <Alert color="blue" className="bg-blue-900/20 border-blue-700/30">
-            <Text size="xs" className="text-gray-300">
-              <strong>What's a magic link?</strong> We'll send you an email with a special link.
-              Click it to sign in and sign up instantly—no password needed!
-            </Text>
-          </Alert>
+              {!(mode === 'password' || mode === 'signup') && (
+                <Alert color="blue" className="bg-blue-900/20 border-blue-700/30">
+                  <Text size="xs" className="text-gray-300">
+                    <strong>What's a magic link?</strong> We'll send you an email with a special
+                    link. Click it to sign in and sign up instantly—no password needed!
+                  </Text>
+                </Alert>
+              )}
 
-          <Divider label="OR" labelPosition="center" className="my-2" />
+              <Divider label="OR" labelPosition="center" className="my-2" />
+            </>
+          )}
 
           {/* Sign Up Section - Show First */}
           {mode === 'signup' && (
-            <div>
+            <div className="animate-fade-in">
               <form onSubmit={handleSignUp}>
                 <Stack gap="md">
+                  <Alert color="teal" className="bg-teal-900/20 border-teal-700/30">
+                    <Text size="xs" className="text-gray-300">
+                      <strong>Creating a new account:</strong> Enter your email and choose a secure
+                      password to get started.
+                    </Text>
+                  </Alert>
                   <TextInput
-                    label="Email"
+                    label="Email Address"
                     placeholder="your@email.com"
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     leftSection={<IconMail size={16} />}
+                    description="We'll use this to create and manage your account"
                   />
                   <TextInput
-                    label="Password"
+                    label="Create Password"
                     type={showPassword ? 'text' : 'password'}
                     required
                     value={password}
@@ -477,13 +557,16 @@ export const Login = () => {
                         {showConfirmPassword ? <IconEyeOff size={18} /> : <IconEye size={18} />}
                       </button>
                     }
+                    description="Re-enter your password to confirm"
                     error={passwordError ? passwordError : undefined}
                   />
                   <Button
                     type="submit"
                     fullWidth
                     loading={loading}
-                    leftSection={<IconLock size={18} />}
+                    leftSection={<IconUserPlus size={18} />}
+                    size="lg"
+                    className="!h-12"
                   >
                     Create Account
                   </Button>
@@ -511,17 +594,24 @@ export const Login = () => {
 
           {/* Password Login Section */}
           {mode === 'password' && (
-            <div>
+            <div className="animate-fade-in">
               <form onSubmit={handlePasswordLogin}>
                 <Stack gap="md">
+                  <Alert color="blue" className="bg-blue-900/20 border-blue-700/30">
+                    <Text size="xs" className="text-gray-300">
+                      <strong>Signing in:</strong> Enter your email and password to access your
+                      account.
+                    </Text>
+                  </Alert>
                   <TextInput
-                    label="Email"
+                    label="Email Address"
                     placeholder="your@email.com"
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     leftSection={<IconMail size={16} />}
+                    description="Enter the email you used to create your account"
                   />
                   <div>
                     <TextInput
@@ -531,6 +621,7 @@ export const Login = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       leftSection={<IconLock size={16} />}
+                      description="Enter your account password"
                     />
                     <div className="text-right mt-1">
                       <button
@@ -549,7 +640,9 @@ export const Login = () => {
                     type="submit"
                     fullWidth
                     loading={loading}
-                    leftSection={<IconLock size={18} />}
+                    leftSection={<IconLogin size={18} />}
+                    size="lg"
+                    className="!h-12"
                   >
                     Sign In
                   </Button>
@@ -577,23 +670,32 @@ export const Login = () => {
 
           {/* Magic Link Section */}
           {mode === 'magic-link' && (
-            <div>
+            <div className="animate-fade-in">
               <form onSubmit={handleMagicLink}>
                 <Stack gap="md">
+                  <Alert color="purple" className="bg-purple-900/20 border-purple-700/30">
+                    <Text size="xs" className="text-gray-300">
+                      <strong>Magic Link:</strong> We'll send you an email with a special link.
+                      Click it to sign in or sign up instantly—no password needed!
+                    </Text>
+                  </Alert>
                   <TextInput
-                    label="Email"
+                    label="Email Address"
                     placeholder="your@email.com"
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     leftSection={<IconMail size={16} />}
+                    description="We'll send the magic link to this email address"
                   />
                   <Button
                     type="submit"
                     fullWidth
                     loading={loading}
-                    leftSection={<IconMail size={18} />}
+                    leftSection={<IconSparkles size={18} />}
+                    size="lg"
+                    className="!h-12"
                   >
                     Send Magic Link
                   </Button>
