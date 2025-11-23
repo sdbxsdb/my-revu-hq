@@ -228,7 +228,18 @@ export const AddCustomer = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-200 mb-1">
-              Phone Number <span className="text-red-400">*</span>
+              {(() => {
+                // Use "Mobile Number" for UK/Ireland, "Cell Number" for others
+                const phoneType =
+                  selectedCountry === 'GB' || selectedCountry === 'IE'
+                    ? 'Mobile Number'
+                    : 'Cell Number';
+                return (
+                  <>
+                    {phoneType} <span className="text-red-400">*</span>
+                  </>
+                );
+              })()}
             </label>
             <PhoneNumber
               value={form.values.phoneNumber}

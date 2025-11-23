@@ -7,12 +7,14 @@ import {
   IconChartBar,
   IconLogin,
 } from '@tabler/icons-react';
+import { useLocationPricing } from '@/hooks/useLocationPricing';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
 export const About = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const formattedPrice = useLocationPricing();
 
   return (
     <Container size="md" py="xl">
@@ -95,8 +97,8 @@ export const About = () => {
                     Simple Pricing
                   </Title>
                   <Text size="sm" className="text-gray-300">
-                    Plans starting from £4.99/month. Unlimited customers, flexible SMS limits. No
-                    hidden costs, no surprises.
+                    Plans starting from {formattedPrice}/month. Unlimited customers, flexible SMS
+                    limits. No hidden costs, no surprises.
                   </Text>
                 </div>
               </div>

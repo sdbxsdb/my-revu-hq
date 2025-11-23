@@ -128,8 +128,58 @@ export const PhoneNumber = forwardRef<HTMLInputElement, PhoneNumberProps>(
         {description && <div className="text-xs text-gray-400">{description}</div>}
         {selectedCountry && !phoneValue && !error && (
           <div className="text-xs text-gray-400">
-            Enter the local phone number (e.g., 07782385414 for UK). The country code (+
-            {getCountryCallingCode(country)}) will be added automatically.
+            {(() => {
+              const examples: Partial<Record<CountryCode, string>> = {
+                GB: '07782385414',
+                IE: '0851234567',
+                US: '5551234567',
+                CA: '4165551234',
+                AU: '0412345678',
+                NZ: '021234567',
+                FR: '0612345678',
+                DE: '015123456789',
+                ES: '612345678',
+                IT: '3123456789',
+                NL: '0612345678',
+                BE: '0470123456',
+                CH: '0781234567',
+                AT: '06641234567',
+                SE: '0701234567',
+                NO: '41234567',
+                DK: '20123456',
+                FI: '0501234567',
+                PL: '512345678',
+                PT: '912345678',
+              };
+              const countryNames: Partial<Record<CountryCode, string>> = {
+                GB: 'UK',
+                IE: 'Ireland',
+                US: 'USA',
+                CA: 'Canada',
+                AU: 'Australia',
+                NZ: 'New Zealand',
+                FR: 'France',
+                DE: 'Germany',
+                ES: 'Spain',
+                IT: 'Italy',
+                NL: 'Netherlands',
+                BE: 'Belgium',
+                CH: 'Switzerland',
+                AT: 'Austria',
+                SE: 'Sweden',
+                NO: 'Norway',
+                DK: 'Denmark',
+                FI: 'Finland',
+                PL: 'Poland',
+                PT: 'Portugal',
+              };
+              const example = examples[country] || '1234567890';
+              const countryName = countryNames[country] || 'your country';
+              // Use "mobile number" for UK and Ireland, "cell number" for others
+              const phoneType =
+                country === 'GB' || country === 'IE' ? 'mobile number' : 'cell number';
+              return `Enter the local ${phoneType} (e.g., ${example} for ${countryName}). The country code (+${getCountryCallingCode(country)}) will be added automatically.`;
+            })()}
           </div>
         )}
       </Stack>

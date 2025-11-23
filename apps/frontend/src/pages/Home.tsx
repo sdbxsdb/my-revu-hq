@@ -9,10 +9,12 @@ import {
 } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useLocationPricing } from '@/hooks/useLocationPricing';
 
 export const Home = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const formattedPrice = useLocationPricing();
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
@@ -98,7 +100,8 @@ export const Home = () => {
                     Simple Pricing
                   </Title>
                   <Text size="xs" className="text-gray-400">
-                    Plans starting from £4.99/month. Unlimited customers, flexible SMS limits
+                    Plans starting from {formattedPrice}/month. Unlimited customers, flexible SMS
+                    limits
                   </Text>
                 </div>
               </div>
