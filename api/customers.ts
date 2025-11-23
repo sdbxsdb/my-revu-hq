@@ -27,6 +27,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const page = parseInt((req.query.page as string) || '1');
       const limit = parseInt((req.query.limit as string) || '10');
       const status = req.query.status as string | undefined;
+      const firstLetter = req.query.firstLetter as string | undefined;
       const offset = (page - 1) * limit;
 
       let query = supabase
@@ -40,13 +41,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         query = query.eq('sms_status', status);
       }
 
+      if (firstLetter && firstLetter.length === 1) {
+        // Filter by first letter of name (case-insensitive)
+        const letter = firstLetter.toUpperCase();
+        query = query.ilike('name', `${letter}%`);
+      }
+
       const { data, error, count } = await query;
 
       if (error) throw error;
 
+      // Get total count without filters for display
+      const { count: totalCount } = await supabase
+        .from('customers')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', auth.userId);
+
       return res.json({
         customers: data || [],
         total: count || 0,
+        totalCount: totalCount || 0, // Total count without any filters
       });
     }
 

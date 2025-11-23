@@ -62,14 +62,63 @@ export const Login = () => {
     setTermsModalOpen(true);
   };
 
+  const getEmailProviderUrl = (emailAddress: string): string | null => {
+    const domain = emailAddress.split('@')[1]?.toLowerCase();
+    if (!domain) return null;
+
+    // Common email providers
+    if (domain.includes('gmail')) return 'https://mail.google.com';
+    if (
+      domain.includes('outlook') ||
+      domain.includes('hotmail') ||
+      domain.includes('live') ||
+      domain.includes('msn')
+    )
+      return 'https://outlook.live.com';
+    if (domain.includes('yahoo')) return 'https://mail.yahoo.com';
+    if (domain.includes('icloud') || domain.includes('me.com') || domain.includes('mac.com'))
+      return 'https://www.icloud.com/mail';
+    if (domain.includes('protonmail') || domain.includes('proton')) return 'https://mail.proton.me';
+    if (domain.includes('aol')) return 'https://mail.aol.com';
+
+    // For custom domains (e.g., user@company.com), we can't reliably detect the provider
+    // Common setups: Google Workspace uses mail.google.com, Microsoft 365 uses outlook.office.com
+    // But we can't know for sure, so we return null and don't show the link
+    // Note: mailto: would open their email client to compose a new email, not their inbox
+    return null;
+  };
+
   const executeMagicLink = async () => {
     setLoading(true);
     setTermsModalOpen(false);
     try {
       await signInWithEmail(email);
+      const emailProviderUrl = getEmailProviderUrl(email);
+      const message = emailProviderUrl ? (
+        <div>
+          <div style={{ marginBottom: '8px' }}>
+            We sent you a magic link. Click it to sign in instantly - no password needed!
+          </div>
+          <a
+            href={emailProviderUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: '#14b8a6',
+              textDecoration: 'underline',
+              fontWeight: 500,
+            }}
+          >
+            Open your email
+          </a>
+        </div>
+      ) : (
+        'We sent you a magic link. Click it to sign in instantly - no password needed!'
+      );
+
       notifications.show({
         title: 'Check your email',
-        message: 'We sent you a magic link. Click it to sign in instantly - no password needed!',
+        message: message,
         color: 'teal',
         autoClose: 10000,
       });
@@ -316,9 +365,32 @@ export const Login = () => {
       if (error) throw error;
 
       setResetEmailSent(true);
+      const emailProviderUrl = getEmailProviderUrl(resetEmail);
+      const message = emailProviderUrl ? (
+        <div>
+          <div style={{ marginBottom: '8px' }}>
+            We sent you a password reset link. Click it to set a new password.
+          </div>
+          <a
+            href={emailProviderUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: '#14b8a6',
+              textDecoration: 'underline',
+              fontWeight: 500,
+            }}
+          >
+            Open your email
+          </a>
+        </div>
+      ) : (
+        'We sent you a password reset link. Click it to set a new password.'
+      );
+
       notifications.show({
         title: 'Check your email',
-        message: 'We sent you a password reset link. Click it to set a new password.',
+        message: message,
         color: 'teal',
         autoClose: 10000,
       });

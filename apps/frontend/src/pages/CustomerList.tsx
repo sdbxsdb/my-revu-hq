@@ -5,7 +5,6 @@ import {
   Title,
   Table,
   Button,
-  Select,
   Pagination,
   Badge,
   Modal,
@@ -42,7 +41,9 @@ export const CustomerList = () => {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedLetter, setSelectedLetter] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
+  const [totalCount, setTotalCount] = useState<number | null>(null);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -79,8 +80,12 @@ export const CustomerList = () => {
 
   useEffect(() => {
     loadCustomers();
+  }, [page, statusFilter, searchQuery, selectedLetter]);
+
+  // Load SMS usage only on initial mount
+  useEffect(() => {
     loadSmsUsage();
-  }, [page, statusFilter, searchQuery]);
+  }, []);
 
   const loadSmsUsage = async () => {
     try {
@@ -208,14 +213,26 @@ export const CustomerList = () => {
         filtered = dummyCustomers.filter((c) => c.sms_status === statusFilter);
       }
 
+      // Apply alphabet filter (only if no search query)
+      if (!searchQuery.trim() && selectedLetter) {
+        filtered = filtered.filter((c) =>
+          c.name.toUpperCase().startsWith(selectedLetter.toUpperCase())
+        );
+      }
+
       // Apply search filter
       if (searchQuery.trim()) {
         const query = searchQuery.trim().toLowerCase();
-        filtered = filtered.filter(
-          (c) =>
-            c.name.toLowerCase().includes(query) ||
-            (c.job_description && c.job_description.toLowerCase().includes(query))
-        );
+        filtered = filtered.filter((c) => {
+          const nameMatch = c.name.toLowerCase().includes(query);
+          const jobMatch = c.job_description && c.job_description.toLowerCase().includes(query);
+          // Search in phone number (handle both local format and E.164 format)
+          const phoneNumber = c.phone?.number || '';
+          const phoneMatch =
+            phoneNumber.toLowerCase().includes(query) ||
+            phoneNumber.replace(/\s+/g, '').includes(query.replace(/\s+/g, ''));
+          return nameMatch || jobMatch || phoneMatch;
+        });
       }
 
       // Apply pagination
@@ -223,6 +240,8 @@ export const CustomerList = () => {
       const end = start + limit;
       setCustomers(filtered.slice(start, end));
       setTotal(filtered.length);
+      // In dev mode, totalCount is the same as total (all dummy customers)
+      setTotalCount(dummyCustomers.length);
       setLoading(false);
       return;
     }
@@ -232,21 +251,28 @@ export const CustomerList = () => {
         page,
         limit,
         status: statusFilter as 'sent' | 'pending' | undefined,
+        firstLetter: selectedLetter && !searchQuery.trim() ? selectedLetter : undefined,
       });
 
-      // Apply search filter on client side
+      // Apply search filter on client side (only if not using firstLetter filter)
       let filtered = data.customers;
       if (searchQuery.trim()) {
         const query = searchQuery.trim().toLowerCase();
-        filtered = data.customers.filter(
-          (c) =>
-            c.name.toLowerCase().includes(query) ||
-            (c.job_description && c.job_description.toLowerCase().includes(query))
-        );
+        filtered = data.customers.filter((c) => {
+          const nameMatch = c.name.toLowerCase().includes(query);
+          const jobMatch = c.job_description && c.job_description.toLowerCase().includes(query);
+          // Search in phone number (handle both local format and E.164 format)
+          const phoneNumber = c.phone?.number || '';
+          const phoneMatch =
+            phoneNumber.toLowerCase().includes(query) ||
+            phoneNumber.replace(/\s+/g, '').includes(query.replace(/\s+/g, ''));
+          return nameMatch || jobMatch || phoneMatch;
+        });
       }
 
       setCustomers(filtered);
-      setTotal(filtered.length);
+      setTotal(data.total);
+      setTotalCount(data.totalCount ?? null);
     } catch (error: any) {
       notifications.show({
         title: 'Error',
@@ -627,9 +653,16 @@ export const CustomerList = () => {
               <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
                 Customer List
               </Title>
-              <p className="text-sm text-gray-400 hidden sm:block">
-                Manage your customers and review requests
-              </p>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <p className="text-sm text-gray-400 hidden sm:block">
+                  Manage your customers and review requests
+                </p>
+                {totalCount !== null && (
+                  <p className="text-sm text-gray-500">
+                    {totalCount} {totalCount === 1 ? 'customer' : 'customers'} total
+                  </p>
+                )}
+              </div>
             </div>
             {!paymentLoading && !hasPaid && (
               <Alert
@@ -660,50 +693,68 @@ export const CustomerList = () => {
           </div>
 
           {/* SMS Usage Display */}
-          {!loadingUsage && smsSent !== null && subscriptionTier && (
+          {(smsSent !== null || loadingUsage) && subscriptionTier && (
             <div className="p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Text size="sm" className="text-gray-400">
-                    SMS Usage:
-                  </Text>
-                  <Text size="sm" className="font-semibold text-white">
-                    {smsSent} / {getSmsLimitFromTier(subscriptionTier)}
-                  </Text>
-                  <Text size="xs" className="text-gray-500">
-                    this month
-                  </Text>
+              {loadingUsage ? (
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Text size="sm" className="text-gray-400">
+                      SMS Usage:
+                    </Text>
+                    <Skeleton height={20} width={80} />
+                    <Text size="xs" className="text-gray-500">
+                      this month
+                    </Text>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Skeleton height={8} width={128} radius="xl" />
+                    <Skeleton height={16} width={60} />
+                  </div>
                 </div>
-                {(() => {
-                  const limit = getSmsLimitFromTier(subscriptionTier);
-                  const percentage = limit > 0 ? (smsSent / limit) * 100 : 0;
-                  const isWarning = percentage >= 80;
-                  const isDanger = percentage >= 100;
+              ) : (
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Text size="sm" className="text-gray-400">
+                      SMS Usage:
+                    </Text>
+                    <Text size="sm" className="font-semibold text-white">
+                      {smsSent} / {getSmsLimitFromTier(subscriptionTier)}
+                    </Text>
+                    <Text size="xs" className="text-gray-500">
+                      this month
+                    </Text>
+                  </div>
+                  {(() => {
+                    const limit = getSmsLimitFromTier(subscriptionTier);
+                    const percentage = limit > 0 ? (smsSent! / limit) * 100 : 0;
+                    const isWarning = percentage >= 80;
+                    const isDanger = percentage >= 100;
 
-                  return (
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 sm:w-32 h-2 bg-[#2a2a2a] rounded-full overflow-hidden">
-                        <div
-                          className={`h-full transition-all ${
-                            isDanger ? 'bg-red-500' : isWarning ? 'bg-yellow-500' : 'bg-teal-500'
-                          }`}
-                          style={{ width: `${Math.min(percentage, 100)}%` }}
-                        />
+                    return (
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 sm:w-32 h-2 bg-[#2a2a2a] rounded-full overflow-hidden">
+                          <div
+                            className={`h-full transition-all ${
+                              isDanger ? 'bg-red-500' : isWarning ? 'bg-yellow-500' : 'bg-teal-500'
+                            }`}
+                            style={{ width: `${Math.min(percentage, 100)}%` }}
+                          />
+                        </div>
+                        {isDanger && (
+                          <Text size="xs" className="text-red-400 font-medium">
+                            Limit reached
+                          </Text>
+                        )}
+                        {isWarning && !isDanger && (
+                          <Text size="xs" className="text-yellow-400 font-medium">
+                            Approaching limit
+                          </Text>
+                        )}
                       </div>
-                      {isDanger && (
-                        <Text size="xs" className="text-red-400 font-medium">
-                          Limit reached
-                        </Text>
-                      )}
-                      {isWarning && !isDanger && (
-                        <Text size="xs" className="text-yellow-400 font-medium">
-                          Approaching limit
-                        </Text>
-                      )}
-                    </div>
-                  );
-                })()}
-              </div>
+                    );
+                  })()}
+                </div>
+              )}
             </div>
           )}
 
@@ -714,36 +765,148 @@ export const CustomerList = () => {
               size="md"
               className="font-medium w-full sm:w-auto sm:max-w-xs"
             >
-              {customers.length === 0 && !loading ? 'Add First Customer' : 'Add Customer'}
+              {totalCount === 0 && !loading ? 'Add First Customer' : 'Add Customer'}
             </Button>
           </div>
-          <Select
-            placeholder="Filter by status"
-            data={[
-              { value: '', label: 'All' },
-              { value: 'sent', label: 'Sent' },
-              { value: 'pending', label: 'Not Sent' },
-            ]}
-            value={statusFilter || ''}
-            onChange={(value) => {
-              setStatusFilter(value || null);
+        </div>
+        <div className="flex flex-col gap-2">
+          <Text size="sm" className="text-gray-400">
+            Search:
+          </Text>
+          <TextInput
+            placeholder="Name, phone number, or job description"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setSelectedLetter(null); // Clear letter filter when searching
               setPage(1);
             }}
-            clearable
-            className="w-full sm:w-48"
+            className="w-full sm:w-96"
             size="md"
           />
         </div>
-        <TextInput
-          placeholder="Search by name or job description..."
-          value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            setPage(1);
-          }}
-          className="w-full sm:w-96"
-          size="md"
-        />
+        {/* Alphabet Filter */}
+        <div className="flex flex-col gap-2">
+          <Text size="sm" className="text-gray-400">
+            Filter by letter:
+          </Text>
+          <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
+            <Button
+              size="xs"
+              variant={selectedLetter === null ? 'filled' : 'outline'}
+              onClick={() => {
+                setSelectedLetter(null);
+                setPage(1);
+              }}
+              className={`flex-shrink-0 ${
+                selectedLetter === null
+                  ? 'bg-teal-600 border-teal-600 text-white'
+                  : 'border-gray-600 text-gray-300 hover:border-teal-600 hover:text-teal-400'
+              }`}
+            >
+              All
+            </Button>
+            {[
+              'A',
+              'B',
+              'C',
+              'D',
+              'E',
+              'F',
+              'G',
+              'H',
+              'I',
+              'J',
+              'K',
+              'L',
+              'M',
+              'N',
+              'O',
+              'P',
+              'Q',
+              'R',
+              'S',
+              'T',
+              'U',
+              'V',
+              'W',
+              'X',
+              'Y',
+              'Z',
+            ].map((letter) => (
+              <Button
+                key={letter}
+                size="xs"
+                variant={selectedLetter === letter ? 'filled' : 'outline'}
+                onClick={() => {
+                  setSelectedLetter(selectedLetter === letter ? null : letter);
+                  setSearchQuery(''); // Clear search when selecting letter
+                  setPage(1);
+                }}
+                className={`min-w-[2rem] flex-shrink-0 ${
+                  selectedLetter === letter
+                    ? 'bg-teal-600 border-teal-600 text-white'
+                    : 'border-gray-600 text-gray-300 hover:border-teal-600 hover:text-teal-400'
+                }`}
+              >
+                {letter}
+              </Button>
+            ))}
+          </div>
+          {/* Status Filter Buttons */}
+          <div className="flex flex-col gap-2">
+            <Text size="sm" className="text-gray-400">
+              Filter by status:
+            </Text>
+            <div className="flex gap-2">
+              <Button
+                size="xs"
+                variant={statusFilter === null ? 'filled' : 'outline'}
+                onClick={() => {
+                  setStatusFilter(null);
+                  setPage(1);
+                }}
+                className={
+                  statusFilter === null
+                    ? 'bg-teal-600 border-teal-600 text-white'
+                    : 'border-gray-600 text-gray-300 hover:border-teal-600 hover:text-teal-400'
+                }
+              >
+                All
+              </Button>
+              <Button
+                size="xs"
+                variant={statusFilter === 'sent' ? 'filled' : 'outline'}
+                onClick={() => {
+                  setStatusFilter('sent');
+                  setPage(1);
+                }}
+                className={
+                  statusFilter === 'sent'
+                    ? 'bg-teal-600 border-teal-600 text-white'
+                    : 'border-gray-600 text-gray-300 hover:border-teal-600 hover:text-teal-400'
+                }
+              >
+                Sent
+              </Button>
+              <Button
+                size="xs"
+                variant={statusFilter === 'pending' ? 'filled' : 'outline'}
+                onClick={() => {
+                  setStatusFilter('pending');
+                  setPage(1);
+                }}
+                className={
+                  statusFilter === 'pending'
+                    ? 'bg-teal-600 border-teal-600 text-white'
+                    : 'border-gray-600 text-gray-300 hover:border-teal-600 hover:text-teal-400'
+                }
+              >
+                Not Sent
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {loading ? (
