@@ -1,10 +1,8 @@
 import { Paper, Title, Text, Container, Stack, Divider, Button, Accordion } from '@mantine/core';
 import { IconMail, IconHelpCircle } from '@tabler/icons-react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
 export const Help = () => {
-  const navigate = useNavigate();
   const { user } = useAuth();
 
   const faqs = [

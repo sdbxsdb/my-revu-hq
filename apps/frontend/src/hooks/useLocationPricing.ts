@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '@/lib/api';
-import { getCurrencyFromCountry, detectCurrency, type Currency } from '@/lib/currency';
+import { getCurrencyFromCountry, detectCurrency } from '@/lib/currency';
 
 export function useLocationPricing(): string {
   const [formattedPrice, setFormattedPrice] = useState<string>('£4.99'); // Default fallback

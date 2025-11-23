@@ -53,7 +53,7 @@ export const useAuth = () => {
       setUser(session?.user ?? null);
       if (session) {
         // Sync session to backend cookies (non-blocking)
-        syncSession().catch((error) => {
+        syncSession().catch(() => {
           // Session sync failed
         });
 
@@ -134,7 +134,7 @@ export const useAuth = () => {
         setUser(session?.user ?? null);
         if (session) {
           // Sync session to backend (non-blocking)
-          syncSession().catch((error) => {
+          syncSession().catch(() => {
             // Session sync failed
           });
         }

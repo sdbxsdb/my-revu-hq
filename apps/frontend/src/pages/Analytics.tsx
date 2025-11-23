@@ -20,9 +20,7 @@ import {
 } from '@tabler/icons-react';
 import { apiClient } from '@/lib/api';
 import { notifications } from '@mantine/notifications';
-import { useAccount } from '@/contexts/AccountContext';
 import { useNavigate } from 'react-router-dom';
-import { PRICING_PLANS } from '@/lib/pricing';
 import {
   BarChart,
   Bar,
@@ -48,7 +46,6 @@ interface MonthlyStat {
 }
 
 export const Analytics = () => {
-  const { account } = useAccount();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState<{
@@ -120,8 +117,6 @@ export const Analytics = () => {
 
   if (!analytics) {
     const currentTier = subscriptionTier || 'starter';
-    const proPlan = PRICING_PLANS.find((p) => p.id === 'pro');
-    const businessPlan = PRICING_PLANS.find((p) => p.id === 'business');
 
     return (
       <Container size="lg" py="xl">
@@ -428,7 +423,7 @@ export const Analytics = () => {
                       labelStyle={{ color: '#9ca3af' }}
                     />
                     <Bar dataKey="count" radius={[8, 8, 0, 0]}>
-                      {[...analytics.monthlyStats].reverse().map((entry, index) => (
+                      {[...analytics.monthlyStats].reverse().map((_, index) => (
                         <Cell
                           key={`cell-${index}`}
                           fill={index === analytics.monthlyStats.length - 1 ? '#059669' : '#14b8a6'}
