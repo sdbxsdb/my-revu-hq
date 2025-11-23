@@ -18,7 +18,6 @@ import {
   IconTrendingUp,
   IconCheck,
   IconX,
-  IconChevronDown,
   IconClock,
   IconAlertTriangle,
 } from '@tabler/icons-react';
@@ -26,10 +25,9 @@ import { apiClient } from '@/lib/api';
 import { notifications } from '@mantine/notifications';
 import { useNavigate } from 'react-router-dom';
 import { getSmsLimitFromTier, type PricingTier } from '@/lib/pricing';
-import { parsePhoneNumberFromString, isValidPhoneNumber } from 'libphonenumber-js';
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { detectCountryFromPhoneNumber } from '@/lib/phone-validation';
 import type { CountryCode } from 'libphonenumber-js';
-import type { Customer } from '@/types';
 import {
   BarChart,
   Bar,
@@ -633,7 +631,6 @@ export const Analytics = () => {
                 type="multiple"
                 variant="separated"
                 radius="sm"
-                defaultValue={[]}
                 classNames={{
                   item: 'bg-[#2a2a2a] border-[#3a3a3a]',
                   control: 'hover:bg-[#333333] py-2 px-3',
@@ -663,7 +660,7 @@ export const Analytics = () => {
                     {analytics.insights.notContacted5Days.length > 0 ? (
                       <div className="space-y-3 max-h-96 overflow-y-auto mt-2">
                       {analytics.insights.notContacted5Days.map((customer) => {
-                        const createdDate = new Date(customer.created_at);
+                        const createdDate = new Date(customer.createdAt);
                         const formattedCreated = createdDate.toLocaleDateString('en-GB', {
                           day: 'numeric',
                           month: 'short',
@@ -671,7 +668,6 @@ export const Analytics = () => {
                         });
                         const isSending = sendingCustomerId === customer.id;
                         const phoneDisplay = formatPhone(customer.phone);
-                        const daysSinceContact = customer.daysSinceContact;
 
                         return (
                           <Paper
@@ -691,7 +687,7 @@ export const Analytics = () => {
                                   </span>
                                   <span>{phoneDisplay.number}</span>
                                 </div>
-                                {customer.created_at && (
+                                {customer.createdAt && (
                                   <div className="text-xs text-gray-500 mt-0.5">
                                     Added: {formattedCreated}
                                   </div>
@@ -756,7 +752,7 @@ export const Analytics = () => {
                     {analytics.insights.notContacted10Days.length > 0 ? (
                       <div className="space-y-3 max-h-96 overflow-y-auto mt-2">
                       {analytics.insights.notContacted10Days.map((customer) => {
-                        const createdDate = new Date(customer.created_at);
+                        const createdDate = new Date(customer.createdAt);
                         const formattedCreated = createdDate.toLocaleDateString('en-GB', {
                           day: 'numeric',
                           month: 'short',
@@ -764,7 +760,6 @@ export const Analytics = () => {
                         });
                         const isSending = sendingCustomerId === customer.id;
                         const phoneDisplay = formatPhone(customer.phone);
-                        const daysSinceContact = customer.daysSinceContact;
 
                         return (
                           <Paper
@@ -784,7 +779,7 @@ export const Analytics = () => {
                                   </span>
                                   <span>{phoneDisplay.number}</span>
                                 </div>
-                                {customer.created_at && (
+                                {customer.createdAt && (
                                   <div className="text-xs text-gray-500 mt-0.5">
                                     Added: {formattedCreated}
                                   </div>
@@ -849,7 +844,7 @@ export const Analytics = () => {
                     {analytics.insights.notContacted30Days.length > 0 ? (
                       <div className="space-y-3 max-h-96 overflow-y-auto mt-2">
                       {analytics.insights.notContacted30Days.map((customer) => {
-                        const createdDate = new Date(customer.created_at);
+                        const createdDate = new Date(customer.createdAt);
                         const formattedCreated = createdDate.toLocaleDateString('en-GB', {
                           day: 'numeric',
                           month: 'short',
@@ -857,10 +852,6 @@ export const Analytics = () => {
                         });
                         const isSending = sendingCustomerId === customer.id;
                         const phoneDisplay = formatPhone(customer.phone);
-                        
-                        // Calculate days since contact for warning
-                        // Use the daysSinceContact from API (already calculated correctly)
-                        const daysSinceContact = customer.daysSinceContact;
 
                         return (
                           <Paper
@@ -880,7 +871,7 @@ export const Analytics = () => {
                                   </span>
                                   <span>{phoneDisplay.number}</span>
                                 </div>
-                                {customer.created_at && (
+                                {customer.createdAt && (
                                   <div className="text-xs text-gray-500 mt-0.5">
                                     Added: {formattedCreated}
                                   </div>
@@ -946,7 +937,7 @@ export const Analytics = () => {
                       <div className="space-y-3 max-h-96 overflow-y-auto mt-2">
                       {analytics.insights.approachingLimit.map((customer) => {
                         const isSending = sendingCustomerId === customer.id;
-                        const createdDate = new Date(customer.created_at);
+                        const createdDate = new Date(customer.createdAt);
                         const formattedCreated = createdDate.toLocaleDateString('en-GB', {
                           day: 'numeric',
                           month: 'short',
@@ -973,7 +964,7 @@ export const Analytics = () => {
                                   </span>
                                   <span>{phoneDisplay.number}</span>
                                 </div>
-                                {customer.created_at && (
+                                {customer.createdAt && (
                                   <div className="text-xs text-gray-500 mt-0.5">
                                     Added: {formattedCreated}
                                   </div>
