@@ -31,6 +31,8 @@ export interface Customer {
   sent_at?: string;
   sms_request_count?: number;
   opt_out?: boolean;
+  created_at?: string;
+  messages?: Array<{ sent_at: string }>;
 }
 
 export interface Message {

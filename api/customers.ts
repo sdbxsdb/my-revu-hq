@@ -51,6 +51,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (error) throw error;
 
+      // Fetch messages for each customer
+      const customersWithMessages = await Promise.all(
+        (data || []).map(async (customer) => {
+          const { data: messages } = await supabase
+            .from('messages')
+            .select('sent_at')
+            .eq('customer_id', customer.id)
+            .order('sent_at', { ascending: false });
+
+          return {
+            ...customer,
+            messages: messages || [],
+          };
+        })
+      );
+
       // Get total count without filters for display
       const { count: totalCount } = await supabase
         .from('customers')
@@ -58,7 +74,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .eq('user_id', auth.userId);
 
       return res.json({
-        customers: data || [],
+        customers: customersWithMessages,
         total: count || 0,
         totalCount: totalCount || 0, // Total count without any filters
       });

@@ -210,6 +210,43 @@ export const apiClient = {
       }>;
     }>;
     totalMessages: number;
+    insights?: {
+      notContacted5Days: Array<{
+        id: string;
+        name: string;
+        phone: { countryCode: string; number: string };
+        job_description: string | null;
+        lastContacted: string | null;
+        daysSinceContact: number;
+        createdAt: string;
+      }>;
+      notContacted10Days: Array<{
+        id: string;
+        name: string;
+        phone: { countryCode: string; number: string };
+        job_description: string | null;
+        lastContacted: string | null;
+        daysSinceContact: number;
+        createdAt: string;
+      }>;
+      notContacted30Days: Array<{
+        id: string;
+        name: string;
+        phone: { countryCode: string; number: string };
+        job_description: string | null;
+        lastContacted: string | null;
+        daysSinceContact: number;
+        createdAt: string;
+      }>;
+      approachingLimit: Array<{
+        id: string;
+        name: string;
+        phone: { countryCode: string; number: string };
+        job_description: string | null;
+        messageCount: number;
+        createdAt: string;
+      }>;
+    };
   }> => {
     const { data } = await api.get('/api/analytics');
     return data;
