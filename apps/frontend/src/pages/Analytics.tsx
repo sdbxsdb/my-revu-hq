@@ -628,7 +628,7 @@ export const Analytics = () => {
                 Customer Insights
               </Title>
               <Accordion
-                type="multiple"
+                multiple
                 variant="separated"
                 radius="sm"
                 classNames={{
@@ -936,7 +936,6 @@ export const Analytics = () => {
                     {analytics.insights.approachingLimit.length > 0 ? (
                       <div className="space-y-3 max-h-96 overflow-y-auto mt-2">
                       {analytics.insights.approachingLimit.map((customer) => {
-                        const isSending = sendingCustomerId === customer.id;
                         const createdDate = new Date(customer.createdAt);
                         const formattedCreated = createdDate.toLocaleDateString('en-GB', {
                           day: 'numeric',
@@ -944,7 +943,6 @@ export const Analytics = () => {
                           year: 'numeric',
                         });
                         const phoneDisplay = formatPhone(customer.phone);
-                        const isLimitReached = customer.messageCount >= 3;
                         
                         return (
                           <Paper
@@ -1010,7 +1008,7 @@ export const Analytics = () => {
               </Alert>
             ) : (
               <Accordion
-                type="multiple"
+                multiple
                 variant="separated"
                 radius="sm"
                 value={expandedMonths}
@@ -1053,7 +1051,7 @@ export const Analytics = () => {
                           <div className="block md:hidden">
                             <Accordion
                               key={`pro-accordion-${stat.month}-${stat.year}`}
-                              type="multiple"
+                              multiple
                               variant="separated"
                               radius="sm"
                               value={expandedItems[`pro-${stat.month}-${stat.year}`] || []}
@@ -1127,7 +1125,7 @@ export const Analytics = () => {
                           {/* Desktop: Compact Table */}
                           <div className="hidden md:block">
                             <div className="overflow-x-auto">
-                              <Table verticalSpacing="xs" fontSize="sm">
+                              <Table verticalSpacing="xs">
                                 <Table.Thead>
                                   <Table.Tr>
                                     <Table.Th className="text-gray-400 text-xs">Customer</Table.Th>
@@ -1187,7 +1185,7 @@ export const Analytics = () => {
                         <div className="block md:hidden">
                           <Accordion
                             key={`business-accordion-${stat.month}-${stat.year}`}
-                            type="multiple"
+                            multiple
                             variant="separated"
                             radius="sm"
                             value={expandedItems[`business-${stat.month}-${stat.year}`] || []}
@@ -1274,7 +1272,7 @@ export const Analytics = () => {
                         {/* Desktop: Compact Table */}
                         <div className="hidden md:block">
                           <div className="overflow-x-auto">
-                            <Table verticalSpacing="xs" fontSize="sm">
+                            <Table verticalSpacing="xs">
                               <Table.Thead>
                                 <Table.Tr>
                                   <Table.Th className="text-gray-400 text-xs">Customer</Table.Th>
