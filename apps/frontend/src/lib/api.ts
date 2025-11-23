@@ -193,4 +193,25 @@ export const apiClient = {
     const { data } = await api.post('/api/billing/change-tier', { tier, currency });
     return data;
   },
+
+  // Analytics (Pro and Business tiers only)
+  getAnalytics: async (): Promise<{
+    tier: string;
+    monthlyStats: Array<{
+      month: string;
+      year: number;
+      count: number;
+      customers?: Array<{
+        id: string;
+        name: string;
+        phone: string;
+        job_description: string | null;
+        sent_at: string;
+      }>;
+    }>;
+    totalMessages: number;
+  }> => {
+    const { data } = await api.get('/api/analytics');
+    return data;
+  },
 };

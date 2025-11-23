@@ -25,6 +25,7 @@
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.21.3",
     "react-svg-credit-card-payment-icons": "^5.0.0",
+    "recharts": "^2.10.3",
     "zod": "^4.1.12"
   },
   "devDependencies": {

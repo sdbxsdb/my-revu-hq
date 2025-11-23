@@ -8,6 +8,8 @@ import {
   IconInfoCircle,
   IconHome,
   IconLogin,
+  IconHelpCircle,
+  IconChartBar,
 } from '@tabler/icons-react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -18,33 +20,67 @@ interface SidebarProps {
 export const Sidebar = ({ onClose }: SidebarProps) => {
   const { signOut, user } = useAuth();
 
-  // Always show About
-  const publicNavItems = [{ to: '/about', label: 'About', icon: IconInfoCircle }];
+  // Customers section
+  const customerNavItems = user
+    ? [
+        { to: '/customers/add', label: 'Add Customer', icon: IconUserPlus },
+        { to: '/customers', label: 'Customer List', icon: IconList },
+      ]
+    : [];
 
-  // Show Home and Login if not logged in
-  const unauthenticatedNavItems = [
-    { to: '/', label: 'Home', icon: IconHome },
-    { to: '/login', label: 'Login', icon: IconLogin },
-  ];
+  // Account section
+  const accountNavItems = user
+    ? [
+        { to: '/account', label: 'SMS Setup', icon: IconDeviceMobile },
+        { to: '/analytics', label: 'Analytics', icon: IconChartBar },
+        { to: '/billing', label: 'Billing', icon: IconCreditCard },
+      ]
+    : [];
 
-  // Show protected routes if logged in
-  const protectedNavItems = [
-    { to: '/customers/add', label: 'Add Customer', icon: IconUserPlus },
-    { to: '/customers', label: 'Customer List', icon: IconList },
-    { to: '/account', label: 'SMS Setup', icon: IconDeviceMobile },
-    { to: '/billing', label: 'Billing', icon: IconCreditCard },
-  ];
-
-  // Combine nav items based on auth state
-  const navItems = user
-    ? [...publicNavItems, ...protectedNavItems]
-    : [...publicNavItems, ...unauthenticatedNavItems];
+  // Others section (no title)
+  const otherNavItems = user
+    ? [
+        { to: '/about', label: 'About', icon: IconInfoCircle },
+        { to: '/help', label: 'Help', icon: IconHelpCircle },
+      ]
+    : [
+        { to: '/', label: 'Home', icon: IconHome },
+        { to: '/login', label: 'Login', icon: IconLogin },
+        { to: '/about', label: 'About', icon: IconInfoCircle },
+        { to: '/help', label: 'Help', icon: IconHelpCircle },
+      ];
 
   const handleNavClick = () => {
     // Close sidebar on mobile when a link is clicked
     if (onClose) {
       onClose();
     }
+  };
+
+  const renderNavItem = (item: { to: string; label: string; icon: any }) => {
+    const Icon = item.icon;
+    return (
+      <NavLink
+        key={item.to}
+        to={item.to}
+        end={item.to === '/customers' || item.to === '/'}
+        onClick={handleNavClick}
+        className={({ isActive }) =>
+          `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium ${
+            isActive
+              ? 'bg-[rgb(9,146,104)] text-white shadow-lg shadow-[rgba(9,146,104,0.3)]'
+              : 'text-gray-400 hover:bg-[#2a2a2a] hover:text-white'
+          }`
+        }
+      >
+        {({ isActive }) => (
+          <>
+            <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+            <span>{item.label}</span>
+          </>
+        )}
+      </NavLink>
+    );
   };
 
   return (
@@ -60,32 +96,36 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
         <p className="text-xs text-gray-400">Review Management</p>
       </div>
 
-      <nav className="flex-1 space-y-2">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === '/customers' || item.to === '/'}
-              onClick={handleNavClick}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium ${
-                  isActive
-                    ? 'bg-[rgb(9,146,104)] text-white shadow-lg shadow-[rgba(9,146,104,0.3)]'
-                    : 'text-gray-400 hover:bg-[#2a2a2a] hover:text-white'
-                }`
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-                  <span>{item.label}</span>
-                </>
-              )}
-            </NavLink>
-          );
-        })}
+      <nav className="flex-1 space-y-6">
+        {/* Customers Section */}
+        {user && customerNavItems.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 mb-2">
+              Customers
+            </h3>
+            {customerNavItems.map(renderNavItem)}
+          </div>
+        )}
+
+        {/* Account Section */}
+        {user && accountNavItems.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 mb-2">
+              Account
+            </h3>
+            {accountNavItems.map(renderNavItem)}
+          </div>
+        )}
+
+        {/* Info Section */}
+        {otherNavItems.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 mb-2">
+              Info
+            </h3>
+            {otherNavItems.map(renderNavItem)}
+          </div>
+        )}
       </nav>
 
       {/* Legal links footer */}

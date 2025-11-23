@@ -44,7 +44,7 @@ export const ResetPassword = () => {
           }
         }
       } catch (error) {
-        console.error('Error validating reset token:', error);
+        // Error validating reset token
       } finally {
         setValidating(false);
       }

@@ -301,7 +301,27 @@ export const AccountSetup = () => {
       </div>
 
       {/* SMS Usage Display */}
-      {!loadingSubscription &&
+      {loadingSubscription || paymentLoading ? (
+        <div className="mb-6 p-4 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
+          <Skeleton height={20} width={100} className="mb-3" />
+          <div className="flex flex-col gap-4">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <Skeleton height={16} width={80} />
+                <Skeleton height={16} width={60} />
+              </div>
+              <Skeleton height={8} radius="xl" />
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <Skeleton height={16} width={60} />
+                <Skeleton height={16} width={80} />
+              </div>
+              <Skeleton height={12} width={200} />
+            </div>
+          </div>
+        </div>
+      ) : (
         account &&
         (account.sms_sent_this_month !== undefined || account.sms_sent_total !== undefined) && (
           <div className="mb-6 p-4 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
@@ -357,7 +377,8 @@ export const AccountSetup = () => {
               )}
             </div>
           </div>
-        )}
+        )
+      )}
 
       {!paymentLoading && !hasPaid && (
         <Alert

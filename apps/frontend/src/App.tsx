@@ -15,7 +15,9 @@ import { Terms } from '@/pages/Terms';
 import { Privacy } from '@/pages/Privacy';
 import { About } from '@/pages/About';
 import { Home } from '@/pages/Home';
+import { Help } from '@/pages/Help';
 import { ResetPassword } from '@/pages/ResetPassword';
+import { Analytics } from '@/pages/Analytics';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -78,6 +80,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/about" element={<About />} />
+              <Route path="/help" element={<Help />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
             </Route>
@@ -91,6 +94,7 @@ function App() {
             >
               <Route path="/home" element={<Navigate to="/about" replace />} />
               <Route path="/account" element={<AccountSetup />} />
+              <Route path="/analytics" element={<Analytics />} />
               <Route path="/billing" element={<Billing />} />
               <Route path="/billing/success" element={<BillingSuccess />} />
               <Route path="/billing/cancel" element={<BillingCancel />} />

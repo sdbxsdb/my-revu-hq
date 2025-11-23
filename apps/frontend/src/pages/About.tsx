@@ -94,6 +94,21 @@ export const About = () => {
                 </ThemeIcon>
                 <div>
                   <Title order={3} size="h4" className="text-white mb-2">
+                    Analytics & Insights
+                  </Title>
+                  <Text size="sm" className="text-gray-300">
+                    Track your SMS campaigns with detailed analytics. Pro and Business plans include
+                    monthly statistics and customer engagement insights.
+                  </Text>
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <ThemeIcon size={48} radius="md" className="bg-teal-500/20 flex-shrink-0">
+                  <IconCheck size={28} className="text-teal-400" />
+                </ThemeIcon>
+                <div>
+                  <Title order={3} size="h4" className="text-white mb-2">
                     Simple Pricing
                   </Title>
                   <Text size="sm" className="text-gray-300">

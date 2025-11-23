@@ -54,9 +54,7 @@ export const useAuth = () => {
       if (session) {
         // Sync session to backend cookies (non-blocking)
         syncSession().catch((error) => {
-          if (!cancelled) {
-            console.error('Session sync failed:', error);
-          }
+          // Session sync failed
         });
 
         // Navigate to customers page after successful auth
@@ -125,7 +123,6 @@ export const useAuth = () => {
         if (cancelled) return;
 
         if (error) {
-          console.error('Session check error:', error);
           if (!initialSessionCheckedRef.current) {
             setUser(null);
             setLoading(false);
@@ -138,9 +135,7 @@ export const useAuth = () => {
         if (session) {
           // Sync session to backend (non-blocking)
           syncSession().catch((error) => {
-            if (!cancelled) {
-              console.error('Session sync failed:', error);
-            }
+            // Session sync failed
           });
         }
 
@@ -150,7 +145,6 @@ export const useAuth = () => {
         }
       } catch (error: any) {
         if (!cancelled && !initialSessionCheckedRef.current) {
-          console.error('Auth initialization error:', error);
           setUser(null);
           setLoading(false);
           initialSessionCheckedRef.current = true;
@@ -205,8 +199,7 @@ export const useAuth = () => {
         try {
           await syncSession();
         } catch (syncError) {
-          // Session sync failure is non-fatal, but log it
-          console.error('Session sync failed:', syncError);
+          // Session sync failure is non-fatal
           // Still return the session - the retry logic in API interceptor will handle it
         }
       }

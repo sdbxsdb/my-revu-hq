@@ -263,7 +263,6 @@ export const Login = () => {
         }
       } catch (checkError) {
         // If check fails, continue with signup anyway
-        console.log('[SignUp] Could not check if email exists:', checkError);
       }
 
       // Proceed with signup
@@ -282,8 +281,6 @@ export const Login = () => {
       setConfirmPassword('');
       setPasswordError('');
     } catch (error: any) {
-      console.error('[SignUp] Error:', error);
-
       // Check if error is due to duplicate email
       const errorMessage = error.message || '';
       const errorCode = error.code || error.status || '';

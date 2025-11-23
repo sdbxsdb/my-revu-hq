@@ -51,9 +51,6 @@ export const syncSession = async () => {
           lastSyncTime = Date.now();
         } catch (error: any) {
           // Don't log timeout errors as they're expected if API isn't available
-          if (error.message !== 'Sync timeout' && error.code !== 'ECONNABORTED') {
-            console.error('Failed to sync session:', error);
-          }
         }
       }
     } finally {
@@ -73,6 +70,6 @@ export const logout = async () => {
   try {
     await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true });
   } catch (error) {
-    console.error('Failed to clear cookies:', error);
+    // Failed to clear cookies
   }
 };

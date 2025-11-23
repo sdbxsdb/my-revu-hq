@@ -285,26 +285,6 @@ export const CustomerList = () => {
   };
 
   const handleEdit = (customer: Customer) => {
-    // Log the complete customer object as it comes from/goes to the DB
-    console.log('=== CUSTOMER DATA (Full Object) ===');
-    console.log('Complete Customer Object:', {
-      id: customer.id,
-      user_id: customer.user_id,
-      name: customer.name,
-      phone: {
-        countryCode: customer.phone.countryCode,
-        country: customer.phone.country,
-        number: customer.phone.number,
-      },
-      job_description: customer.job_description,
-      sms_status: customer.sms_status,
-      sent_at: customer.sent_at,
-    });
-    console.log('Raw customer object:', customer);
-    console.log('=== END CUSTOMER DATA ===');
-    console.log('Country code:', customer.phone.countryCode);
-    console.log('Phone number:', customer.phone.number);
-
     // Customer phone is stored in DB as:
     // { countryCode: "44", number: "07911123456" } - LOCAL format (as user entered)
     // NOT E.164 format - we convert to E.164 only when sending to Twilio
@@ -316,11 +296,8 @@ export const CustomerList = () => {
       customer.phone.countryCode
     );
     const countryToUse = detectedCountry || 'GB'; // Default fallback
-    console.log('Auto-detected country:', countryToUse);
-    console.log('Setting selectedCountry to:', countryToUse);
     setSelectedCountry(countryToUse);
     countryRef.current = countryToUse;
-    console.log('selectedCountry state set, countryRef.current set to:', countryRef.current);
 
     // The number is already in local format (as stored in DB)
     // Just use it directly - no transformation needed

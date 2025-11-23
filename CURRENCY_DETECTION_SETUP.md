@@ -39,7 +39,7 @@ You need to create **3 products** (Starter, Pro, Business) with **3 prices each*
 
 2. **Create Starter Product:**
    - Name: `MyRevuHQ Starter`
-   - Description: `Starter plan - 20 SMS messages per month`
+   - Description: `Starter plan - 15 SMS messages per month`
    - Create **3 prices**:
      - **GBP**: £4.99/month (499 pence)
      - **EUR**: €5.99/month (599 cents)
@@ -48,7 +48,7 @@ You need to create **3 products** (Starter, Pro, Business) with **3 prices each*
 
 3. **Create Pro Product:**
    - Name: `MyRevuHQ Pro`
-   - Description: `Pro plan - 50 SMS messages per month`
+   - Description: `Pro plan - 30 SMS messages per month`
    - Create **3 prices**:
      - **GBP**: £9.99/month (999 pence)
      - **EUR**: €11.99/month (1199 cents)
@@ -57,7 +57,7 @@ You need to create **3 products** (Starter, Pro, Business) with **3 prices each*
 
 4. **Create Business Product:**
    - Name: `MyRevuHQ Business`
-   - Description: `Business plan - 100 SMS messages per month`
+   - Description: `Business plan - 60 SMS messages per month`
    - Create **3 prices**:
      - **GBP**: £19.99/month (1999 pence)
      - **EUR**: €23.99/month (2399 cents)

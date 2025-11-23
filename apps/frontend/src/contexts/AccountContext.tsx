@@ -68,7 +68,7 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
       // In development with proxy, cookies might need extra time
       await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (err) {
-      console.error('Session sync failed:', err);
+      // Session sync failed
     }
 
     // Start new fetch

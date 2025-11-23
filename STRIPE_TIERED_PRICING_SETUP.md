@@ -4,12 +4,12 @@ This guide explains how to set up tiered pricing in Stripe for MyRevuHQ.
 
 ## Pricing Tiers
 
-| Tier           | Price (GBP) | SMS Limit     | Price (EUR) | Price (USD) |
-| -------------- | ----------- | ------------- | ----------- | ----------- |
-| **Starter**    | £4.99       | 20 SMS/month  | €5.99       | $5.99       |
-| **Pro**        | £9.99       | 50 SMS/month  | €11.99      | $11.99      |
-| **Business**   | £19.99      | 100 SMS/month | €23.99      | $23.99      |
-| **Enterprise** | Custom      | Custom        | Custom      | Custom      |
+| Tier           | Price (GBP) | SMS Limit    | Price (EUR) | Price (USD) |
+| -------------- | ----------- | ------------ | ----------- | ----------- |
+| **Starter**    | £4.99       | 15 SMS/month | €5.99       | $5.99       |
+| **Pro**        | £9.99       | 30 SMS/month | €11.99      | $11.99      |
+| **Business**   | £19.99      | 60 SMS/month | €23.99      | $23.99      |
+| **Enterprise** | Custom      | Custom       | Custom      | Custom      |
 
 ## Step 1: Create Products in Stripe
 
@@ -19,17 +19,17 @@ This guide explains how to set up tiered pricing in Stripe for MyRevuHQ.
 ### Starter Product
 
 - **Name**: `MyRevuHQ Starter`
-- **Description**: `Starter plan - 20 SMS messages per month`
+- **Description**: `Starter plan - 15 SMS messages per month`
 
 ### Pro Product
 
 - **Name**: `MyRevuHQ Pro`
-- **Description**: `Pro plan - 50 SMS messages per month`
+- **Description**: `Pro plan - 30 SMS messages per month`
 
 ### Business Product
 
 - **Name**: `MyRevuHQ Business`
-- **Description**: `Business plan - 100 SMS messages per month`
+- **Description**: `Business plan - 60 SMS messages per month`
 
 ## Step 2: Create Prices for Each Tier and Currency
 

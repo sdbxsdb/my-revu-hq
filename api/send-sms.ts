@@ -17,11 +17,11 @@ const sendSMSSchema = z.object({
 function getSmsLimitFromTier(tier: string | null | undefined): number {
   switch (tier) {
     case 'starter':
-      return 20;
+      return 15;
     case 'pro':
-      return 50;
+      return 30;
     case 'business':
-      return 100;
+      return 60;
     case 'enterprise':
       return 999999; // Effectively unlimited
     default:

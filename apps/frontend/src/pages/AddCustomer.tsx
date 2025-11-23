@@ -188,7 +188,7 @@ export const AddCustomer = () => {
         <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
           Add Customer
         </Title>
-        <p className="text-sm text-gray-400">Add a new customer and send them a review request</p>
+        <p className="text-sm text-gray-400">Add a new customer to send them a review request</p>
       </div>
 
       {!paymentLoading && !hasPaid && (

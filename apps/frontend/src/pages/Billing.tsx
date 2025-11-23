@@ -384,11 +384,16 @@ export const Billing = () => {
                     Plan
                   </Text>
                   <Text className="font-semibold text-white">Active Subscription</Text>
-                  {subscriptionTier && (
-                    <Text size="sm" className="text-teal-400 mt-1 capitalize">
-                      {getPlanById(subscriptionTier)?.name || subscriptionTier} Plan
-                    </Text>
-                  )}
+                  {subscriptionTier &&
+                    (() => {
+                      const plan = getPlanById(subscriptionTier);
+                      const smsLimit = plan?.smsLimit || 0;
+                      return (
+                        <Text size="sm" className="text-teal-400 mt-1 capitalize">
+                          {plan?.name || subscriptionTier} Plan ({smsLimit} sms/month)
+                        </Text>
+                      );
+                    })()}
                 </div>
                 <div>
                   <Text size="sm" className="text-gray-400 mb-1">
@@ -583,31 +588,6 @@ export const Billing = () => {
                   </div>
                 </div>
               ) : null}
-
-              {/* Features Included */}
-              <div className="pt-4 border-t border-[#2a2a2a]">
-                <Text size="sm" className="text-gray-400 mb-3">
-                  Your subscription includes:
-                </Text>
-                <ul className="list-none space-y-2">
-                  <li className="flex items-start gap-2 text-sm text-gray-300">
-                    <IconCheck size={16} className="text-teal-400 mt-0.5 flex-shrink-0" />
-                    <span>SMS messages based on your plan</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-sm text-gray-300">
-                    <IconCheck size={16} className="text-teal-400 mt-0.5 flex-shrink-0" />
-                    <span>Unlimited customers</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-sm text-gray-300">
-                    <IconCheck size={16} className="text-teal-400 mt-0.5 flex-shrink-0" />
-                    <span>Automatic monthly billing</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-sm text-gray-300">
-                    <IconCheck size={16} className="text-teal-400 mt-0.5 flex-shrink-0" />
-                    <span>Cancel anytime</span>
-                  </li>
-                </ul>
-              </div>
             </Stack>
           </Paper>
 
@@ -659,6 +639,25 @@ export const Billing = () => {
                           <Text size="xs" className="text-gray-400">
                             {plan.smsLimit} SMS/month
                           </Text>
+                          {/* Analytics info */}
+                          <div className="mt-2 pt-2 border-t border-[#2a2a2a]">
+                            <Text size="xs" className="text-gray-400 mb-1">
+                              Analytics:
+                            </Text>
+                            {plan.id === 'pro' ? (
+                              <Text size="xs" className="text-teal-400">
+                                📊 Visual insights & trends
+                              </Text>
+                            ) : plan.id === 'business' ? (
+                              <Text size="xs" className="text-teal-400">
+                                📈 Advanced analytics & customer insights
+                              </Text>
+                            ) : (
+                              <Text size="xs" className="text-gray-500">
+                                Not available
+                              </Text>
+                            )}
+                          </div>
                           {!isCurrentTier && (
                             <Button
                               variant={isUpgrade ? 'filled' : 'outline'}
@@ -939,6 +938,19 @@ export const Billing = () => {
                                 </li>
                               );
                             })}
+                            {/* Analytics feature */}
+                            {plan.id === 'pro' && (
+                              <li className="flex items-center gap-2 text-sm text-teal-400">
+                                <IconCheck size={16} className="text-teal-400 flex-shrink-0" />
+                                <span>Analytics: Visual insights & performance trends</span>
+                              </li>
+                            )}
+                            {plan.id === 'business' && (
+                              <li className="flex items-center gap-2 text-sm text-teal-400">
+                                <IconCheck size={16} className="text-teal-400 flex-shrink-0" />
+                                <span>Advanced Analytics: Customer-level insights & engagement tracking</span>
+                              </li>
+                            )}
                           </ul>
                           <Button
                             size="md"
