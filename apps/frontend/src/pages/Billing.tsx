@@ -646,11 +646,11 @@ export const Billing = () => {
                             </Text>
                             {plan.id === 'pro' ? (
                               <Text size="xs" className="text-teal-400">
-                                📊 Visual insights & trends
+                                Visual insights & trends
                               </Text>
                             ) : plan.id === 'business' ? (
                               <Text size="xs" className="text-teal-400">
-                                📈 Advanced analytics & customer insights
+                                Advanced analytics & customer insights
                               </Text>
                             ) : (
                               <Text size="xs" className="text-gray-500">
@@ -948,7 +948,9 @@ export const Billing = () => {
                             {plan.id === 'business' && (
                               <li className="flex items-center gap-2 text-sm text-teal-400">
                                 <IconCheck size={16} className="text-teal-400 flex-shrink-0" />
-                                <span>Advanced Analytics: Customer-level insights & engagement tracking</span>
+                                <span>
+                                  Advanced Analytics: Customer-level insights & engagement tracking
+                                </span>
                               </li>
                             )}
                           </ul>
