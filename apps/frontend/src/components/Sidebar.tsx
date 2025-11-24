@@ -23,17 +23,17 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
   // Customers section
   const customerNavItems = user
     ? [
-        { to: '/customers/add', label: 'Add Customer', icon: IconUserPlus },
-        { to: '/customers', label: 'Customer List', icon: IconList },
+    { to: '/customers/add', label: 'Add Customer', icon: IconUserPlus },
+    { to: '/customers', label: 'Customer List', icon: IconList },
       ]
     : [];
 
   // Account section
   const accountNavItems = user
     ? [
-        { to: '/account', label: 'SMS Setup', icon: IconDeviceMobile },
+    { to: '/account', label: 'SMS Setup', icon: IconDeviceMobile },
         { to: '/analytics', label: 'Analytics', icon: IconChartBar },
-        { to: '/billing', label: 'Billing', icon: IconCreditCard },
+    { to: '/billing', label: 'Billing', icon: IconCreditCard },
       ]
     : [];
 
@@ -58,29 +58,29 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
   };
 
   const renderNavItem = (item: { to: string; label: string; icon: any }) => {
-    const Icon = item.icon;
-    return (
-      <NavLink
-        key={item.to}
-        to={item.to}
-        end={item.to === '/customers' || item.to === '/'}
-        onClick={handleNavClick}
-        className={({ isActive }) =>
-          `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium ${
-            isActive
-              ? 'bg-[rgb(9,146,104)] text-white shadow-lg shadow-[rgba(9,146,104,0.3)]'
-              : 'text-gray-400 hover:bg-[#2a2a2a] hover:text-white'
-          }`
-        }
-      >
-        {({ isActive }) => (
-          <>
-            <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-            <span>{item.label}</span>
-          </>
-        )}
-      </NavLink>
-    );
+          const Icon = item.icon;
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.to === '/customers' || item.to === '/'}
+              onClick={handleNavClick}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium ${
+                  isActive
+                    ? 'bg-[rgb(9,146,104)] text-white shadow-lg shadow-[rgba(9,146,104,0.3)]'
+                    : 'text-gray-400 hover:bg-[#2a2a2a] hover:text-white'
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                  <span>{item.label}</span>
+                </>
+              )}
+            </NavLink>
+          );
   };
 
   return (

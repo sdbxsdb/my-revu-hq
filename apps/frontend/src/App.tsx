@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { AccountProvider } from '@/contexts/AccountContext';
 import { PaymentProvider } from '@/contexts/PaymentContext';
 import { Layout } from '@/components/Layout';
+import { ScrollToTop } from '@/components/ScrollToTop';
 import { Login } from '@/pages/Login';
 import { AccountSetup } from '@/pages/AccountSetup';
 import { Billing } from '@/pages/Billing';
@@ -71,6 +72,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <AccountProvider>
         <PaymentProvider>
           <Routes>

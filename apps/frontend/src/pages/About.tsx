@@ -21,7 +21,7 @@ export const About = () => {
       <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
         <Stack gap="lg">
           <section className="text-center">
-            <Title order={1} className="text-white mb-3">
+            <Title order={1} className="text-white mb-3 text-2xl sm:text-3xl">
               Essential for Any Business That Knows Reviews Matter
             </Title>
             <Text size="sm" className="text-gray-300 mb-6">

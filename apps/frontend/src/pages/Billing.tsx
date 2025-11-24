@@ -11,6 +11,7 @@ import {
   Badge,
   Skeleton,
   Modal,
+  Container,
 } from '@mantine/core';
 import {
   IconCreditCard,
@@ -283,7 +284,8 @@ export const Billing = () => {
   };
 
   return (
-    <Paper shadow="md" p="md" className="w-full max-w-4xl mx-auto">
+    <Container size="lg" py="md" px="xs">
+      <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
       <div className="mb-8">
         <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
           Billing & Subscription
@@ -338,36 +340,6 @@ export const Billing = () => {
                 >
                   Update Payment Method
                 </Button>
-              </div>
-            </Alert>
-          )}
-
-          {/* Subscription Status Banner */}
-          {accessStatus !== 'past_due' && (
-            <Alert
-              icon={<IconCheck size={16} />}
-              title="Active Subscription"
-              color="teal"
-              className="mb-6"
-            >
-              <div className="flex flex-col gap-2">
-                <Text size="sm" className="text-gray-300">
-                  Your subscription is active and you have full access to all features.
-                  {displayNextBillingDate && (
-                    <>
-                      {' '}
-                      Next billing date:{' '}
-                      {new Date(displayNextBillingDate).toLocaleDateString('en-GB', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                      })}
-                    </>
-                  )}
-                </Text>
-                <Badge color="teal" size="lg" className="self-start">
-                  Active Subscription
-                </Badge>
               </div>
             </Alert>
           )}
@@ -636,27 +608,20 @@ export const Billing = () => {
                           <Text size="lg" className="font-bold text-white">
                             {displayPrice}
                           </Text>
-                          <Text size="xs" className="text-gray-400">
-                            {plan.smsLimit} SMS/month
-                          </Text>
-                          {/* Analytics info */}
-                          <div className="mt-2 pt-2 border-t border-[#2a2a2a]">
-                            <Text size="xs" className="text-gray-400 mb-1">
-                              Analytics:
+                          <div className="space-y-0.5">
+                            <Text size="xs" className="text-gray-400">
+                              {plan.smsLimit} SMS/month
                             </Text>
-                            {plan.id === 'pro' ? (
-                              <Text size="xs" className="text-teal-400">
-                                Visual insights & trends
-                              </Text>
-                            ) : plan.id === 'business' ? (
-                              <Text size="xs" className="text-teal-400">
-                                Advanced analytics & customer insights
-                              </Text>
-                            ) : (
-                              <Text size="xs" className="text-gray-500">
-                                Not available
-                              </Text>
-                            )}
+                            <Text size="xs" className="text-gray-400">
+                              Analytics:{' '}
+                              <span className={plan.id === 'starter' ? 'text-gray-500' : 'text-teal-400'}>
+                                {plan.id === 'pro'
+                                  ? 'Visual insights & trends'
+                                  : plan.id === 'business'
+                                  ? 'Advanced analytics & customer insights'
+                                  : 'Not available'}
+                              </span>
+                            </Text>
                           </div>
                           {!isCurrentTier && (
                             <Button
@@ -683,71 +648,55 @@ export const Billing = () => {
           )}
 
           {/* Account Management Section */}
-          <Paper shadow="sm" p="md" className="bg-[#2a2a2a]/50 border border-[#2a2a2a]">
-            <Title order={3} className="text-xl font-bold mb-4 text-white">
+          <Paper shadow="sm" p="sm" className="bg-[#2a2a2a]/50 border border-[#2a2a2a]">
+            <Title order={4} className="text-sm font-semibold mb-3 text-gray-400">
               Account Management
             </Title>
-            <Stack gap="md">
+            <Stack gap="sm">
               {/* Cancel Subscription - Different messaging for card vs invoice */}
-              <div className="p-4 bg-yellow-900/20 rounded-lg border border-yellow-800/50">
-                <div className="mb-4">
-                  <Text className="font-semibold text-white mb-2">
-                    {displayPaymentMethod === 'card'
+              <div className="border-t border-[#2a2a2a] pt-2">
+                <Text size="xs" className="text-gray-500 mb-1.5">
+                  {displayPaymentMethod === 'card' ? (
+                    <>
+                      Cancel your subscription to stop billing.
+                    </>
+                  ) : (
+                    <>
+                      Cancel your invoice/direct debit payment method.
+                    </>
+                  )}
+                </Text>
+                <Button
+                  variant="subtle"
+                  color="gray"
+                  size="xs"
+                  onClick={() => setCancelModalOpen(true)}
+                  disabled={accountStatus === 'cancelled'}
+                >
+                  {accountStatus === 'cancelled'
+                    ? displayPaymentMethod === 'card'
+                      ? 'Subscription Already Cancelled'
+                      : 'Payment Method Already Cancelled'
+                    : displayPaymentMethod === 'card'
                       ? 'Cancel Subscription'
                       : 'Cancel Payment Method'}
-                  </Text>
-                  <Text size="sm" className="text-gray-400 mb-4">
-                    {displayPaymentMethod === 'card' ? (
-                      <>
-                        Cancel your subscription to stop billing. You'll keep access to your account
-                        and customer data, but SMS sending will be disabled.
-                      </>
-                    ) : (
-                      <>
-                        Cancel your invoice/direct debit payment method. You'll keep access to your
-                        account and customer data, but SMS sending will be disabled. To switch to
-                        card payment, cancel this first and then set up a new subscription.
-                      </>
-                    )}
-                  </Text>
-                  <Button
-                    variant="light"
-                    color="yellow"
-                    leftSection={<IconX size={16} />}
-                    onClick={() => setCancelModalOpen(true)}
-                    disabled={accountStatus === 'cancelled'}
-                    className="max-w-xs lg:max-w-sm w-full lg:w-auto"
-                  >
-                    {accountStatus === 'cancelled'
-                      ? displayPaymentMethod === 'card'
-                        ? 'Subscription Already Cancelled'
-                        : 'Payment Method Already Cancelled'
-                      : displayPaymentMethod === 'card'
-                        ? 'Cancel Subscription'
-                        : 'Cancel Payment Method'}
-                  </Button>
-                </div>
+                </Button>
               </div>
 
               {/* Delete Account */}
-              <div className="p-4 bg-red-900/20 rounded-lg border border-red-800/50">
-                <div>
-                  <Text className="font-semibold text-white mb-2">Delete Account</Text>
-                  <Text size="sm" className="text-gray-400 mb-4">
-                    Permanently delete your account and all associated data. This action cannot be
-                    undone.
-                  </Text>
-                  <Button
-                    variant="light"
-                    color="red"
-                    leftSection={<IconTrash size={16} />}
-                    onClick={() => setDeleteModalOpen(true)}
-                    disabled={accountStatus === 'deleted'}
-                    className="max-w-xs lg:max-w-sm w-full lg:w-auto"
-                  >
-                    {accountStatus === 'deleted' ? 'Account Already Deleted' : 'Delete Account'}
-                  </Button>
-                </div>
+              <div className="border-t border-[#2a2a2a] pt-2">
+                <Text size="xs" className="text-gray-500 mb-1.5">
+                  Permanently delete your account and all data.
+                </Text>
+                <Button
+                  variant="subtle"
+                  color="gray"
+                  size="xs"
+                  onClick={() => setDeleteModalOpen(true)}
+                  disabled={accountStatus === 'deleted'}
+                >
+                  {accountStatus === 'deleted' ? 'Account Already Deleted' : 'Delete Account'}
+                </Button>
               </div>
             </Stack>
           </Paper>
@@ -1181,6 +1130,9 @@ export const Billing = () => {
         onClose={() => setCancelModalOpen(false)}
         title="Cancel Subscription"
         centered
+        classNames={{
+          body: 'p-0',
+        }}
       >
         <Stack gap="md">
           <Text size="sm" className="text-gray-300">
@@ -1197,11 +1149,11 @@ export const Billing = () => {
               variant="light"
               onClick={() => setCancelModalOpen(false)}
               fullWidth
-              className="!h-auto !min-h-[3.5rem]"
+              className="!h-auto !min-h-[2.5rem] !px-2"
             >
-              <div className="flex flex-col leading-tight py-1">
-                <span>Keep</span>
-                <span>Subscription</span>
+              <div className="flex flex-col leading-tight py-0.5 text-center w-full">
+                <span className="text-xs">Keep</span>
+                <span className="text-xs">Subscription</span>
               </div>
             </Button>
             <Button
@@ -1209,11 +1161,11 @@ export const Billing = () => {
               onClick={handleCancelSubscription}
               loading={cancelling}
               fullWidth
-              className="!h-auto !min-h-[3.5rem]"
+              className="!h-auto !min-h-[2.5rem] !px-2"
             >
-              <div className="flex flex-col leading-tight py-1">
-                <span>Cancel</span>
-                <span>Subscription</span>
+              <div className="flex flex-col leading-tight py-0.5 text-center w-full">
+                <span className="text-xs">Cancel</span>
+                <span className="text-xs">Subscription</span>
               </div>
             </Button>
           </div>
@@ -1226,6 +1178,9 @@ export const Billing = () => {
         onClose={() => setDeleteModalOpen(false)}
         title="Delete Account"
         centered
+        classNames={{
+          body: 'p-0',
+        }}
       >
         <Stack gap="md">
           <Alert color="red" icon={<IconAlertCircle size={16} />}>
@@ -1243,11 +1198,28 @@ export const Billing = () => {
             <li>Your subscription and billing information</li>
           </ul>
           <div className="flex gap-3 mt-4">
-            <Button variant="light" onClick={() => setDeleteModalOpen(false)} fullWidth>
-              Keep Account
+            <Button
+              variant="light"
+              onClick={() => setDeleteModalOpen(false)}
+              fullWidth
+              className="!h-auto !min-h-[2.5rem] !px-2"
+            >
+              <div className="flex flex-col leading-tight py-0.5 text-center w-full">
+                <span className="text-xs">Keep</span>
+                <span className="text-xs">Account</span>
+              </div>
             </Button>
-            <Button color="red" onClick={handleDeleteAccount} loading={deleting} fullWidth>
-              Delete Account
+            <Button
+              color="red"
+              onClick={handleDeleteAccount}
+              loading={deleting}
+              fullWidth
+              className="!h-auto !min-h-[2.5rem] !px-2"
+            >
+              <div className="flex flex-col leading-tight py-0.5 text-center w-full">
+                <span className="text-xs">Delete</span>
+                <span className="text-xs">Account</span>
+              </div>
             </Button>
           </div>
         </Stack>
@@ -1262,6 +1234,9 @@ export const Billing = () => {
         }}
         title="Change Subscription Plan"
         centered
+        classNames={{
+          body: 'p-0',
+        }}
       >
         <Stack gap="md">
           {selectedNewTier &&
@@ -1362,6 +1337,7 @@ export const Billing = () => {
             })()}
         </Stack>
       </Modal>
-    </Paper>
+      </Paper>
+    </Container>
   );
 };

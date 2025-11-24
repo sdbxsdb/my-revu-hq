@@ -14,6 +14,7 @@ import {
   Skeleton,
   Loader,
   Checkbox,
+  Container,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -51,10 +52,31 @@ export const AccountSetup = () => {
   const [loading, setLoading] = useState(false);
   const [subscriptionTier, setSubscriptionTier] = useState<PricingTier | null>(null);
   const [loadingSubscription, setLoadingSubscription] = useState(true);
+  const [userCountry, setUserCountry] = useState<string>('GB');
 
   // Show loading skeleton only while actively loading account data
   // Don't show skeleton if we have account data (even if form hasn't populated yet)
   const isLoading = accountLoading && !account;
+
+  // Detect user's country for spelling
+  useEffect(() => {
+    const detectCountry = async () => {
+      try {
+        const response = await apiClient.detectCountry();
+        setUserCountry(response.country);
+      } catch (error) {
+        // Default to GB
+        setUserCountry('GB');
+      }
+    };
+    detectCountry();
+  }, []);
+
+  // Determine spelling based on location
+  // UK and IE use 's', US and CA use 'z'
+  const personalizationSpelling = ['GB', 'IE'].includes(userCountry.toUpperCase())
+    ? 'Personalisation'
+    : 'Personalization';
 
   const form = useForm({
     initialValues: {
@@ -299,7 +321,8 @@ export const AccountSetup = () => {
   };
 
   return (
-    <Paper shadow="md" p="md" className="w-full max-w-2xl mx-auto">
+    <Container size="md" py="md" px="xs">
+      <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
       <div className="mb-8">
         <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
           SMS Setup
@@ -438,7 +461,7 @@ export const AccountSetup = () => {
           <Stack gap="lg">
             <TextInput
               label="Business Name"
-              placeholder="Your Business Name"
+              placeholder="your business name"
               required
               disabled={accountLoading}
               {...form.getInputProps('businessName')}
@@ -446,7 +469,9 @@ export const AccountSetup = () => {
 
             {/* Review Links */}
             <div>
-              <label className="block text-sm font-medium text-gray-200 mb-1">Review Links</label>
+              <label className="block text-sm font-medium text-gray-200 mb-1">
+                Review Links <span className="text-red-500">*</span>
+              </label>
               <p className="text-xs text-gray-400 mb-3">
                 Enter the full URL for each review link (e.g., https://g.page/r/ABC123XYZ/review).
                 You can add up to 5 links. At least one complete link (name and URL) is required.
@@ -560,17 +585,27 @@ export const AccountSetup = () => {
             {/* SMS Personalization Options */}
             <div className="space-y-3 p-4 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
               <Text size="sm" className="font-medium text-gray-200 mb-2">
-                Personalization Options
+                {personalizationSpelling} Options
               </Text>
               <Checkbox
-                label="Include customer name in SMS (e.g., 'Hi John,')"
+                label={
+                  <div>
+                    <div>Include customer name in SMS</div>
+                    <div className="text-xs text-gray-400">(e.g., 'Hi John,')</div>
+                  </div>
+                }
                 {...form.getInputProps('includeNameInSms', { type: 'checkbox' })}
                 classNames={{
                   label: 'text-gray-300 text-sm',
                 }}
               />
               <Checkbox
-                label="Include job description in SMS (e.g., 'Job: Kitchen renovation')"
+                label={
+                  <div>
+                    <div>Include job description in SMS</div>
+                    <div className="text-xs text-gray-400">(e.g., 'Job: Kitchen renovation')</div>
+                  </div>
+                }
                 {...form.getInputProps('includeJobInSms', { type: 'checkbox' })}
                 classNames={{
                   label: 'text-gray-300 text-sm',
@@ -770,6 +805,7 @@ export const AccountSetup = () => {
           </Stack>
         </form>
       )}
-    </Paper>
+      </Paper>
+    </Container>
   );
 };

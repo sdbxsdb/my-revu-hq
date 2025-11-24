@@ -220,7 +220,7 @@ export const Analytics = () => {
 
   if (loading) {
     return (
-      <Container size="lg" py="xl">
+      <Container size="lg" py="md" px="xs">
         <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
           <Stack gap="lg">
             <Skeleton height={40} width="60%" />
@@ -236,7 +236,7 @@ export const Analytics = () => {
     const currentTier = subscriptionTier || 'starter';
 
     return (
-      <Container size="lg" py="xl">
+      <Container size="lg" py="md" px="xs">
         <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
           <Stack gap="lg">
             <div>
@@ -600,12 +600,14 @@ export const Analytics = () => {
                     <YAxis tick={{ fill: '#9ca3af', fontSize: 12 }} />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: '#1a1a1a',
-                        border: '1px solid #3a3a3a',
+                        backgroundColor: '#1f2937',
+                        border: '1px solid #4b5563',
                         borderRadius: '8px',
-                        color: '#fff',
+                        color: '#f3f4f6',
                       }}
-                      labelStyle={{ color: '#9ca3af' }}
+                      labelStyle={{ color: '#e5e7eb', fontWeight: 600 }}
+                      itemStyle={{ color: '#f3f4f6' }}
+                      cursor={{ fill: 'rgba(148, 163, 184, 0.1)' }}
                     />
                     <Bar dataKey="count" radius={[8, 8, 0, 0]}>
                       {[...analytics.monthlyStats].reverse().map((_, index) => (
@@ -633,9 +635,9 @@ export const Analytics = () => {
                 radius="sm"
                 classNames={{
                   item: 'bg-[#2a2a2a] border-[#3a3a3a]',
-                  control: 'hover:bg-[#333333] py-2 px-3',
+                  control: 'hover:bg-[#333333] py-3 px-4',
                   label: 'text-white',
-                  content: 'pt-0',
+                  content: 'pt-3',
                   chevron: 'text-teal-400',
                 }}
               >
@@ -672,37 +674,42 @@ export const Analytics = () => {
                         return (
                           <Paper
                             key={customer.id}
-                            p="sm"
                             shadow="sm"
                             className="bg-[#141414] border border-[#2a2a2a] hover:border-[#333333] transition-colors"
+                            style={{ padding: '1rem' }}
                           >
                             <div className="flex justify-between items-start mb-2">
                               <div className="flex-1">
-                                <div className="font-semibold text-base text-white mb-0.5">
+                                <div className="font-semibold text-lg text-white mb-1">
                                   {customer.name}
                                 </div>
-                                <div className="text-xs text-gray-400 font-medium flex items-center gap-1.5">
-                                  <span className="flex items-center justify-center text-sm leading-none">
+                                <div className="text-sm text-gray-400 font-medium flex items-center gap-1.5">
+                                  <span className="flex items-center justify-center text-base leading-none">
                                     {phoneDisplay.flag}
                                   </span>
                                   <span>{phoneDisplay.number}</span>
                                 </div>
                                 {customer.createdAt && (
-                                  <div className="text-xs text-gray-500 mt-0.5">
+                                  <div className="mt-0.5 text-sm text-gray-500">
                                     Added: {formattedCreated}
+                                  </div>
+                                )}
+                                {customer.daysSinceContact !== null && customer.daysSinceContact !== undefined && (
+                                  <div className="mt-1 text-xs text-yellow-400">
+                                    {customer.daysSinceContact}d ago. No request sent.
                                   </div>
                                 )}
                               </div>
                               <div className="flex flex-col items-end gap-1 ml-2">
                                 {customer.lastContacted && (
-                                  <div className="text-xs text-gray-500 font-medium">
+                                  <div className="font-medium" style={{ fontSize: '0.875rem', color: '#9ca3af' }}>
                                     {formatDate(customer.lastContacted)}
                                   </div>
                                 )}
                               </div>
                             </div>
                             {customer.job_description && (
-                              <div className="text-xs text-gray-300 mb-2 p-2 bg-[#2a2a2a]/50 rounded border border-[#2a2a2a]">
+                              <div className="text-sm text-gray-300 mb-4 p-4 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
                                 {customer.job_description}
                               </div>
                             )}
@@ -764,37 +771,42 @@ export const Analytics = () => {
                         return (
                           <Paper
                             key={customer.id}
-                            p="sm"
                             shadow="sm"
                             className="bg-[#141414] border border-[#2a2a2a] hover:border-[#333333] transition-colors"
+                            style={{ padding: '1rem' }}
                           >
                             <div className="flex justify-between items-start mb-2">
                               <div className="flex-1">
-                                <div className="font-semibold text-base text-white mb-0.5">
+                                <div className="font-semibold text-lg text-white mb-1">
                                   {customer.name}
                                 </div>
-                                <div className="text-xs text-gray-400 font-medium flex items-center gap-1.5">
-                                  <span className="flex items-center justify-center text-sm leading-none">
+                                <div className="text-sm text-gray-400 font-medium flex items-center gap-1.5">
+                                  <span className="flex items-center justify-center text-base leading-none">
                                     {phoneDisplay.flag}
                                   </span>
                                   <span>{phoneDisplay.number}</span>
                                 </div>
                                 {customer.createdAt && (
-                                  <div className="text-xs text-gray-500 mt-0.5">
+                                  <div className="mt-0.5 text-sm text-gray-500">
                                     Added: {formattedCreated}
+                                  </div>
+                                )}
+                                {customer.daysSinceContact !== null && customer.daysSinceContact !== undefined && (
+                                  <div className="mt-1 text-xs text-orange-400">
+                                    {customer.daysSinceContact}d ago. No request sent.
                                   </div>
                                 )}
                               </div>
                               <div className="flex flex-col items-end gap-1 ml-2">
                                 {customer.lastContacted && (
-                                  <div className="text-xs text-gray-500 font-medium">
+                                  <div className="font-medium" style={{ fontSize: '0.875rem', color: '#9ca3af' }}>
                                     {formatDate(customer.lastContacted)}
                                   </div>
                                 )}
                               </div>
                             </div>
                             {customer.job_description && (
-                              <div className="text-xs text-gray-300 mb-2 p-2 bg-[#2a2a2a]/50 rounded border border-[#2a2a2a]">
+                              <div className="text-sm text-gray-300 mb-4 p-4 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
                                 {customer.job_description}
                               </div>
                             )}
@@ -856,37 +868,42 @@ export const Analytics = () => {
                         return (
                           <Paper
                             key={customer.id}
-                            p="sm"
                             shadow="sm"
                             className="bg-[#141414] border border-[#2a2a2a] hover:border-[#333333] transition-colors"
+                            style={{ padding: '1rem' }}
                           >
                             <div className="flex justify-between items-start mb-2">
                               <div className="flex-1">
-                                <div className="font-semibold text-base text-white mb-0.5">
+                                <div className="font-semibold text-lg text-white mb-1">
                                   {customer.name}
                                 </div>
-                                <div className="text-xs text-gray-400 font-medium flex items-center gap-1.5">
-                                  <span className="flex items-center justify-center text-sm leading-none">
+                                <div className="text-sm text-gray-400 font-medium flex items-center gap-1.5">
+                                  <span className="flex items-center justify-center text-base leading-none">
                                     {phoneDisplay.flag}
                                   </span>
                                   <span>{phoneDisplay.number}</span>
                                 </div>
                                 {customer.createdAt && (
-                                  <div className="text-xs text-gray-500 mt-0.5">
+                                  <div className="mt-0.5 text-sm text-gray-500">
                                     Added: {formattedCreated}
+                                  </div>
+                                )}
+                                {customer.daysSinceContact !== null && customer.daysSinceContact !== undefined && (
+                                  <div className="mt-1 text-xs text-red-400">
+                                    {customer.daysSinceContact}d ago. No request sent.
                                   </div>
                                 )}
                               </div>
                               <div className="flex flex-col items-end gap-1 ml-2">
                                 {customer.lastContacted && (
-                                  <div className="text-xs text-gray-500 font-medium">
+                                  <div className="font-medium" style={{ fontSize: '0.875rem', color: '#9ca3af' }}>
                                     {formatDate(customer.lastContacted)}
                                   </div>
                                 )}
                               </div>
                             </div>
                             {customer.job_description && (
-                              <div className="text-xs text-gray-300 mb-2 p-2 bg-[#2a2a2a]/50 rounded border border-[#2a2a2a]">
+                              <div className="text-sm text-gray-300 mb-4 p-4 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
                                 {customer.job_description}
                               </div>
                             )}
@@ -947,23 +964,23 @@ export const Analytics = () => {
                         return (
                           <Paper
                             key={customer.id}
-                            p="sm"
                             shadow="sm"
                             className="bg-[#141414] border border-[#2a2a2a] hover:border-[#333333] transition-colors"
+                            style={{ padding: '1rem' }}
                           >
                             <div className="flex justify-between items-start mb-2">
                               <div className="flex-1">
-                                <div className="font-semibold text-base text-white mb-0.5">
+                                <div className="font-semibold text-lg text-white mb-1">
                                   {customer.name}
                                 </div>
-                                <div className="text-xs text-gray-400 font-medium flex items-center gap-1.5">
-                                  <span className="flex items-center justify-center text-sm leading-none">
+                                <div className="text-sm text-gray-400 font-medium flex items-center gap-1.5">
+                                  <span className="flex items-center justify-center text-base leading-none">
                                     {phoneDisplay.flag}
                                   </span>
                                   <span>{phoneDisplay.number}</span>
                                 </div>
                                 {customer.createdAt && (
-                                  <div className="text-xs text-gray-500 mt-0.5">
+                                  <div className="mt-0.5 text-sm text-gray-500">
                                     Added: {formattedCreated}
                                   </div>
                                 )}
@@ -975,7 +992,7 @@ export const Analytics = () => {
                               </div>
                             </div>
                             {customer.job_description && (
-                              <div className="text-xs text-gray-300 p-2 bg-[#2a2a2a]/50 rounded border border-[#2a2a2a]">
+                              <div className="text-sm text-gray-300 p-4 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a] mb-4">
                                 {customer.job_description}
                               </div>
                             )}
@@ -1015,7 +1032,7 @@ export const Analytics = () => {
                 onChange={setExpandedMonths}
                 classNames={{
                   item: 'bg-[#2a2a2a] border-[#3a3a3a]',
-                  control: 'hover:bg-[#333333] pt-4',
+                  control: 'hover:bg-[#333333] py-4',
                   label: 'text-white',
                   content: 'pt-0',
                   chevron: 'text-teal-400',
@@ -1063,9 +1080,9 @@ export const Analytics = () => {
                               }
                               classNames={{
                                 item: 'bg-[#1a1a1a] border-[#3a3a3a]',
-                                control: 'py-0 px-1 hover:bg-[#2a2a2a]',
+                                control: 'py-3 px-4 hover:bg-[#2a2a2a]',
                                 label: 'text-white text-sm font-medium',
-                                content: 'text-gray-300 text-xs px-2 pb-1',
+                                content: 'text-gray-300 text-sm p-4',
                                 chevron: 'text-teal-400',
                               }}
                               styles={{
@@ -1074,8 +1091,8 @@ export const Analytics = () => {
                                   paddingBottom: 0,
                                 },
                                 control: {
-                                  paddingTop: '0.125rem',
-                                  paddingBottom: '0.125rem',
+                                  paddingTop: '0.75rem',
+                                  paddingBottom: '0.75rem',
                                 },
                                 item: {
                                   marginTop: '0.25rem',
@@ -1090,7 +1107,7 @@ export const Analytics = () => {
                                       <Text size="sm" className="text-white font-medium">
                                         John Smith
                                       </Text>
-                                      <Text size="xs" className="text-gray-400">
+                                      <Text size="sm" className="text-gray-400">
                                         {new Date().toLocaleDateString('en-GB', {
                                           day: 'numeric',
                                           month: 'short',
@@ -1099,20 +1116,20 @@ export const Analytics = () => {
                                     </div>
                                   </Accordion.Control>
                                   <Accordion.Panel>
-                                    <div className="space-y-1">
+                                    <div className="space-y-2">
                                       <div className="flex justify-between">
-                                        <Text size="xs" className="text-gray-500">
+                                        <Text size="sm" className="text-gray-400">
                                           Phone:
                                         </Text>
-                                        <Text size="xs" className="text-gray-300">
+                                        <Text size="sm" className="text-gray-200 font-medium">
                                           07780586444
                                         </Text>
                                       </div>
                                       <div className="flex justify-between">
-                                        <Text size="xs" className="text-gray-500">
+                                        <Text size="sm" className="text-gray-400">
                                           Job:
                                         </Text>
-                                        <Text size="xs" className="text-gray-300">
+                                        <Text size="sm" className="text-gray-200">
                                           Kitchen renovation
                                         </Text>
                                       </div>
@@ -1199,7 +1216,7 @@ export const Analytics = () => {
                               item: 'bg-[#1a1a1a] border-[#3a3a3a]',
                               control: 'py-0 px-1 hover:bg-[#2a2a2a]',
                               label: 'text-white text-sm font-medium',
-                              content: 'text-gray-300 text-xs px-2 pb-1',
+                              content: 'text-gray-300 text-sm p-4',
                               chevron: 'text-teal-400',
                             }}
                             styles={{
@@ -1227,7 +1244,7 @@ export const Analytics = () => {
                                     <Text size="sm" className="text-white font-medium">
                                       {customer.name}
                                     </Text>
-                                    <Text size="xs" className="text-gray-400">
+                                    <Text size="sm" className="text-gray-400">
                                       {new Date(customer.sent_at).toLocaleDateString('en-GB', {
                                         day: 'numeric',
                                         month: 'short',
@@ -1236,30 +1253,30 @@ export const Analytics = () => {
                                   </div>
                                 </Accordion.Control>
                                 <Accordion.Panel>
-                                  <div className="space-y-1">
+                                  <div className="space-y-2">
                                     <div className="flex justify-between">
-                                      <Text size="xs" className="text-gray-500">
+                                      <Text size="sm" className="text-gray-400">
                                         Phone:
                                       </Text>
-                                      <Text size="xs" className="text-gray-300">
+                                      <Text size="sm" className="text-gray-200 font-medium">
                                         {customer.phone}
                                       </Text>
                                     </div>
                                     {customer.job_description && (
                                       <div className="flex justify-between">
-                                        <Text size="xs" className="text-gray-500">
+                                        <Text size="sm" className="text-gray-400">
                                           Job:
                                         </Text>
-                                        <Text size="xs" className="text-gray-300 text-right max-w-[60%]">
+                                        <Text size="sm" className="text-gray-200 text-right max-w-[60%]">
                                           {customer.job_description}
                                         </Text>
                                       </div>
                                     )}
                                     <div className="flex justify-between">
-                                      <Text size="xs" className="text-gray-500">
+                                      <Text size="sm" className="text-gray-400">
                                         Sent:
                                       </Text>
-                                      <Text size="xs" className="text-gray-400">
+                                      <Text size="sm" className="text-gray-300">
                                         {formatDate(customer.sent_at)}
                                       </Text>
                                     </div>

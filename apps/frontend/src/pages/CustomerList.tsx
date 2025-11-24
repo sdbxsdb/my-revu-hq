@@ -14,6 +14,7 @@ import {
   Alert,
   Text,
   Skeleton,
+  Container,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useForm } from '@mantine/form';
@@ -622,7 +623,8 @@ export const CustomerList = () => {
   };
 
   return (
-    <Paper shadow="md" p="md" className="w-full">
+    <Container size="md" py="md" px="xs">
+      <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
       <div className="flex flex-col gap-6 mb-8 pb-6 border-b border-[#2a2a2a]">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -1042,9 +1044,7 @@ export const CustomerList = () => {
                                     : 'text-yellow-400'
                                 }
                               >
-                                {customer.sent_at
-                                  ? `Not contacted in ${daysSinceContact} days`
-                                  : `Not contacted (${daysSinceContact} days)`}
+                                {daysSinceContact}d ago. No request sent.
                               </Text>
                             );
                           }
@@ -1058,7 +1058,7 @@ export const CustomerList = () => {
                           return null;
                         })()}
                         {customer.created_at && (
-                          <Text size="xs" className="text-gray-500 mt-1">
+                          <Text size="sm" className="text-gray-500 mt-1">
                             Added: {new Date(customer.created_at).toLocaleDateString('en-GB', {
                               day: 'numeric',
                               month: 'short',
@@ -1152,9 +1152,15 @@ export const CustomerList = () => {
                   shadow="sm"
                   className={`bg-[#141414] border transition-colors sm:p-lg ${phoneValid ? 'border-[#2a2a2a] hover:border-[#333333]' : 'border-red-800/50'}`}
                 >
-                  <div className="flex justify-between items-start mb-4">
+                  {/* Section 1: Customer Info */}
+                  <div className="flex justify-between items-start mb-3 pb-3 border-b border-[#2a2a2a]">
                     <div className="flex-1">
                       <div className="font-semibold text-lg text-white mb-1">{customer.name}</div>
+                      {customer.job_description && (
+                        <div className="text-sm text-gray-300 mb-2">
+                          {customer.job_description}
+                        </div>
+                      )}
                       <div className="text-sm text-gray-400 font-medium flex items-center gap-1.5">
                         <span className="flex items-center justify-center text-base leading-none">
                           {phoneDisplay.flag}
@@ -1164,75 +1170,6 @@ export const CustomerList = () => {
                       {!phoneValid && phoneError && (
                         <div className="text-xs text-red-400 mt-1 font-medium">{phoneError}</div>
                       )}
-                      {customer.created_at && (
-                        <div className="mt-2">
-                          <div className="text-xs text-gray-400 font-medium mb-0.5">
-                            Added:
-                          </div>
-                          <div className="text-xs text-gray-500 flex items-center gap-1.5">
-                            <span className="text-teal-400">•</span>
-                            {new Date(customer.created_at).toLocaleDateString('en-GB', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric',
-                            })}
-                          </div>
-                        </div>
-                      )}
-                      {customer.messages && customer.messages.length > 0 && (
-                        <div className="mt-2">
-                          <div className="text-xs text-gray-400 font-medium mb-0.5">
-                            Review Requests ({customer.messages.length}/3):
-                          </div>
-                          <div className="space-y-0.5">
-                            {customer.messages.slice(0, 3).map((message, idx) => (
-                              <div key={idx} className="text-xs text-gray-500 flex items-center gap-1.5">
-                                <span className="text-teal-400">•</span>
-                                {new Date(message.sent_at).toLocaleDateString('en-GB', {
-                                  day: 'numeric',
-                                  month: 'short',
-                                })}, {new Date(message.sent_at).toLocaleTimeString('en-GB', {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {(() => {
-                        // Calculate days since last contact
-                        let daysSinceContact: number | null = null;
-                        if (customer.sent_at) {
-                          const lastContacted = new Date(customer.sent_at);
-                          const now = new Date();
-                          daysSinceContact = Math.floor(
-                            (now.getTime() - lastContacted.getTime()) / (1000 * 60 * 60 * 24)
-                          );
-                        } else if (customer.created_at) {
-                          const created = new Date(customer.created_at);
-                          const now = new Date();
-                          daysSinceContact = Math.floor(
-                            (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24)
-                          );
-                        }
-
-                        const showContactWarning = daysSinceContact !== null && daysSinceContact >= 5;
-
-                        return showContactWarning ? (
-                          <div
-                            className={`text-xs mt-1 ${
-                              daysSinceContact! >= 30
-                                ? 'text-red-400'
-                                : daysSinceContact! >= 10
-                                ? 'text-orange-400'
-                                : 'text-yellow-400'
-                            }`}
-                          >
-                            Added {daysSinceContact}d ago. No request sent.
-                          </div>
-                        ) : null;
-                      })()}
                     </div>
                     <div className="flex flex-col items-end gap-1.5 ml-2">
                       <Badge
@@ -1244,44 +1181,110 @@ export const CustomerList = () => {
                       </Badge>
                     </div>
                   </div>
-                  {customer.job_description && (
-                    <div className="text-sm text-gray-300 mb-4 p-4 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
-                      {customer.job_description}
-                    </div>
-                  )}
-                  {(() => {
-                    const requestCount = customer.sms_request_count || 0;
-                    const isOptedOut = customer.opt_out || false;
-                    const isLimitReached = requestCount >= 3;
 
-                    return (
-                      <>
-                        {(isLimitReached || isOptedOut) && (
-                          <details className="mb-4">
-                            <summary className={`text-xs cursor-pointer list-none flex items-center justify-between p-2 rounded ${
-                              isOptedOut ? 'bg-red-900/20 text-red-400' : 'bg-yellow-900/20 text-yellow-400'
-                            }`}>
-                              <div className="flex items-center gap-2">
-                                <IconAlertCircle size={14} />
-                                <span className="font-medium">
-                                  {isOptedOut ? 'Opted Out' : `Limit Reached (${requestCount}/3)`}
-                                </span>
-                              </div>
-                              <span className="text-xs opacity-70 underline">Learn more</span>
-                            </summary>
-                            <div className={`text-xs mt-2 p-2 rounded ${
-                              isOptedOut ? 'bg-red-900/10 text-gray-300' : 'bg-yellow-900/10 text-gray-300'
-                            }`}>
-                              {isOptedOut
-                                ? 'This customer has opted out of receiving SMS messages.'
-                                : 'Maximum of 3 review requests reached. No more messages can be sent to this customer. This limit helps maintain good customer relationships and comply with SMS regulations.'}
+                  {/* Section 2: Activity Tracking */}
+                  <div className="mb-3 pb-3 border-b border-[#2a2a2a]">
+                    {customer.created_at && (
+                      <div className="mb-2">
+                        <div className="text-sm text-gray-400 font-medium mb-0.5">
+                          Added:
+                        </div>
+                        <div className="text-sm text-gray-500 flex items-center gap-1.5">
+                          <span className="text-teal-400">•</span>
+                          {new Date(customer.created_at).toLocaleDateString('en-GB', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    {customer.messages && customer.messages.length > 0 && (
+                      <div className="mb-2">
+                        <div className="text-sm text-gray-400 font-medium mb-0.5">
+                          Review Requests ({customer.messages.length}/3):
+                        </div>
+                        <div className="space-y-0.5">
+                          {customer.messages.slice(0, 3).map((message, idx) => (
+                            <div key={idx} className="text-sm text-gray-500 flex items-center gap-1.5">
+                              <span className="text-teal-400">•</span>
+                              {new Date(message.sent_at).toLocaleDateString('en-GB', {
+                                day: 'numeric',
+                                month: 'short',
+                              })}, {new Date(message.sent_at).toLocaleTimeString('en-GB', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
                             </div>
-                          </details>
-                        )}
-                      </>
-                    );
-                  })()}
-                  <div className="flex justify-between items-center pt-4 border-t border-[#2a2a2a]">
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {(() => {
+                      // Calculate days since last contact
+                      let daysSinceContact: number | null = null;
+                      if (customer.sent_at) {
+                        const lastContacted = new Date(customer.sent_at);
+                        const now = new Date();
+                        daysSinceContact = Math.floor(
+                          (now.getTime() - lastContacted.getTime()) / (1000 * 60 * 60 * 24)
+                        );
+                      } else if (customer.created_at) {
+                        const created = new Date(customer.created_at);
+                        const now = new Date();
+                        daysSinceContact = Math.floor(
+                          (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24)
+                        );
+                      }
+
+                      const showContactWarning = daysSinceContact !== null && daysSinceContact >= 5;
+
+                      return showContactWarning ? (
+                        <div
+                          className={`text-xs ${
+                            daysSinceContact! >= 30
+                              ? 'text-red-400'
+                              : daysSinceContact! >= 10
+                              ? 'text-orange-400'
+                              : 'text-yellow-400'
+                          }`}
+                        >
+                          {daysSinceContact}d ago. No request sent.
+                        </div>
+                      ) : null;
+                    })()}
+                    {(() => {
+                      const requestCount = customer.sms_request_count || 0;
+                      const isOptedOut = customer.opt_out || false;
+                      const isLimitReached = requestCount >= 3;
+
+                      return (isLimitReached || isOptedOut) ? (
+                        <details className="mt-2">
+                          <summary className={`text-sm cursor-pointer list-none flex items-center justify-between p-2 rounded ${
+                            isOptedOut ? 'bg-red-900/20 text-red-400' : 'bg-yellow-900/20 text-yellow-400'
+                          }`}>
+                            <div className="flex items-center gap-2">
+                              <IconAlertCircle size={16} />
+                              <span className="font-medium">
+                                {isOptedOut ? 'Opted Out' : `Limit Reached (${requestCount}/3)`}
+                              </span>
+                            </div>
+                            <span className="text-xs opacity-70 underline">Learn more</span>
+                          </summary>
+                          <div className={`text-sm mt-2 p-2 rounded ${
+                            isOptedOut ? 'bg-red-900/10 text-gray-300' : 'bg-yellow-900/10 text-gray-300'
+                          }`}>
+                            {isOptedOut
+                              ? 'This customer has opted out of receiving SMS messages.'
+                              : 'Maximum of 3 review requests reached. No more messages can be sent to this customer. This limit helps maintain good customer relationships and comply with SMS regulations.'}
+                          </div>
+                        </details>
+                      ) : null;
+                    })()}
+                  </div>
+
+                  {/* Section 3: Action Buttons */}
+                  <div className="flex justify-between items-center">
                     <Button
                       size="xs"
                       variant="subtle"
@@ -1366,6 +1369,9 @@ export const CustomerList = () => {
         title="Edit Customer"
         size="md"
         className="modal-mobile-fullscreen"
+        classNames={{
+          body: 'p-0',
+        }}
       >
         <form onSubmit={editForm.onSubmit(handleSaveEdit)}>
           <Stack gap="md">
@@ -1461,7 +1467,9 @@ export const CustomerList = () => {
               label="Job Description (Optional)"
               placeholder="Brief description of the work done"
               rows={3}
+              maxLength={250}
               {...editForm.getInputProps('jobDescription')}
+              description={`${editForm.values.jobDescription.length}/250 characters`}
             />
 
             <div className="flex flex-col gap-3 pt-4 border-t border-[#2a2a2a]">
@@ -1514,6 +1522,9 @@ export const CustomerList = () => {
         title="Delete Customer"
         size="md"
         centered
+        classNames={{
+          body: 'p-0',
+        }}
       >
         <Stack gap="md">
           <Text size="sm" className="text-gray-300">
@@ -1540,6 +1551,7 @@ export const CustomerList = () => {
           </div>
         </Stack>
       </Modal>
-    </Paper>
+      </Paper>
+    </Container>
   );
 };

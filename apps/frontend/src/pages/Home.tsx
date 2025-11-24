@@ -21,7 +21,7 @@ export const Home = () => {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
-      <Container size="md" py="md" px="md">
+      <Container size="md" py="md" px="xs">
         <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
           <Stack gap="lg">
             {/* Hero Section */}

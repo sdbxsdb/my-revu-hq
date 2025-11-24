@@ -491,9 +491,9 @@ export const Login = () => {
                 </Title>
               </div>
             ) : (
-              <Text c="dimmed" size="sm" ta="center" className="text-gray-400">
-                Sign in or create your account
-              </Text>
+          <Text c="dimmed" size="sm" ta="center" className="text-gray-400">
+            Sign in or create your account
+          </Text>
             )}
           </div>
           <Text
@@ -513,50 +513,50 @@ export const Login = () => {
           {/* OAuth and Magic Link - Both work for sign up and sign in */}
           {mode !== 'magic-link' && (
             <>
-              <Button
-                type="button"
-                leftSection={
-                  <img
-                    src="/assets/logos/googlelogo.png"
-                    alt="Google"
-                    className="h-5 w-5 object-contain"
-                  />
-                }
-                variant="default"
-                fullWidth
-                onClick={handleGoogleOAuth}
-                loading={oauthLoading}
-                disabled={loading}
-                color="teal"
-                className="!font-medium !h-11"
-              >
-                Continue with Google
-              </Button>
+          <Button
+            type="button"
+            leftSection={
+              <img
+                src="/assets/logos/googlelogo.png"
+                alt="Google"
+                className="h-5 w-5 object-contain"
+              />
+            }
+            variant="default"
+            fullWidth
+            onClick={handleGoogleOAuth}
+            loading={oauthLoading}
+            disabled={loading}
+            color="teal"
+            className="!font-medium !h-11"
+          >
+            Continue with Google
+          </Button>
 
-              <Button
-                type="button"
-                variant="light"
-                fullWidth
-                onClick={(e) => {
-                  e.preventDefault();
-                  setMode('magic-link');
-                }}
-                leftSection={<IconMail size={18} />}
+          <Button
+            type="button"
+            variant="light"
+            fullWidth
+            onClick={(e) => {
+              e.preventDefault();
+              setMode('magic-link');
+            }}
+            leftSection={<IconMail size={18} />}
                 className="border border-teal-600/30 hover:bg-teal-600/10 !h-11 transition-all"
-              >
-                Continue with Magic Link
-              </Button>
+          >
+            Continue with Magic Link
+          </Button>
 
               {!(mode === 'password' || mode === 'signup') && (
-                <Alert color="blue" className="bg-blue-900/20 border-blue-700/30">
-                  <Text size="xs" className="text-gray-300">
+          <Alert color="blue" className="bg-blue-900/20 border-blue-700/30">
+            <Text size="xs" className="text-gray-300">
                     <strong>What's a magic link?</strong> We'll send you an email with a special
                     link. Click it to sign in and sign up instantly—no password needed!
-                  </Text>
-                </Alert>
+            </Text>
+          </Alert>
               )}
 
-              <Divider label="OR" labelPosition="center" className="my-2" />
+          <Divider label="OR" labelPosition="center" className="my-2" />
             </>
           )}
 
@@ -845,7 +845,7 @@ export const Login = () => {
           body: 'p-0 flex flex-col',
         }}
       >
-        <Stack gap="md" className="p-4">
+        <Stack gap="md" className="p-0">
           <Stack gap="md">
             <div>
               <Text size="sm" className="text-white font-semibold mb-2">
@@ -860,25 +860,25 @@ export const Login = () => {
             <div>
               <Text size="sm" className="text-gray-300">
                 By continuing, you agree to our{' '}
-                <a
-                  href="/terms"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-teal-400 hover:text-teal-300 underline"
-                >
-                  Terms and Conditions
+              <a
+                href="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-teal-400 hover:text-teal-300 underline"
+              >
+                Terms and Conditions
                 </a>{' '}
                 and{' '}
-                <a
-                  href="/privacy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-teal-400 hover:text-teal-300 underline"
-                >
-                  Privacy Policy
-                </a>
+              <a
+                href="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-teal-400 hover:text-teal-300 underline"
+              >
+                Privacy Policy
+              </a>
                 . You can read the full details by clicking the links above.
-              </Text>
+            </Text>
             </div>
           </Stack>
           <div className="flex-shrink-0 pt-4 border-t border-[#2a2a2a]">
@@ -961,6 +961,9 @@ export const Login = () => {
         }}
         title="Reset Password"
         centered
+        classNames={{
+          body: 'p-0',
+        }}
       >
         <Stack gap="md">
           {!resetEmailSent ? (

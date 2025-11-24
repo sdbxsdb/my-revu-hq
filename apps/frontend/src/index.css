@@ -156,13 +156,13 @@
   }
 }
 
-/* Compact accordion labels for analytics - outside layer for higher specificity */
+/* Accordion labels with better touch targets */
 .mantine-Accordion-label {
-  padding: 0 !important;
+  padding: 0.25rem 0.5rem !important;
 }
 
 /* Reduce gap between accordion items */
 .mantine-Accordion-item {
-  margin-top: 0.75rem !important;
-  margin-bottom: 0 !important;
+  margin-top: 0.375rem !important;
+  margin-bottom: 0.375rem !important;
 }

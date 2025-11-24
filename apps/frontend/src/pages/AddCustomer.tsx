@@ -11,6 +11,7 @@ import {
   Alert,
   Text,
   Tooltip,
+  Container,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { CountryCode } from 'libphonenumber-js';
@@ -183,7 +184,8 @@ export const AddCustomer = () => {
   };
 
   return (
-    <Paper shadow="md" p="md" className="w-full max-w-2xl mx-auto">
+    <Container size="md" py="md" px="xs">
+      <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
       <div className="mb-8">
         <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
           Add Customer
@@ -359,6 +361,7 @@ export const AddCustomer = () => {
           </div>
         </Stack>
       </form>
-    </Paper>
+      </Paper>
+    </Container>
   );
 };
