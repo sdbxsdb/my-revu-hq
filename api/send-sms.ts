@@ -48,7 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { data: user, error: userError } = await supabase
       .from('users')
       .select(
-        'sms_sent_this_month, business_name, review_links, sms_template, account_lifecycle_status, payment_status, subscription_tier'
+        'sms_sent_this_month, business_name, review_links, sms_template, account_lifecycle_status, payment_status, subscription_tier, include_name_in_sms, include_job_in_sms'
       )
       .eq('id', auth.userId)
       .single<{
@@ -59,6 +59,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         account_lifecycle_status: string | null;
         payment_status: string | null;
         subscription_tier: string | null;
+        include_name_in_sms: boolean | null;
+        include_job_in_sms: boolean | null;
       }>();
 
     if (userError) throw userError;
@@ -135,15 +137,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Build SMS message
-    let messageBody =
+    let messageBody = '';
+
+    // Add customer name if enabled (default to true if not set)
+    if (user.include_name_in_sms !== false && customer.name) {
+      messageBody += `Hi ${customer.name},\n\n`;
+    }
+
+    // Add main template
+    messageBody +=
       user.sms_template ||
       `You recently had ${user.business_name || 'us'} for work. We'd greatly appreciate a review on one or all of the following links:`;
 
     // Replace placeholders
     messageBody = messageBody.replace(/{businessName}/g, user.business_name || 'us');
 
-    // Add job description if available
-    if (customer.job_description) {
+    // Add job description if enabled (default to true if not set) and available (not empty or whitespace)
+    if (user.include_job_in_sms !== false && customer.job_description && customer.job_description.trim()) {
       messageBody += `\n\nJob: ${customer.job_description}`;
     }
 

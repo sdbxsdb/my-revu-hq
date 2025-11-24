@@ -13,6 +13,7 @@ import {
   Text,
   Skeleton,
   Loader,
+  Checkbox,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -60,6 +61,8 @@ export const AccountSetup = () => {
       businessName: '',
       reviewLinks: [{ name: '', url: '' }] as Array<{ name: string; url: string }>,
       smsTemplate: '',
+      includeNameInSms: true,
+      includeJobInSms: true,
     },
     validate: {
       businessName: (value) => (value.trim().length === 0 ? 'Business name is required' : null),
@@ -140,6 +143,8 @@ export const AccountSetup = () => {
         businessName: account.business_name || '',
         reviewLinks,
         smsTemplate: templateWithName,
+        includeNameInSms: account.include_name_in_sms !== false, // Default to true
+        includeJobInSms: account.include_job_in_sms !== false, // Default to true
       });
       formPopulatedRef.current = true;
     } else if (!account) {
@@ -270,6 +275,8 @@ export const AccountSetup = () => {
         business_name: values.businessName,
         review_links: filteredLinks,
         sms_template: templateForSave,
+        include_name_in_sms: values.includeNameInSms,
+        include_job_in_sms: values.includeJobInSms,
       });
 
       // Refetch account data to update the context
@@ -545,8 +552,31 @@ export const AccountSetup = () => {
               label="SMS Template"
               placeholder="SMS message template"
               rows={4}
+              maxLength={500}
               {...form.getInputProps('smsTemplate')}
+              description={`${form.values.smsTemplate.length}/500 characters`}
             />
+
+            {/* SMS Personalization Options */}
+            <div className="space-y-3 p-4 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
+              <Text size="sm" className="font-medium text-gray-200 mb-2">
+                Personalization Options
+              </Text>
+              <Checkbox
+                label="Include customer name in SMS (e.g., 'Hi John,')"
+                {...form.getInputProps('includeNameInSms', { type: 'checkbox' })}
+                classNames={{
+                  label: 'text-gray-300 text-sm',
+                }}
+              />
+              <Checkbox
+                label="Include job description in SMS (e.g., 'Job: Kitchen renovation')"
+                {...form.getInputProps('includeJobInSms', { type: 'checkbox' })}
+                classNames={{
+                  label: 'text-gray-300 text-sm',
+                }}
+              />
+            </div>
 
             {/* SMS Preview */}
             <div className="mt-4">
@@ -578,9 +608,19 @@ export const AccountSetup = () => {
                       // Split message into parts for rendering
                       const parts: (string | { type: 'link'; label: string; url: string })[] = [];
 
+                      // Add customer name if enabled
+                      if (form.values.includeNameInSms) {
+                        parts.push('Hi [Customer Name],\n\n');
+                      }
+
                       // Add template text as-is (no replacements)
                       if (message.trim()) {
                         parts.push(message.trim());
+                      }
+
+                      // Add job description if enabled
+                      if (form.values.includeJobInSms) {
+                        parts.push('\n\nJob: [Job Description]');
                       }
 
                       // Add review links

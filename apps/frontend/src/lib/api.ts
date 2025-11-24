@@ -78,8 +78,10 @@ export const apiClient = {
     business_name?: string;
     review_links?: Array<{ name: string; url: string }>;
     sms_template?: string;
+    include_name_in_sms?: boolean;
+    include_job_in_sms?: boolean;
   }): Promise<User> => {
-    const { data } = await api.put('/api/account', account);
+    const { data} = await api.put('/api/account', account);
     return data;
   },
 

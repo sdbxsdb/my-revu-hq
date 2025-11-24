@@ -10,7 +10,7 @@ const customerSchema = z.object({
     countryCode: z.string(),
     number: z.string(),
   }),
-  jobDescription: z.string().optional(),
+  jobDescription: z.string().max(250, 'Job description must be 250 characters or less').optional(),
 });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -89,7 +89,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           user_id: auth.userId,
           name: validated.name,
           phone: validated.phone,
-          job_description: validated.jobDescription,
+          job_description: validated.jobDescription?.trim() || null,
           sms_status: 'pending',
         } as any)
         .select()

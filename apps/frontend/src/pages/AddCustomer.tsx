@@ -304,7 +304,9 @@ export const AddCustomer = () => {
             label="Job Description (Optional)"
             placeholder="Brief description of the work done"
             rows={3}
+            maxLength={250}
             {...form.getInputProps('jobDescription')}
+            description={`${form.values.jobDescription.length}/250 characters`}
           />
 
           <div className="flex flex-col gap-3 mt-8 pt-6 border-t border-[#2a2a2a]">

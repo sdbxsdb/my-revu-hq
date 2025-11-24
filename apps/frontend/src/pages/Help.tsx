@@ -238,9 +238,9 @@ export const Help = () => {
               radius="md"
               classNames={{
                 item: 'bg-[#2a2a2a] border-[#3a3a3a]',
-                control: 'hover:bg-[#333333]',
+                control: 'hover:bg-[#333333] py-4 px-5',
                 label: 'text-white font-semibold',
-                content: 'text-gray-300',
+                content: 'text-gray-300 pb-4 px-5',
                 chevron: 'text-teal-400',
               }}
             >

@@ -12,7 +12,7 @@ const updateCustomerSchema = z.object({
       number: z.string(),
     })
     .optional(),
-  jobDescription: z.string().optional(),
+  jobDescription: z.string().max(250, 'Job description must be 250 characters or less').optional(),
 });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -45,7 +45,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (validated.name) updateData.name = validated.name;
       if (validated.phone) updateData.phone = validated.phone;
       if (validated.jobDescription !== undefined) {
-        updateData.job_description = validated.jobDescription || null;
+        // Convert empty string to null
+        updateData.job_description = validated.jobDescription?.trim() || null;
       }
 
       const { data, error } = await supabase

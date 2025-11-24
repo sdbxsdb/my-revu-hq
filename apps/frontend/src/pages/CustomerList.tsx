@@ -388,7 +388,7 @@ export const CustomerList = () => {
           number: localNumber, // LOCAL format: "07780586444" (as user entered)
           // Country is auto-detected from the number (not stored in DB)
         },
-        jobDescription: values.jobDescription || undefined,
+        jobDescription: values.jobDescription,
       });
 
       notifications.show({

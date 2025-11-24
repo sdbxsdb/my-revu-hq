@@ -6,6 +6,8 @@ export interface User {
   sms_template?: string;
   sms_sent_this_month?: number;
   sms_sent_total?: number;
+  include_name_in_sms?: boolean; // Include customer name in SMS messages
+  include_job_in_sms?: boolean; // Include job description in SMS messages
   // Billing & Subscription fields
   stripe_customer_id?: string;
   stripe_subscription_id?: string;
