@@ -18,14 +18,13 @@ import {
   IconBuildingBank,
   IconCheck,
   IconAlertCircle,
-  IconTrash,
-  IconX,
 } from '@tabler/icons-react';
 import { apiClient } from '@/lib/api';
 import { notifications } from '@mantine/notifications';
 import { usePayment } from '@/contexts/PaymentContext';
 import { useAccount } from '@/contexts/AccountContext';
 import CardBrandIcon from '@/components/CardBrandIcon';
+import { AccountErrorAlert } from '@/components/AccountErrorAlert';
 import { getCurrencyFromCountry, detectCurrency, type Currency } from '@/lib/currency';
 import '@/lib/currency-debug'; // Load debug utility in dev
 import { PRICING_PLANS, type PricingTier, getPlanById } from '@/lib/pricing';
@@ -292,6 +291,9 @@ export const Billing = () => {
         </Title>
         <p className="text-sm text-gray-400">Manage your subscription and payment methods</p>
       </div>
+
+      {/* Account Error Alert */}
+      <AccountErrorAlert />
 
       {accountLoading || loadingSubscription || loadingPrices || loadingCountry ? (
         <div className="space-y-6">

@@ -5,6 +5,7 @@ import { AccountProvider } from '@/contexts/AccountContext';
 import { PaymentProvider } from '@/contexts/PaymentContext';
 import { Layout } from '@/components/Layout';
 import { ScrollToTop } from '@/components/ScrollToTop';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Login } from '@/pages/Login';
 import { AccountSetup } from '@/pages/AccountSetup';
 import { Billing } from '@/pages/Billing';
@@ -71,22 +72,23 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 function App() {
   return (
-    <BrowserRouter>
-      <ScrollToTop />
-      <AccountProvider>
-        <PaymentProvider>
-          <Routes>
-            <Route element={<Layout />}>
-              {/* Public pages with navigation */}
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/help" element={<Help />} />
-              <Route path="/terms" element={<Terms />} />
-              <Route path="/privacy" element={<Privacy />} />
-            </Route>
-            {/* Protected routes with navigation */}
+    <ErrorBoundary>
+      <BrowserRouter>
+        <ScrollToTop />
+        <AccountProvider>
+          <PaymentProvider>
+            <Routes>
+              <Route element={<Layout />}>
+                {/* Public pages with navigation */}
+                <Route path="/" element={<Home />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/help" element={<Help />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/privacy" element={<Privacy />} />
+              </Route>
+              {/* Protected routes with navigation */}
             <Route
               element={
                 <ProtectedRoute>
@@ -103,10 +105,11 @@ function App() {
               <Route path="/customers/add" element={<AddCustomer />} />
               <Route path="/customers" element={<CustomerList />} />
             </Route>
-          </Routes>
-        </PaymentProvider>
-      </AccountProvider>
-    </BrowserRouter>
+            </Routes>
+          </PaymentProvider>
+        </AccountProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

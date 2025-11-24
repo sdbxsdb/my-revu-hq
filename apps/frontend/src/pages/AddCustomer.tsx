@@ -19,6 +19,7 @@ import { apiClient } from '@/lib/api';
 import { PhoneNumber } from '@/components/PhoneNumber';
 import { validatePhoneNumber, formatPhoneNumberForApi } from '@/lib/phone-validation';
 import { usePayment } from '@/contexts/PaymentContext';
+import { AccountErrorAlert } from '@/components/AccountErrorAlert';
 import { IconAlertCircle } from '@tabler/icons-react';
 
 export const AddCustomer = () => {
@@ -192,6 +193,9 @@ export const AddCustomer = () => {
         </Title>
         <p className="text-sm text-gray-400">Add a new customer to send them a review request</p>
       </div>
+
+      {/* Account Error Alert */}
+      <AccountErrorAlert />
 
       {!paymentLoading && !hasPaid && (
         <Alert

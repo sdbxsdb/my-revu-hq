@@ -22,6 +22,7 @@ import { CountryCode } from 'libphonenumber-js';
 import { apiClient } from '@/lib/api';
 import type { Customer } from '@/types';
 import { PhoneNumber } from '@/components/PhoneNumber';
+import { AccountErrorAlert } from '@/components/AccountErrorAlert';
 import {
   validatePhoneNumber,
   formatPhoneNumberForApi,
@@ -625,6 +626,9 @@ export const CustomerList = () => {
   return (
     <Container size="md" py="md" px="xs">
       <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
+      {/* Account Error Alert */}
+      <AccountErrorAlert />
+
       <div className="flex flex-col gap-6 mb-8 pb-6 border-b border-[#2a2a2a]">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

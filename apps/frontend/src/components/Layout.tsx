@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
+import { OfflineAlert } from './OfflineAlert';
 import { IconMenu2, IconX } from '@tabler/icons-react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -68,7 +69,13 @@ export const Layout = ({ children }: LayoutProps) => {
         </div>
 
         {/* Page content */}
-        <div className="p-0 max-w-7xl mx-auto">{children || <Outlet />}</div>
+        <div className="p-0 max-w-7xl mx-auto">
+          {/* Offline Alert - shows on all pages */}
+          <div className="px-4 pt-4">
+            <OfflineAlert />
+          </div>
+          {children || <Outlet />}
+        </div>
       </main>
     </div>
   );

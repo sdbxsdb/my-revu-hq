@@ -28,6 +28,7 @@ import { apiClient } from '@/lib/api';
 import { usePayment } from '@/contexts/PaymentContext';
 import { useAccount } from '@/contexts/AccountContext';
 import { getSmsLimitFromTier, type PricingTier } from '@/lib/pricing';
+import { AccountErrorAlert } from '@/components/AccountErrorAlert';
 
 // Helper function to validate URL
 const isValidUrl = (url: string): boolean => {
@@ -329,6 +330,9 @@ export const AccountSetup = () => {
         </Title>
         <p className="text-sm text-gray-400">Manage your business information and SMS template</p>
       </div>
+
+      {/* Account Error Alert */}
+      <AccountErrorAlert />
 
       {/* SMS Usage Display */}
       {loadingSubscription || paymentLoading ? (

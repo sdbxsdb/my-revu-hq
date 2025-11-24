@@ -24,6 +24,15 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
   const hasFetchedRef = useRef(false);
 
   const fetchAccount = async () => {
+    // TEST: Check for forced error flag
+    const forceError = window.localStorage.getItem('TEST_FORCE_ACCOUNT_ERROR');
+    if (forceError === 'true') {
+      window.localStorage.removeItem('TEST_FORCE_ACCOUNT_ERROR');
+      setError(new Error('Network request failed. Please check your connection.'));
+      setLoading(false);
+      return;
+    }
+
     if (!user) {
       setAccount(null);
       setLoading(false);

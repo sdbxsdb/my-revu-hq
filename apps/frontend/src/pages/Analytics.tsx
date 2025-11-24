@@ -28,6 +28,7 @@ import { getSmsLimitFromTier, type PricingTier } from '@/lib/pricing';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { detectCountryFromPhoneNumber } from '@/lib/phone-validation';
 import type { CountryCode } from 'libphonenumber-js';
+import { AccountErrorAlert } from '@/components/AccountErrorAlert';
 import {
   BarChart,
   Bar,
@@ -452,6 +453,9 @@ export const Analytics = () => {
     <Container size="lg" py="xl">
       <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
         <Stack gap="lg">
+          {/* Account Error Alert */}
+          <AccountErrorAlert />
+
           <div>
             <div className="flex items-center gap-3 mb-2">
               <IconChartBar size={32} className="text-teal-400" />

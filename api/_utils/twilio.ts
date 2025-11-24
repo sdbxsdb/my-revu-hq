@@ -1,4 +1,5 @@
 import twilio from 'twilio';
+import { parseTwilioError } from './twilio-errors';
 
 let twilioClient: ReturnType<typeof twilio> | null = null;
 
@@ -12,7 +13,7 @@ function getTwilioClient() {
 
   if (!accountSid || !authToken) {
     throw new Error(
-      'Twilio is not configured. Please add TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN to your environment variables.'
+      'SMS service is not configured. Please contact support for assistance.'
     );
   }
 
@@ -43,7 +44,7 @@ export const sendSMS = async (
       from = process.env.TWILIO_PHONE_NUMBER || process.env.TWILIO_US_PHONE_NUMBER || '';
       if (!from) {
         throw new Error(
-          'TWILIO_PHONE_NUMBER or TWILIO_US_PHONE_NUMBER must be set for USA/Canada messaging'
+          'SMS service is not configured for USA/Canada. Please contact support for assistance.'
         );
       }
     } else {
@@ -63,6 +64,8 @@ export const sendSMS = async (
       status: message.status,
     };
   } catch (error: any) {
-    throw new Error(`Failed to send SMS: ${error.message}`);
+    // Parse Twilio-specific errors into user-friendly messages
+    const parsedError = parseTwilioError(error);
+    throw new Error(parsedError.message);
   }
 };
