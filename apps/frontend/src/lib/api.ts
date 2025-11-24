@@ -129,7 +129,7 @@ export const apiClient = {
     messageSid: string;
     customer: {
       id: string;
-      sms_status: string;
+      sms_status: 'sent' | 'pending';
       sent_at: string;
       sms_request_count: number;
     };
