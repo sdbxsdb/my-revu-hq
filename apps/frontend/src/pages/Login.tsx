@@ -11,6 +11,7 @@ import {
   Modal,
   Checkbox,
   Title,
+  Container,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useAuth } from '@/hooks/useAuth';
@@ -478,8 +479,8 @@ export const Login = () => {
   };
 
   return (
-    <div className="flex items-start justify-center py-4">
-      <Paper shadow="xl" p="md" className="w-full max-w-md">
+    <Container size="md" py="md" px="xs">
+      <Paper shadow="xl" p="md" className="w-full max-w-md mx-auto">
         <div className="text-center mb-6">
           <div className="transition-all duration-300 mb-3">
             {mode === 'password' || mode === 'signup' || mode === 'magic-link' ? (
@@ -1015,6 +1016,6 @@ export const Login = () => {
           )}
         </Stack>
       </Modal>
-    </div>
+    </Container>
   );
 };

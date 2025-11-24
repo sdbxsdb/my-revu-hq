@@ -212,7 +212,7 @@ export const Help = () => {
   ];
 
   return (
-    <Container size="md" py="xl">
+    <Container size="md" py="md" px="xs">
       <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
         <Stack gap="lg">
           <section className="text-center">

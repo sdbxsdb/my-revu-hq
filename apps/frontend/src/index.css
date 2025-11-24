@@ -163,6 +163,6 @@
 
 /* Reduce gap between accordion items */
 .mantine-Accordion-item {
-  margin-top: 0.25rem !important;
+  margin-top: 0.75rem !important;
   margin-bottom: 0 !important;
 }

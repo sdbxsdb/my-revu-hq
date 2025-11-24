@@ -68,7 +68,7 @@ export const Layout = ({ children }: LayoutProps) => {
         </div>
 
         {/* Page content */}
-        <div className="p-4 max-w-7xl mx-auto">{children || <Outlet />}</div>
+        <div className="p-0 max-w-7xl mx-auto">{children || <Outlet />}</div>
       </main>
     </div>
   );

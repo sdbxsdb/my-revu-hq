@@ -13,6 +13,7 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true, // Allow access from network (for mobile testing)
+    allowedHosts: ['.loca.lt', '.ngrok.io', '.ngrok-free.app'], // Allow tunnel services
     proxy: {
       '/api': {
         target: 'http://localhost:3000', // Vercel dev server
