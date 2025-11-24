@@ -9,6 +9,7 @@ import {
   IconCurrencyDollar,
   IconCurrencyPound,
   IconCurrencyEuro,
+  IconRocket,
 } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -58,8 +59,8 @@ export const Home = () => {
 
             {/* Key Features - Visual Grid */}
             <section>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
-                <div className="text-center">
+              <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:justify-center gap-4 sm:gap-6">
+                <div className="text-center sm:w-52">
                   <ThemeIcon size={56} radius="md" className="bg-teal-500/20 mx-auto mb-3">
                     <IconMessageCircle size={32} className="text-teal-400" />
                   </ThemeIcon>
@@ -71,7 +72,7 @@ export const Home = () => {
                   </Text>
                 </div>
 
-                <div className="text-center">
+                <div className="text-center sm:w-52">
                   <ThemeIcon size={56} radius="md" className="bg-teal-500/20 mx-auto mb-3">
                     <IconUsers size={32} className="text-teal-400" />
                   </ThemeIcon>
@@ -83,7 +84,7 @@ export const Home = () => {
                   </Text>
                 </div>
 
-                <div className="text-center">
+                <div className="text-center sm:w-52">
                   <ThemeIcon size={56} radius="md" className="bg-teal-500/20 mx-auto mb-3">
                     <IconLink size={32} className="text-teal-400" />
                   </ThemeIcon>
@@ -95,7 +96,7 @@ export const Home = () => {
                   </Text>
                 </div>
 
-                <div className="text-center">
+                <div className="text-center sm:w-52">
                   <ThemeIcon size={56} radius="md" className="bg-teal-500/20 mx-auto mb-3">
                     {formattedPrice.includes('£') ? (
                       <IconCurrencyPound size={32} className="text-teal-400" />
@@ -113,18 +114,28 @@ export const Home = () => {
                   </Text>
                 </div>
 
-                <div className="text-center col-span-2 sm:col-span-1 sm:col-start-2">
-                  <div className="max-w-[50%] sm:max-w-none mx-auto">
-                    <ThemeIcon size={56} radius="md" className="bg-teal-500/20 mx-auto mb-3">
-                      <IconChartBar size={32} className="text-teal-400" />
-                    </ThemeIcon>
-                    <Title order={3} size="h4" className="text-white mb-2 text-base">
-                      Track Analytics
-                    </Title>
-                    <Text size="xs" className="text-gray-400">
-                      Monitor message trends and track your SMS campaigns with detailed insights
-                    </Text>
-                  </div>
+                <div className="text-center sm:w-52">
+                  <ThemeIcon size={56} radius="md" className="bg-teal-500/20 mx-auto mb-3">
+                    <IconChartBar size={32} className="text-teal-400" />
+                  </ThemeIcon>
+                  <Title order={3} size="h4" className="text-white mb-2 text-base">
+                    Track Analytics
+                  </Title>
+                  <Text size="xs" className="text-gray-400">
+                    Monitor message trends and track your SMS campaigns with detailed insights
+                  </Text>
+                </div>
+
+                <div className="text-center sm:w-52">
+                  <ThemeIcon size={56} radius="md" className="bg-teal-500/20 mx-auto mb-3">
+                    <IconRocket size={32} className="text-teal-400" />
+                  </ThemeIcon>
+                  <Title order={3} size="h4" className="text-white mb-2 text-base">
+                    Quick Setup
+                  </Title>
+                  <Text size="xs" className="text-gray-400">
+                    Get started in minutes with our simple setup process
+                  </Text>
                 </div>
               </div>
             </section>

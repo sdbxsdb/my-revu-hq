@@ -579,27 +579,87 @@ export const Billing = () => {
                   and your next invoice will reflect the adjustment.
                 </Text>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {PRICING_PLANS.filter((plan) => plan.id !== 'enterprise').map((plan) => {
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {PRICING_PLANS.map((plan) => {
                     const stripePrice = stripePrices[plan.id]?.[selectedCurrency];
                     const displayPrice = stripePrice?.formatted || 'Loading...';
                     const isCurrentTier = subscriptionTier === plan.id;
                     const isUpgrade =
                       (subscriptionTier === 'starter' && plan.id === 'pro') ||
                       (subscriptionTier === 'starter' && plan.id === 'business') ||
-                      (subscriptionTier === 'pro' && plan.id === 'business');
+                      (subscriptionTier === 'starter' && plan.id === 'enterprise') ||
+                      (subscriptionTier === 'pro' && plan.id === 'business') ||
+                      (subscriptionTier === 'pro' && plan.id === 'enterprise') ||
+                      (subscriptionTier === 'business' && plan.id === 'enterprise');
+
+                    // Special case for Enterprise
+                    if (plan.id === 'enterprise') {
+                      return (
+                        <div
+                          key={plan.id}
+                          className={`p-4 rounded-lg border h-full ${
+                            isCurrentTier
+                              ? 'bg-teal-900/20 border-teal-800/50'
+                              : 'bg-[#1a1a1a] border-[#2a2a2a] hover:border-[#333333]'
+                          }`}
+                        >
+                          <div className="flex flex-col h-full">
+                            <div className="flex items-center justify-between mb-2">
+                              <Text className="font-semibold text-white capitalize">{plan.name}</Text>
+                              {isCurrentTier && (
+                                <Badge size="sm" color="teal">
+                                  Current
+                                </Badge>
+                              )}
+                            </div>
+                            <Text size="lg" className="font-bold text-white mb-2">
+                              Custom
+                            </Text>
+                            <div className="space-y-0.5 flex-grow mb-2">
+                              <Text size="xs" className="text-gray-400">
+                                Custom SMS volume
+                              </Text>
+                              <Text size="xs" className="text-gray-400">
+                                Dedicated account manager
+                              </Text>
+                              <Text size="xs" className="text-gray-400">
+                                Custom onboarding
+                              </Text>
+                              <Text size="xs" className="text-gray-400">
+                                Analytics:{' '}
+                                <span className="text-teal-400">
+                                  Advanced & custom
+                                </span>
+                              </Text>
+                            </div>
+                            {!isCurrentTier && (
+                              <Button
+                                variant="light"
+                                color="teal"
+                                size="sm"
+                                className="mt-auto"
+                                component="a"
+                                href="mailto:myrevuhq@gmail.com?subject=Enterprise Plan Inquiry"
+                              >
+                                Contact Us
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    }
 
                     return (
                       <div
                         key={plan.id}
-                        className={`p-4 rounded-lg border ${
+                        className={`p-4 rounded-lg border h-full ${
                           isCurrentTier
                             ? 'bg-teal-900/20 border-teal-800/50'
                             : 'bg-[#1a1a1a] border-[#2a2a2a] hover:border-[#333333]'
                         }`}
                       >
-                        <div className="flex flex-col gap-2">
-                          <div className="flex items-center justify-between">
+                        <div className="flex flex-col h-full">
+                          <div className="flex items-center justify-between mb-2">
                             <Text className="font-semibold text-white capitalize">{plan.name}</Text>
                             {isCurrentTier && (
                               <Badge size="sm" color="teal">
@@ -607,10 +667,10 @@ export const Billing = () => {
                               </Badge>
                             )}
                           </div>
-                          <Text size="lg" className="font-bold text-white">
+                          <Text size="lg" className="font-bold text-white mb-2">
                             {displayPrice}
                           </Text>
-                          <div className="space-y-0.5">
+                          <div className="space-y-0.5 flex-grow mb-2">
                             <Text size="xs" className="text-gray-400">
                               {plan.smsLimit} SMS/month
                             </Text>
@@ -630,7 +690,7 @@ export const Billing = () => {
                               variant={isUpgrade ? 'filled' : 'outline'}
                               color={isUpgrade ? 'teal' : 'gray'}
                               size="sm"
-                              className="mt-2"
+                              className="mt-auto"
                               onClick={() => {
                                 setSelectedNewTier(plan.id);
                                 setChangeTierModalOpen(true);

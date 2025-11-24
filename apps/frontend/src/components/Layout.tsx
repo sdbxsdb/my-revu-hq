@@ -49,13 +49,16 @@ export const Layout = ({ children }: LayoutProps) => {
         <div className="lg:hidden bg-[#141414] border-b border-[#2a2a2a] sticky top-0 z-30 p-4 flex items-center justify-between">
           <button
             onClick={handleLogoClick}
-            className="flex items-center cursor-pointer hover:opacity-80 transition-opacity"
+            className="flex flex-col items-start cursor-pointer hover:opacity-80 transition-opacity"
           >
             <img
               src="/assets/logos/myrevuhq.png"
               alt="MyRevuHQ"
-              className="h-16 w-auto object-contain"
+              className="h-16 w-auto object-contain mb-1 -ml-1"
             />
+            <p className="text-[10px] text-gray-300 font-bold tracking-wider uppercase leading-tight">
+              Business Review Management
+            </p>
           </button>
           {(!isHomePage || user) && (
             <button
@@ -69,12 +72,11 @@ export const Layout = ({ children }: LayoutProps) => {
         </div>
 
         {/* Page content */}
-        <div className="p-0 max-w-7xl mx-auto">
-          {/* Offline Alert - shows on all pages */}
-          <div className="px-4 pt-4">
+        <div className="p-0 max-w-7xl mx-auto min-h-screen lg:flex lg:flex-col lg:justify-center">
+          <div>
             <OfflineAlert />
+            {children || <Outlet />}
           </div>
-          {children || <Outlet />}
         </div>
       </main>
     </div>

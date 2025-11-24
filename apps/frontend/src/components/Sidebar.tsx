@@ -85,16 +85,20 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
 
   return (
     <div className="w-64 bg-[#141414] border-r border-[#2a2a2a] text-white h-full p-6 flex flex-col overflow-y-auto overscroll-contain lg:overflow-y-auto lg:overscroll-contain">
-      <div className="mb-10 hidden lg:block">
-        <div className="mb-2">
-          <img
-            src="/assets/logos/myrevuhq.png"
-            alt="MyRevuHQ"
-            className="h-10 w-auto object-contain"
-          />
-        </div>
-        <p className="text-xs text-gray-400">Review Management</p>
-      </div>
+      <Link 
+        to={user ? '/customers' : '/'} 
+        onClick={handleNavClick}
+        className="mb-10 hidden lg:block hover:opacity-80 transition-opacity"
+      >
+        <img
+          src="/assets/logos/myrevuhq.png"
+          alt="MyRevuHQ"
+          className="h-16 w-auto object-contain mb-2"
+        />
+        <p className="text-[11px] text-gray-300 font-bold tracking-wider uppercase leading-tight text-center">
+          Business Review Management
+        </p>
+      </Link>
 
       <nav className="flex-1 space-y-6">
         {/* Customers Section */}

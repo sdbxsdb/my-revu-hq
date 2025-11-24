@@ -859,25 +859,7 @@ export const Login = () => {
 
             <div>
               <Text size="sm" className="text-gray-300">
-                By continuing, you agree to our{' '}
-              <a
-                href="/terms"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-teal-400 hover:text-teal-300 underline"
-              >
-                Terms and Conditions
-                </a>{' '}
-                and{' '}
-              <a
-                href="/privacy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-teal-400 hover:text-teal-300 underline"
-              >
-                Privacy Policy
-              </a>
-                . You can read the full details by clicking the links above.
+                By continuing, you agree to our Terms and Conditions and Privacy Policy. You can read the full details by clicking the links below.
             </Text>
             </div>
           </Stack>

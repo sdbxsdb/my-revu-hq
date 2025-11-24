@@ -645,7 +645,6 @@ export const Analytics = () => {
                   chevron: 'text-teal-400',
                 }}
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 {/* Not Contacted in 5+ Days */}
                 <Accordion.Item value="not-contacted-5">
                   <Accordion.Control>
@@ -664,7 +663,7 @@ export const Analytics = () => {
                   </Accordion.Control>
                   <Accordion.Panel>
                     {analytics.insights.notContacted5Days.length > 0 ? (
-                      <div className="space-y-3 max-h-96 overflow-y-auto mt-2">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 max-h-96 overflow-y-auto mt-2">
                       {analytics.insights.notContacted5Days.map((customer) => {
                         const createdDate = new Date(customer.createdAt);
                         const formattedCreated = createdDate.toLocaleDateString('en-GB', {
@@ -761,7 +760,7 @@ export const Analytics = () => {
                   </Accordion.Control>
                   <Accordion.Panel>
                     {analytics.insights.notContacted10Days.length > 0 ? (
-                      <div className="space-y-3 max-h-96 overflow-y-auto mt-2">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 max-h-96 overflow-y-auto mt-2">
                       {analytics.insights.notContacted10Days.map((customer) => {
                         const createdDate = new Date(customer.createdAt);
                         const formattedCreated = createdDate.toLocaleDateString('en-GB', {
@@ -858,7 +857,7 @@ export const Analytics = () => {
                   </Accordion.Control>
                   <Accordion.Panel>
                     {analytics.insights.notContacted30Days.length > 0 ? (
-                      <div className="space-y-3 max-h-96 overflow-y-auto mt-2">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 max-h-96 overflow-y-auto mt-2">
                       {analytics.insights.notContacted30Days.map((customer) => {
                         const createdDate = new Date(customer.createdAt);
                         const formattedCreated = createdDate.toLocaleDateString('en-GB', {
@@ -955,7 +954,7 @@ export const Analytics = () => {
                   </Accordion.Control>
                   <Accordion.Panel>
                     {analytics.insights.approachingLimit.length > 0 ? (
-                      <div className="space-y-3 max-h-96 overflow-y-auto mt-2">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 max-h-96 overflow-y-auto mt-2">
                       {analytics.insights.approachingLimit.map((customer) => {
                         const createdDate = new Date(customer.createdAt);
                         const formattedCreated = createdDate.toLocaleDateString('en-GB', {
@@ -1011,7 +1010,6 @@ export const Analytics = () => {
                     )}
                   </Accordion.Panel>
                 </Accordion.Item>
-                </div>
               </Accordion>
             </div>
           )}
@@ -1150,8 +1148,8 @@ export const Analytics = () => {
                                 <Table.Thead>
                                   <Table.Tr>
                                     <Table.Th className="text-gray-400 text-xs">Customer</Table.Th>
-                                    <Table.Th className="text-gray-400 text-xs">Phone</Table.Th>
                                     <Table.Th className="text-gray-400 text-xs">Job</Table.Th>
+                                    <Table.Th className="text-gray-400 text-xs">Phone</Table.Th>
                                     <Table.Th className="text-gray-400 text-xs">Sent</Table.Th>
                                   </Table.Tr>
                                 </Table.Thead>
@@ -1160,10 +1158,10 @@ export const Analytics = () => {
                                     <Table.Tr key={idx}>
                                       <Table.Td className="text-white text-sm">John Smith</Table.Td>
                                       <Table.Td className="text-gray-300 text-sm">
-                                        07780586444
+                                        Kitchen renovation
                                       </Table.Td>
                                       <Table.Td className="text-gray-300 text-sm">
-                                        Kitchen renovation
+                                        07780586444
                                       </Table.Td>
                                       <Table.Td className="text-gray-400 text-xs">
                                         {new Date().toLocaleDateString('en-GB', {
@@ -1297,8 +1295,8 @@ export const Analytics = () => {
                               <Table.Thead>
                                 <Table.Tr>
                                   <Table.Th className="text-gray-400 text-xs">Customer</Table.Th>
-                                  <Table.Th className="text-gray-400 text-xs">Phone</Table.Th>
                                   <Table.Th className="text-gray-400 text-xs">Job</Table.Th>
+                                  <Table.Th className="text-gray-400 text-xs">Phone</Table.Th>
                                   <Table.Th className="text-gray-400 text-xs">Sent</Table.Th>
                                 </Table.Tr>
                               </Table.Thead>
@@ -1309,10 +1307,10 @@ export const Analytics = () => {
                                       {customer.name}
                                     </Table.Td>
                                     <Table.Td className="text-gray-300 text-sm">
-                                      {customer.phone}
+                                      {customer.job_description || '-'}
                                     </Table.Td>
                                     <Table.Td className="text-gray-300 text-sm">
-                                      {customer.job_description || '-'}
+                                      {customer.phone}
                                     </Table.Td>
                                     <Table.Td className="text-gray-400 text-xs">
                                       {formatDate(customer.sent_at)}

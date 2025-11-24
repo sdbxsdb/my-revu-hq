@@ -773,7 +773,7 @@ export const CustomerList = () => {
           <Text size="sm" className="text-gray-400">
             Filter by letter:
           </Text>
-          <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
+          <div className="flex gap-1.5 overflow-x-auto sm:overflow-x-visible sm:flex-wrap pb-2 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
             <Button
               size="xs"
               variant={selectedLetter === null ? 'filled' : 'outline'}
@@ -781,7 +781,7 @@ export const CustomerList = () => {
                 setSelectedLetter(null);
                 setPage(1);
               }}
-              className={`flex-shrink-0 ${
+              className={`flex-shrink-0 sm:flex-shrink ${
                 selectedLetter === null
                   ? 'bg-teal-600 border-teal-600 text-white'
                   : 'border-gray-600 text-gray-300 hover:border-teal-600 hover:text-teal-400'
@@ -826,7 +826,7 @@ export const CustomerList = () => {
                   setSearchQuery(''); // Clear search when selecting letter
                   setPage(1);
                 }}
-                className={`min-w-[2rem] flex-shrink-0 ${
+                className={`min-w-[2rem] flex-shrink-0 sm:flex-shrink ${
                   selectedLetter === letter
                     ? 'bg-teal-600 border-teal-600 text-white'
                     : 'border-gray-600 text-gray-300 hover:border-teal-600 hover:text-teal-400'
@@ -1074,16 +1074,7 @@ export const CustomerList = () => {
                     </Table.Td>
                     <Table.Td className="text-gray-400">{formatDate(customer.sent_at)}</Table.Td>
                     <Table.Td>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="xs"
-                          variant="subtle"
-                          onClick={() => handleEdit(customer)}
-                          radius="md"
-                          className="font-medium flex items-center justify-center"
-                        >
-                          Edit
-                        </Button>
+                      <div className="flex flex-col gap-2 min-w-[200px]">
                         {(() => {
                           const requestCount = customer.sms_request_count || 0;
                           const isOptedOut = customer.opt_out || false;
@@ -1125,7 +1116,7 @@ export const CustomerList = () => {
                               variant={customer.sms_status === 'sent' ? 'light' : 'filled'}
                               onClick={() => handleSendAgain(customer.id)}
                               radius="md"
-                              className="font-medium"
+                              className="font-medium w-full"
                               disabled={isDisabled}
                               loading={isSending}
                               title={getTooltip()}
@@ -1134,6 +1125,15 @@ export const CustomerList = () => {
                             </Button>
                           );
                         })()}
+                        <Button
+                          size="sm"
+                          variant="subtle"
+                          onClick={() => handleEdit(customer)}
+                          radius="md"
+                          className="font-medium w-full"
+                        >
+                          Edit
+                        </Button>
                       </div>
                     </Table.Td>
                   </Table.Tr>

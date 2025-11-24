@@ -185,43 +185,44 @@ export const AddCustomer = () => {
   };
 
   return (
-    <Container size="md" py="md" px="xs">
-      <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
-      <div className="mb-8">
-        <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
-          Add Customer
-        </Title>
-        <p className="text-sm text-gray-400">Add a new customer to send them a review request</p>
-      </div>
+    <Container size="lg" py="md" px="xs">
+      <Paper shadow="md" className="bg-[#1a1a1a] px-4 pt-6 pb-8 sm:px-6">
+      <div className="max-w-full sm:max-w-2xl sm:mx-auto">
+        <div className="mb-8">
+          <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
+            Add Customer
+          </Title>
+          <p className="text-sm text-gray-400">Add a new customer to send them a review request</p>
+        </div>
 
-      {/* Account Error Alert */}
-      <AccountErrorAlert />
+        {/* Account Error Alert */}
+        <AccountErrorAlert />
 
-      {!paymentLoading && !hasPaid && (
-        <Alert
-          icon={<IconAlertCircle size={16} />}
-          title="Payment Required to Send Messages"
-          color="yellow"
-          className="mb-6 relative"
-        >
-          <div className="flex flex-col gap-3 pb-10">
-            <Text size="sm" className="text-gray-300">
-              You can add customers, but you need to set up payment to send SMS messages.
-            </Text>
-          </div>
-          <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-4">
-            <Button
-              component={Link}
-              to="/billing"
-              size="sm"
-              color="teal"
-              className="font-semibold !px-3 !py-1 !h-auto !text-xs"
-            >
-              Set up payment
-            </Button>
-          </div>
-        </Alert>
-      )}
+        {!paymentLoading && !hasPaid && (
+          <Alert
+            icon={<IconAlertCircle size={16} />}
+            title="Payment Required to Send Messages"
+            color="yellow"
+            className="mb-6 relative"
+          >
+            <div className="flex flex-col gap-3 pb-10">
+              <Text size="sm" className="text-gray-300">
+                You can add customers, but you need to set up payment to send SMS messages.
+              </Text>
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-4">
+              <Button
+                component={Link}
+                to="/billing"
+                size="sm"
+                color="teal"
+                className="font-semibold !px-3 !py-1 !h-auto !text-xs"
+              >
+                Set up payment
+              </Button>
+            </div>
+          </Alert>
+        )}
 
       <form onSubmit={form.onSubmit(() => {})}>
         <Stack gap="lg">
@@ -232,79 +233,77 @@ export const AddCustomer = () => {
             {...form.getInputProps('name')}
           />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-200 mb-1">
-              {(() => {
-                // Use "Mobile Number" for UK/Ireland, "Cell Number" for others
-                const phoneType =
-                  selectedCountry === 'GB' || selectedCountry === 'IE'
-                    ? 'Mobile Number'
-                    : 'Cell Number';
-                return (
-                  <>
-                    {phoneType} <span className="text-red-400">*</span>
-                  </>
-                );
-              })()}
-            </label>
-            <PhoneNumber
-              value={form.values.phoneNumber}
-              country={selectedCountry}
-              onChange={(value) => {
-                form.setFieldValue('phoneNumber', value);
-                // Validate immediately when typing - use current country from ref
+          <label className="block text-sm font-medium text-gray-200 mb-1">
+            {(() => {
+              // Use "Mobile Number" for UK/Ireland, "Cell Number" for others
+              const phoneType =
+                selectedCountry === 'GB' || selectedCountry === 'IE'
+                  ? 'Mobile Number'
+                  : 'Cell Number';
+              return (
+                <>
+                  {phoneType} <span className="text-red-400">*</span>
+                </>
+              );
+            })()}
+          </label>
+          <PhoneNumber
+            value={form.values.phoneNumber}
+            country={selectedCountry}
+            onChange={(value) => {
+              form.setFieldValue('phoneNumber', value);
+              // Validate immediately when typing - use current country from ref
+              const validation = validatePhoneNumber(
+                value,
+                countryRef.current as CountryCode | undefined
+              );
+              if (!validation.isValid) {
+                setPhoneError(validation.error || 'Invalid phone number');
+                form.setFieldError('phoneNumber', validation.error || 'Invalid phone number');
+              } else {
+                setPhoneError(null);
+                form.setFieldError('phoneNumber', null);
+              }
+              form.validateField('phoneNumber');
+            }}
+            onCountryChange={(country) => {
+              // Update country in both state and ref FIRST
+              setSelectedCountry(country);
+              countryRef.current = country;
+
+              // Always validate when country changes if there's a phone number
+              if (country && form.values.phoneNumber) {
+                // Re-validate the existing number with the new country immediately
                 const validation = validatePhoneNumber(
-                  value,
-                  countryRef.current as CountryCode | undefined
+                  form.values.phoneNumber,
+                  country as CountryCode | undefined
                 );
                 if (!validation.isValid) {
                   setPhoneError(validation.error || 'Invalid phone number');
+                  // Also set form error
                   form.setFieldError('phoneNumber', validation.error || 'Invalid phone number');
                 } else {
+                  // Clear error if number is valid for the new country
                   setPhoneError(null);
                   form.setFieldError('phoneNumber', null);
                 }
-                form.validateField('phoneNumber');
-              }}
-              onCountryChange={(country) => {
-                // Update country in both state and ref FIRST
-                setSelectedCountry(country);
-                countryRef.current = country;
-
-                // Always validate when country changes if there's a phone number
-                if (country && form.values.phoneNumber) {
-                  // Re-validate the existing number with the new country immediately
-                  const validation = validatePhoneNumber(
-                    form.values.phoneNumber,
-                    country as CountryCode | undefined
-                  );
-                  if (!validation.isValid) {
-                    setPhoneError(validation.error || 'Invalid phone number');
-                    // Also set form error
-                    form.setFieldError('phoneNumber', validation.error || 'Invalid phone number');
-                  } else {
-                    // Clear error if number is valid for the new country
-                    setPhoneError(null);
-                    form.setFieldError('phoneNumber', null);
-                  }
-                  // Force re-validation to ensure form state is updated with new country
-                  setTimeout(() => {
-                    form.validateField('phoneNumber');
-                  }, 0);
-                } else if (country) {
-                  // New country selected but no phone number - clear any errors
-                  setPhoneError(null);
-                  form.setFieldError('phoneNumber', null);
-                } else {
-                  // No country selected - clear errors
-                  setPhoneError(null);
-                  form.setFieldError('phoneNumber', null);
-                }
-              }}
-              error={phoneError}
-              defaultCountry="GB"
-            />
-          </div>
+                // Force re-validation to ensure form state is updated with new country
+                setTimeout(() => {
+                  form.validateField('phoneNumber');
+                }, 0);
+              } else if (country) {
+                // New country selected but no phone number - clear any errors
+                setPhoneError(null);
+                form.setFieldError('phoneNumber', null);
+              } else {
+                // No country selected - clear errors
+                setPhoneError(null);
+                form.setFieldError('phoneNumber', null);
+              }
+            }}
+            error={phoneError}
+            defaultCountry="GB"
+          />
 
           <Textarea
             label="Job Description (Optional)"
@@ -315,56 +314,59 @@ export const AddCustomer = () => {
             description={`${form.values.jobDescription.length}/250 characters`}
           />
 
-          <div className="flex flex-col gap-3 mt-8 pt-6 border-t border-[#2a2a2a]">
-            <Tooltip
-              label={
-                paymentLoading
-                  ? 'Loading payment status...'
-                  : 'Payment required to send SMS messages'
-              }
-              disabled={paymentLoading || hasPaid}
-              position="top"
-              withArrow
-            >
+          <div className="flex flex-col sm:flex-row-reverse gap-3 mt-8 pt-6 border-t border-[#2a2a2a]">
+            <div className="w-full sm:flex-1">
+              <Tooltip
+                label={
+                  paymentLoading
+                    ? 'Loading payment status...'
+                    : 'Payment required to send SMS messages'
+                }
+                disabled={paymentLoading || hasPaid}
+                position="top"
+                withArrow
+              >
+                <Button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    form.onSubmit(handleSendNow)();
+                  }}
+                  loading={loadingSendNow}
+                  size="md"
+                  className="w-full font-semibold !py-4 !h-auto min-h-[3.5rem]"
+                  disabled={paymentLoading || !hasPaid || loadingSendLater}
+                >
+                  <div className="flex flex-col items-center gap-0.5">
+                    <span>Add Customer</span>
+                    <span>Request Review</span>
+                  </div>
+                </Button>
+              </Tooltip>
+            </div>
+            <div className="w-full sm:flex-1">
               <Button
                 type="button"
                 onClick={(e) => {
                   e.preventDefault();
-                  form.onSubmit(handleSendNow)();
+                  form.onSubmit(handleSendLater)();
                 }}
-                loading={loadingSendNow}
+                loading={loadingSendLater}
+                variant="light"
                 size="md"
                 className="w-full font-semibold !py-4 !h-auto min-h-[3.5rem]"
-                fullWidth
-                disabled={paymentLoading || !hasPaid || loadingSendLater}
+                disabled={loadingSendNow}
               >
                 <div className="flex flex-col items-center gap-0.5">
                   <span>Add Customer</span>
-                  <span>Request Review</span>
+                  <span>Request Later</span>
                 </div>
               </Button>
-            </Tooltip>
-            <Button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                form.onSubmit(handleSendLater)();
-              }}
-              loading={loadingSendLater}
-              variant="light"
-              size="md"
-              className="w-full font-semibold !py-4 !h-auto min-h-[3.5rem]"
-              fullWidth
-              disabled={loadingSendNow}
-            >
-              <div className="flex flex-col items-center gap-0.5">
-                <span>Add Customer</span>
-                <span>Request Later</span>
-              </div>
-            </Button>
+            </div>
           </div>
         </Stack>
       </form>
+      </div>
       </Paper>
     </Container>
   );

@@ -230,7 +230,7 @@ export const Help = () => {
           <Divider />
 
           <section>
-            <Title order={2} size="h3" className="text-white mb-4">
+            <Title order={2} size="h3" className="text-white mb-3">
               Frequently Asked Questions
             </Title>
             <Accordion
@@ -238,9 +238,9 @@ export const Help = () => {
               radius="md"
               classNames={{
                 item: 'bg-[#2a2a2a] border-[#3a3a3a]',
-                control: 'hover:bg-[#333333] py-4 px-5',
+                control: 'hover:bg-[#333333] py-3 px-5',
                 label: 'text-white font-semibold',
-                content: 'text-gray-300 pb-4 px-5',
+                content: 'text-gray-300 pt-2 pb-4 px-5',
                 chevron: 'text-teal-400',
               }}
             >

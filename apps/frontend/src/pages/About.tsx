@@ -6,6 +6,7 @@ import {
   IconLink,
   IconChartBar,
   IconLogin,
+  IconRocket,
 } from '@tabler/icons-react';
 import { useLocationPricing } from '@/hooks/useLocationPricing';
 import { useNavigate } from 'react-router-dom';
@@ -22,11 +23,10 @@ export const About = () => {
         <Stack gap="lg">
           <section className="text-center">
             <Title order={1} className="text-white mb-3 text-2xl sm:text-3xl">
-              Essential for Any Business That Knows Reviews Matter
+              What is MyRevuHQ?
             </Title>
             <Text size="sm" className="text-gray-300 mb-6">
-              Whether you're a small business, tradesperson, or larger operation—if you know reviews
-              drive growth, MyRevuHQ is for you.
+              Essential for any business that knows reviews matter. Whether you're a small business, tradesperson, or larger operation—if you know reviews drive growth, MyRevuHQ is for you.
             </Text>
             {!user && (
               <Button
@@ -117,6 +117,21 @@ export const About = () => {
                   </Text>
                 </div>
               </div>
+
+              <div className="flex gap-4">
+                <ThemeIcon size={48} radius="md" className="bg-teal-500/20 flex-shrink-0">
+                  <IconRocket size={28} className="text-teal-400" />
+                </ThemeIcon>
+                <div>
+                  <Title order={3} size="h4" className="text-white mb-2">
+                    Quick Setup
+                  </Title>
+                  <Text size="sm" className="text-gray-300">
+                    Get started in minutes with our simple setup process. No technical knowledge
+                    required—just add your details and start sending.
+                  </Text>
+                </div>
+              </div>
             </div>
           </section>
 
@@ -129,60 +144,60 @@ export const About = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="bg-[#2a2a2a] p-4 rounded-lg">
                 <div className="flex items-start gap-3">
-                  <ThemeIcon color="teal" size={24} radius="xl" className="flex-shrink-0">
-                    <IconCheck size={16} />
-                  </ThemeIcon>
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center">
+                    <Text size="sm" className="text-white font-bold">1</Text>
+                  </div>
                   <div>
                     <Text size="sm" className="text-white font-semibold mb-1">
                       Add Customers
                     </Text>
                     <Text size="xs" className="text-gray-400">
-                      Enter customer details and job information
+                      Enter customer details including name, phone number, and job information. Build your complete customer database in one central location.
                     </Text>
                   </div>
                 </div>
               </div>
               <div className="bg-[#2a2a2a] p-4 rounded-lg">
                 <div className="flex items-start gap-3">
-                  <ThemeIcon color="teal" size={24} radius="xl" className="flex-shrink-0">
-                    <IconCheck size={16} />
-                  </ThemeIcon>
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center">
+                    <Text size="sm" className="text-white font-bold">2</Text>
+                  </div>
                   <div>
                     <Text size="sm" className="text-white font-semibold mb-1">
                       Set Up Review Links
                     </Text>
                     <Text size="xs" className="text-gray-400">
-                      Add your Google, Facebook, and other review profiles
+                      Add your Google, Facebook, and other review platform URLs. Configure where you want customers to leave their reviews.
                     </Text>
                   </div>
                 </div>
               </div>
               <div className="bg-[#2a2a2a] p-4 rounded-lg">
                 <div className="flex items-start gap-3">
-                  <ThemeIcon color="teal" size={24} radius="xl" className="flex-shrink-0">
-                    <IconCheck size={16} />
-                  </ThemeIcon>
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center">
+                    <Text size="sm" className="text-white font-bold">3</Text>
+                  </div>
                   <div>
                     <Text size="sm" className="text-white font-semibold mb-1">
                       Customise Your Message
                     </Text>
                     <Text size="xs" className="text-gray-400">
-                      Create a personalised SMS template with your review links
+                      Create a personalised SMS template that includes your review links. Add customer names and job details to make each message unique.
                     </Text>
                   </div>
                 </div>
               </div>
               <div className="bg-[#2a2a2a] p-4 rounded-lg">
                 <div className="flex items-start gap-3">
-                  <ThemeIcon color="teal" size={24} radius="xl" className="flex-shrink-0">
-                    <IconCheck size={16} />
-                  </ThemeIcon>
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center">
+                    <Text size="sm" className="text-white font-bold">4</Text>
+                  </div>
                   <div>
                     <Text size="sm" className="text-white font-semibold mb-1">
                       Send & Grow
                     </Text>
                     <Text size="xs" className="text-gray-400">
-                      Send requests instantly and watch your reviews grow
+                      Send review requests instantly with a single click. Track your campaigns and watch your online reputation grow with 5-star reviews.
                     </Text>
                   </div>
                 </div>
@@ -193,7 +208,7 @@ export const About = () => {
           <Divider />
 
           <section className="text-center">
-            <Text size="sm" className="text-gray-300 mb-6">
+            <Text size="sm" className="text-gray-300">
               Questions? Contact us at{' '}
               <a href="mailto:myrevuhq@gmail.com" className="text-teal-400 hover:underline">
                 myrevuhq@gmail.com
