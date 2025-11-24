@@ -153,7 +153,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     messageBody = messageBody.replace(/{businessName}/g, user.business_name || 'us');
 
     // Add job description if enabled (default to true if not set) and available (not empty or whitespace)
-    if (user.include_job_in_sms !== false && customer.job_description && customer.job_description.trim()) {
+    if (
+      user.include_job_in_sms !== false &&
+      customer.job_description &&
+      customer.job_description.trim()
+    ) {
       messageBody += `\n\nJob: ${customer.job_description}`;
     }
 
@@ -189,12 +193,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Update customer status and increment request count
     const newRequestCount = requestCount + 1;
+    const sentAt = new Date().toISOString();
     await supabase
       .from('customers')
       // @ts-ignore - Supabase types don't include all fields
       .update({
         sms_status: 'sent',
-        sent_at: new Date().toISOString(),
+        sent_at: sentAt,
         sms_request_count: newRequestCount,
       })
       .eq('id', customerId);
@@ -207,7 +212,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         customer_id: customerId,
         user_id: auth.userId,
         body: messageBody,
-        sent_at: new Date().toISOString(),
+        sent_at: sentAt,
       });
 
     // Update user's monthly count and total count
@@ -218,17 +223,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .single<{ sms_sent_total: number | null }>();
 
     const currentTotal = currentUser?.sms_sent_total || 0;
+    const newSmsSentThisMonth = sentThisMonth + 1;
 
     await supabase
       .from('users')
       // @ts-ignore - Supabase types don't include all fields
       .update({
-        sms_sent_this_month: sentThisMonth + 1,
+        sms_sent_this_month: newSmsSentThisMonth,
         sms_sent_total: currentTotal + 1,
       })
       .eq('id', auth.userId);
 
-    return res.json({ success: true, messageSid: result.sid });
+    return res.json({
+      success: true,
+      messageSid: result.sid,
+      customer: {
+        id: customerId,
+        sms_status: 'sent',
+        sent_at: sentAt,
+        sms_request_count: newRequestCount,
+      },
+      usage: {
+        sms_sent_this_month: newSmsSentThisMonth,
+        sms_limit: smsLimit,
+      },
+    });
   } catch (error: any) {
     if (error.message === 'Unauthorized') {
       return res.status(401).json({ error: 'Unauthorized' });

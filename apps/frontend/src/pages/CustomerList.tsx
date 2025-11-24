@@ -437,15 +437,34 @@ export const CustomerList = () => {
 
     setSendingCustomerId(customerId);
     try {
-      await apiClient.sendSMS(customerId);
-      // Refresh SMS usage after sending
-      await loadSmsUsage();
+      const result = await apiClient.sendSMS(customerId);
+      
+      // Update the customer in state with new data
+      setCustomers((prevCustomers) =>
+        prevCustomers.map((c) =>
+          c.id === customerId
+            ? {
+                ...c,
+                sms_status: result.customer.sms_status,
+                sent_at: result.customer.sent_at,
+                sms_request_count: result.customer.sms_request_count,
+                messages: [
+                  ...(c.messages || []),
+                  { sent_at: result.customer.sent_at }
+                ]
+              }
+            : c
+        )
+      );
+
+      // Update SMS usage in state
+      setSmsSent(result.usage.sms_sent_this_month);
+
       notifications.show({
         title: 'Success',
         message: 'SMS sent successfully',
         color: 'green',
       });
-      loadCustomers();
     } catch (error: any) {
       notifications.show({
         title: 'Error',

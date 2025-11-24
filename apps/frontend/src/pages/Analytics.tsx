@@ -199,15 +199,19 @@ export const Analytics = () => {
   const handleSendSMS = async (customerId: string) => {
     setSendingCustomerId(customerId);
     try {
-      await apiClient.sendSMS(customerId);
+      const result = await apiClient.sendSMS(customerId);
+      
+      // Update SMS usage in state
+      setSmsSent(result.usage.sms_sent_this_month);
+
       notifications.show({
         title: 'Success',
         message: 'SMS sent successfully',
         color: 'green',
       });
-      // Reload analytics to update the insights lists
+      
+      // Reload analytics to update the insights lists (customer moved from not contacted to contacted)
       await loadAnalytics();
-      await loadSmsUsage();
     } catch (error: any) {
       notifications.show({
         title: 'Error',

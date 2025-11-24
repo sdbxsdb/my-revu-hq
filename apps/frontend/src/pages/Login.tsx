@@ -859,7 +859,25 @@ export const Login = () => {
 
             <div>
               <Text size="sm" className="text-gray-300">
-                By continuing, you agree to our Terms and Conditions and Privacy Policy. You can read the full details by clicking the links below.
+                By continuing, you agree to our{' '}
+                <a
+                  href="/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-teal-400 hover:text-teal-300 underline"
+                >
+                  Terms and Conditions
+                </a>{' '}
+                and{' '}
+                <a
+                  href="/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-teal-400 hover:text-teal-300 underline"
+                >
+                  Privacy Policy
+                </a>
+                .
             </Text>
             </div>
           </Stack>
@@ -867,26 +885,7 @@ export const Login = () => {
             <Checkbox
               label={
                 <Text size="sm" className="text-gray-300">
-                  I have read and agree to the{' '}
-                  <a
-                    href="/terms"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-teal-400 hover:text-teal-300 underline"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    Terms and Conditions
-                  </a>{' '}
-                  and{' '}
-                  <a
-                    href="/privacy"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-teal-400 hover:text-teal-300 underline"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    Privacy Policy
-                  </a>
+                  I have read and agree to the Terms and Conditions and Privacy Policy
                 </Text>
               }
               checked={termsAgreed}

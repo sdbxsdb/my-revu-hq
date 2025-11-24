@@ -205,27 +205,37 @@ export const About = () => {
             </div>
           </section>
 
-          <Divider />
+          <Divider className="my-4" />
+
+          {!user && (
+            <>
+              <section className="text-center">
+                <Button
+                  size="lg"
+                  leftSection={<IconLogin size={20} />}
+                  onClick={() => navigate('/login')}
+                >
+                  Get Started
+                </Button>
+              </section>
+
+              <Divider className="my-4" />
+            </>
+          )}
 
           <section className="text-center">
+            <Text size="sm" className="text-gray-300 mb-1">
+              Questions?
+            </Text>
             <Text size="sm" className="text-gray-300">
-              Questions? Contact us at{' '}
+              Contact us at{' '}
               <a href="mailto:myrevuhq@gmail.com" className="text-teal-400 hover:underline">
                 myrevuhq@gmail.com
               </a>
             </Text>
-            {!user && (
-              <Button
-                size="lg"
-                leftSection={<IconLogin size={20} />}
-                onClick={() => navigate('/login')}
-              >
-                Get Started
-              </Button>
-            )}
           </section>
 
-          <Divider />
+          <Divider className="my-4" />
 
           <section className="text-center">
             <Text size="sm" className="text-gray-400">

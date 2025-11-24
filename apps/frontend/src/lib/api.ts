@@ -81,7 +81,7 @@ export const apiClient = {
     include_name_in_sms?: boolean;
     include_job_in_sms?: boolean;
   }): Promise<User> => {
-    const { data} = await api.put('/api/account', account);
+    const { data } = await api.put('/api/account', account);
     return data;
   },
 
@@ -122,8 +122,24 @@ export const apiClient = {
   },
 
   // SMS
-  sendSMS: async (customerId: string): Promise<void> => {
-    await api.post('/api/send-sms', { customerId });
+  sendSMS: async (
+    customerId: string
+  ): Promise<{
+    success: boolean;
+    messageSid: string;
+    customer: {
+      id: string;
+      sms_status: string;
+      sent_at: string;
+      sms_request_count: number;
+    };
+    usage: {
+      sms_sent_this_month: number;
+      sms_limit: number;
+    };
+  }> => {
+    const response = await api.post('/api/send-sms', { customerId });
+    return response.data;
   },
 
   // Billing
