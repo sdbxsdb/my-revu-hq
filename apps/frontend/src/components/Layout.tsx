@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { OfflineAlert } from './OfflineAlert';
 import { IconMenu2, IconX } from '@tabler/icons-react';
@@ -11,10 +11,8 @@ interface LayoutProps {
 
 export const Layout = ({ children }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const isHomePage = location.pathname === '/';
 
   const handleLogoClick = () => {
     if (user) {
@@ -60,15 +58,13 @@ export const Layout = ({ children }: LayoutProps) => {
               Business Review Management
             </p>
           </button>
-          {(!isHomePage || user) && (
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-lg hover:bg-[#2a2a2a] active:bg-[#333333] transition-colors text-gray-300"
-              aria-label="Toggle menu"
-            >
-              {sidebarOpen ? <IconX size={24} /> : <IconMenu2 size={24} />}
-            </button>
-          )}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 rounded-lg hover:bg-[#2a2a2a] active:bg-[#333333] transition-colors text-gray-300"
+            aria-label="Toggle menu"
+          >
+            {sidebarOpen ? <IconX size={24} /> : <IconMenu2 size={24} />}
+          </button>
         </div>
 
         {/* Page content */}

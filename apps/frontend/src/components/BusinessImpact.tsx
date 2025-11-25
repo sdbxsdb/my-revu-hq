@@ -45,49 +45,49 @@ export const BusinessImpact = () => {
     <Paper p="lg" className="bg-[#1a1a1a] border border-[#2a2a2a]">
       <div className="text-center mb-8">
         <Title order={3} className="text-xl font-bold mb-2 text-white">
-          What Businesses Typically Achieve
+          The Numbers That Matter
         </Title>
         <Text size="sm" className="text-gray-400 max-w-2xl mx-auto">
-          Real outcomes from businesses using automated SMS review requests
+          Real data showing why automated review requests transform your business
         </Text>
       </div>
 
       <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="lg" className="mb-6">
         <ImpactCard
           icon={<IconStar size={48} />}
-          stat="3-5x"
-          description="More reviews collected in the first 3 months compared to manual requests"
+          stat="10x"
+          description="More reviews collected when you consistently ask every customer—most businesses forget to ask"
           delay={0}
         />
 
         <ImpactCard
           icon={<IconTrendingUp size={48} />}
-          stat="+0.5★"
-          description="Average rating improvement within 6 months from increased positive reviews"
+          stat="+45%"
+          description="Potential revenue increase from improving your rating to 5 stars with more positive reviews"
           delay={100}
         />
 
         <ImpactCard
           icon={<IconUsers size={48} />}
-          stat="15-25%"
-          description="Increase in new customer inquiries from improved online reputation"
+          stat="3x"
+          description="More customer clicks and inquiries for businesses with 10+ reviews vs those with few or none"
           delay={200}
         />
 
         <ImpactCard
           icon={<IconClock size={48} />}
-          stat="5 hours"
-          description="Average time saved per month by automating review requests"
+          stat="98%"
+          description="SMS open rate within 3 minutes—the fastest way to reach customers when satisfaction is highest"
           delay={300}
         />
       </SimpleGrid>
 
       <Paper p="md" className="bg-gradient-to-r from-teal-900/40 to-blue-900/40 border border-teal-700/30">
         <Text size="sm" className="text-center text-gray-200 leading-relaxed">
-          <span className="font-semibold text-teal-300">The Simple Truth:</span> Businesses that
-          consistently ask for reviews get more of them. With MyRevuHQ, every satisfied customer
-          automatically receives a review request—so you never miss an opportunity to grow your
-          reputation.
+          <span className="font-semibold text-teal-300">Here's Why It Works:</span> Most businesses
+          rely on customers remembering to leave reviews—but the best performers systematically ask
+          every time. MyRevuHQ makes it effortless to send review requests the moment the job is
+          done. More reviews mean more customers choosing you.
         </Text>
       </Paper>
     </Paper>

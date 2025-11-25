@@ -12,6 +12,7 @@ import {
   Checkbox,
   Title,
   Container,
+  Tabs,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useAuth } from '@/hooks/useAuth';
@@ -481,33 +482,36 @@ export const Login = () => {
   return (
     <Container size="md" py="md" px="xs">
       <Paper shadow="xl" p="md" className="w-full max-w-md mx-auto">
-        <div className="text-center mb-6">
-          <div className="transition-all duration-300 mb-3">
-            {mode === 'password' || mode === 'signup' || mode === 'magic-link' ? (
-              <div className="flex items-center justify-center gap-2 mb-2">
-                {getModeIcon()}
-                <Title order={2} className="text-white text-xl font-semibold">
-                  {getModeTitle()}
-                </Title>
-              </div>
-            ) : (
-          <Text c="dimmed" size="sm" ta="center" className="text-gray-400">
-            Sign in or create your account
-          </Text>
-            )}
-          </div>
-          <Text
-            size="sm"
-            ta="center"
-            className={`transition-all duration-300 ${
-              mode === 'password' || mode === 'signup' || mode === 'magic-link'
-                ? 'text-teal-400 font-medium'
-                : 'text-gray-500'
-            }`}
-          >
-            {getModeDescription()}
-          </Text>
-        </div>
+        <Tabs
+          value={mode === 'signup' ? 'signup' : mode === 'magic-link' ? 'signin' : 'signin'}
+          onChange={(value) => {
+            if (value === 'signup') {
+              setMode('signup');
+              setPassword('');
+              setConfirmPassword('');
+              setPasswordError('');
+            } else if (value === 'signin') {
+              setMode('password');
+              setPassword('');
+              setConfirmPassword('');
+              setPasswordError('');
+            }
+          }}
+          classNames={{
+            root: 'mb-6',
+            list: 'border-b border-[#2a2a2a]',
+            tab: 'text-gray-400 hover:text-teal-400 hover:border-teal-400 data-[active=true]:text-teal-400 data-[active=true]:border-teal-400 font-semibold text-base',
+          }}
+        >
+          <Tabs.List grow>
+            <Tabs.Tab value="signin" leftSection={<IconLogin size={18} />}>
+              Sign In
+            </Tabs.Tab>
+            <Tabs.Tab value="signup" leftSection={<IconUserPlus size={18} />}>
+              Create Account
+            </Tabs.Tab>
+          </Tabs.List>
+        </Tabs>
 
         <Stack gap="md">
           {/* OAuth and Magic Link - Both work for sign up and sign in */}
@@ -530,7 +534,7 @@ export const Login = () => {
             color="teal"
             className="!font-medium !h-11"
           >
-            Continue with Google
+            {mode === 'signup' ? 'Create account with Google' : 'Sign in with Google'}
           </Button>
 
           <Button
@@ -544,14 +548,15 @@ export const Login = () => {
             leftSection={<IconMail size={18} />}
                 className="border border-teal-600/30 hover:bg-teal-600/10 !h-11 transition-all"
           >
-            Continue with Magic Link
+            {mode === 'signup' ? 'Create account with Magic Link' : 'Sign in with Magic Link'}
           </Button>
 
-              {!(mode === 'password' || mode === 'signup') && (
+              {mode !== 'magic-link' && (
           <Alert color="blue" className="bg-blue-900/20 border-blue-700/30">
             <Text size="xs" className="text-gray-300">
                     <strong>What's a magic link?</strong> We'll send you an email with a special
-                    link. Click it to sign in and sign up instantly—no password needed!
+                    link. Click it to {mode === 'signup' ? 'create your account' : 'sign in'} instantly—no password needed!
+                    {mode === 'signup' && ' Once you create your account with a magic link, you can sign in with a magic link every time.'}
             </Text>
           </Alert>
               )}
@@ -565,12 +570,6 @@ export const Login = () => {
             <div className="animate-fade-in">
               <form onSubmit={handleSignUp}>
                 <Stack gap="md">
-                  <Alert color="teal" className="bg-teal-900/20 border-teal-700/30">
-                    <Text size="xs" className="text-gray-300">
-                      <strong>Creating a new account:</strong> Enter your email and choose a secure
-                      password to get started.
-                    </Text>
-                  </Alert>
                   <TextInput
                     label="Email Address"
                     placeholder="your@email.com"
@@ -639,23 +638,6 @@ export const Login = () => {
                   >
                     Create Account
                   </Button>
-                  <div className="text-center pt-2">
-                    <Text size="sm" className="text-gray-400">
-                      Already have an account?{' '}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setMode('password');
-                          setPassword('');
-                          setConfirmPassword('');
-                          setPasswordError('');
-                        }}
-                        className="text-teal-400 hover:text-teal-300 underline font-medium"
-                      >
-                        Sign in
-                      </button>
-                    </Text>
-                  </div>
                 </Stack>
               </form>
             </div>
@@ -666,12 +648,6 @@ export const Login = () => {
             <div className="animate-fade-in">
               <form onSubmit={handlePasswordLogin}>
                 <Stack gap="md">
-                  <Alert color="blue" className="bg-blue-900/20 border-blue-700/30">
-                    <Text size="xs" className="text-gray-300">
-                      <strong>Signing in:</strong> Enter your email and password to access your
-                      account.
-                    </Text>
-                  </Alert>
                   <TextInput
                     label="Email Address"
                     placeholder="your@email.com"
@@ -715,23 +691,6 @@ export const Login = () => {
                   >
                     Sign In
                   </Button>
-                  <div className="text-center pt-2">
-                    <Text size="sm" className="text-gray-400">
-                      Don't have an account?{' '}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setMode('signup');
-                          setPassword('');
-                          setConfirmPassword('');
-                          setPasswordError('');
-                        }}
-                        className="text-teal-400 hover:text-teal-300 underline font-medium"
-                      >
-                        Create account
-                      </button>
-                    </Text>
-                  </div>
                 </Stack>
               </form>
             </div>
@@ -740,12 +699,21 @@ export const Login = () => {
           {/* Magic Link Section */}
           {mode === 'magic-link' && (
             <div className="animate-fade-in">
+              <div className="mb-4">
+                <button
+                  type="button"
+                  onClick={() => setMode('password')}
+                  className="text-sm text-teal-400 hover:text-teal-300 underline flex items-center gap-1"
+                >
+                  ← Back to Sign In
+                </button>
+              </div>
               <form onSubmit={handleMagicLink}>
                 <Stack gap="md">
                   <Alert color="purple" className="bg-purple-900/20 border-purple-700/30">
                     <Text size="xs" className="text-gray-300">
                       <strong>Magic Link:</strong> We'll send you an email with a special link.
-                      Click it to sign in or sign up instantly—no password needed!
+                      Click it to sign in instantly—no password needed!
                     </Text>
                   </Alert>
                   <TextInput
@@ -768,30 +736,6 @@ export const Login = () => {
                   >
                     Send Magic Link
                   </Button>
-                  <div className="text-center pt-2 space-y-2">
-                    <Text size="sm" className="text-gray-400">
-                      Prefer password?{' '}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setMode('signup');
-                        }}
-                        className="text-teal-400 hover:text-teal-300 underline font-medium"
-                      >
-                        Sign up with password
-                      </button>
-                      {' or '}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setMode('password');
-                        }}
-                        className="text-teal-400 hover:text-teal-300 underline font-medium"
-                      >
-                        sign in with password
-                      </button>
-                    </Text>
-                  </div>
                 </Stack>
               </form>
             </div>
