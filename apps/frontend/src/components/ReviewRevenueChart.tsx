@@ -82,7 +82,7 @@ export const ReviewRevenueChart = () => {
                 formatter={(value: number) => [`+${value}%`, 'Revenue Increase']}
               />
               <Bar dataKey="displayRevenue" radius={[8, 8, 0, 0]} animationDuration={800}>
-                {barData.map((entry, index) => (
+                {barData.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={getBarColor(index)} />
                 ))}
               </Bar>
