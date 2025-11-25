@@ -14,6 +14,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocationPricing } from '@/hooks/useLocationPricing';
+import { ReviewImpactStats } from '@/components/ReviewImpactStats';
 
 export const Home = () => {
   const navigate = useNavigate();
@@ -54,6 +55,11 @@ export const Home = () => {
                 </Button>
               </div>
             </div>
+
+            <Divider />
+
+            {/* Review Impact Statistics */}
+            <ReviewImpactStats />
 
             <Divider />
 

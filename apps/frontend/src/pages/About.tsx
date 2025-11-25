@@ -11,6 +11,8 @@ import {
 import { useLocationPricing } from '@/hooks/useLocationPricing';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { ReviewRevenueChart } from '@/components/ReviewRevenueChart';
+import { BusinessImpact } from '@/components/BusinessImpact';
 
 export const About = () => {
   const navigate = useNavigate();
@@ -134,6 +136,16 @@ export const About = () => {
               </div>
             </div>
           </section>
+
+          <Divider />
+
+          {/* Revenue Impact Chart */}
+          <ReviewRevenueChart />
+
+          <Divider />
+
+          {/* Business Impact */}
+          <BusinessImpact />
 
           <Divider />
 

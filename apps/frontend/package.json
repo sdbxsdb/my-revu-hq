@@ -23,7 +23,9 @@
     "libphonenumber-js": "^1.12.26",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-intersection-observer": "^10.0.0",
     "react-router-dom": "^6.21.3",
+    "react-spring": "^10.0.3",
     "react-svg-credit-card-payment-icons": "^5.0.0",
     "recharts": "^2.10.3",
     "zod": "^4.1.12"
