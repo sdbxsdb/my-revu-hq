@@ -1,12 +1,6 @@
 import { Paper, Title, Text, Container, Stack, Divider, ThemeIcon, Button } from '@mantine/core';
 import {
-  IconCheck,
-  IconMessageCircle,
-  IconUsers,
-  IconLink,
-  IconChartBar,
   IconLogin,
-  IconClock,
   IconCurrencyPound,
   IconCurrencyEuro,
   IconCurrencyDollar,

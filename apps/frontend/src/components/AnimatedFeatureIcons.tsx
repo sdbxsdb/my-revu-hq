@@ -1,4 +1,4 @@
-import { useSpring, animated, useSpringValue, config } from '@react-spring/web';
+import { animated, useSpringValue } from '@react-spring/web';
 import { useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
 import {
