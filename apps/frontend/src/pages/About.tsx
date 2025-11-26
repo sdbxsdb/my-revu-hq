@@ -77,6 +77,20 @@ export const About = () => {
 
               <div className="flex gap-4">
                 <ThemeIcon size={48} radius="md" className="bg-teal-500/20 flex-shrink-0">
+                  <IconClock size={28} className="text-teal-400" />
+                </ThemeIcon>
+                <div>
+                  <Title order={3} size="h4" className="text-white mb-2">
+                    Schedule SMS
+                  </Title>
+                  <Text size="sm" className="text-gray-300">
+                    Schedule review requests for any future date and time. Perfect for sending requests after project completion or at the optimal time for your industry.
+                  </Text>
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <ThemeIcon size={48} radius="md" className="bg-teal-500/20 flex-shrink-0">
                   <IconLink size={28} className="text-teal-400" />
                 </ThemeIcon>
                 <div>
@@ -116,20 +130,6 @@ export const About = () => {
                   <Text size="sm" className="text-gray-300">
                     Plans starting from {formattedPrice}/month. Unlimited customers, flexible SMS
                     limits. No hidden costs, no surprises.
-                  </Text>
-                </div>
-              </div>
-
-              <div className="flex gap-4">
-                <ThemeIcon size={48} radius="md" className="bg-teal-500/20 flex-shrink-0">
-                  <IconClock size={28} className="text-teal-400" />
-                </ThemeIcon>
-                <div>
-                  <Title order={3} size="h4" className="text-white mb-2">
-                    Schedule SMS
-                  </Title>
-                  <Text size="sm" className="text-gray-300">
-                    Schedule review requests for any future date and time. Perfect for sending requests after project completion or at the optimal time for your industry.
                   </Text>
                 </div>
               </div>

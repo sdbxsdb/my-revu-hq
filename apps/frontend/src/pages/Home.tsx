@@ -29,7 +29,9 @@ export const Home = () => {
             {/* Hero Section */}
             <div className="text-center">
               <Title order={1} className="text-white mb-4 text-2xl sm:text-3xl">
-                Reviews Always Matter
+                MyRevuHQ
+                <br />
+                Grow Your Online Reputation
               </Title>
               <Text size="lg" className="text-gray-300 mb-6 text-base sm:text-lg">
                 Every satisfied customer is a potential 5-star review. MyRevuHQ makes it simple to
@@ -92,6 +94,19 @@ export const Home = () => {
 
                 <div className="text-center sm:w-52">
                   <ThemeIcon size={56} radius="md" className="bg-teal-500/20 mx-auto mb-3">
+                    <IconClock size={32} className="text-teal-400" />
+                  </ThemeIcon>
+                  <Title order={3} size="h4" className="text-white mb-2 text-base">
+                    Schedule SMS
+                  </Title>
+                  <Text size="xs" className="text-gray-400">
+                    Schedule review requests for the perfect time — send automatically when it
+                    matters most
+                  </Text>
+                </div>
+
+                <div className="text-center sm:w-52">
+                  <ThemeIcon size={56} radius="md" className="bg-teal-500/20 mx-auto mb-3">
                     <IconLink size={32} className="text-teal-400" />
                   </ThemeIcon>
                   <Title order={3} size="h4" className="text-white mb-2 text-base">
@@ -129,18 +144,6 @@ export const Home = () => {
                   </Title>
                   <Text size="xs" className="text-gray-400">
                     Monitor message trends and track your SMS campaigns with detailed insights
-                  </Text>
-                </div>
-
-                <div className="text-center sm:w-52">
-                  <ThemeIcon size={56} radius="md" className="bg-teal-500/20 mx-auto mb-3">
-                    <IconClock size={32} className="text-teal-400" />
-                  </ThemeIcon>
-                  <Title order={3} size="h4" className="text-white mb-2 text-base">
-                    Schedule SMS
-                  </Title>
-                  <Text size="xs" className="text-gray-400">
-                    Schedule review requests for the perfect time — send automatically when it matters most
                   </Text>
                 </div>
               </div>

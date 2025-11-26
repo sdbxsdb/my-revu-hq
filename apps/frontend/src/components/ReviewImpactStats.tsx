@@ -73,7 +73,7 @@ export const ReviewImpactStats = () => {
     <div className="mb-12">
       <div className="text-center mb-8">
         <Title order={2} className="text-2xl sm:text-3xl font-bold mb-3 text-white">
-          Why Reviews Matter
+          The Power of Reviews
         </Title>
         <Text size="sm" className="text-gray-400 max-w-2xl mx-auto">
           Real data showing the measurable impact of online reviews on business growth
