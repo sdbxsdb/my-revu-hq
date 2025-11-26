@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useForm } from '@mantine/form';
 import { useNavigate, Link } from 'react-router-dom';
 import {
@@ -12,24 +12,40 @@ import {
   Text,
   Tooltip,
   Container,
+  Modal,
 } from '@mantine/core';
+import { DateTimePicker } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { CountryCode } from 'libphonenumber-js';
 import { apiClient } from '@/lib/api';
 import { PhoneNumber } from '@/components/PhoneNumber';
 import { validatePhoneNumber, formatPhoneNumberForApi } from '@/lib/phone-validation';
 import { usePayment } from '@/contexts/PaymentContext';
+import { useAccount } from '@/contexts/AccountContext';
 import { AccountErrorAlert } from '@/components/AccountErrorAlert';
-import { IconAlertCircle } from '@tabler/icons-react';
+import { IconAlertCircle, IconClock } from '@tabler/icons-react';
 
 export const AddCustomer = () => {
   const { hasPaid, loading: paymentLoading } = usePayment();
+  const { subscriptionTier } = useAccount();
   const [loadingSendNow, setLoadingSendNow] = useState(false);
   const [loadingSendLater, setLoadingSendLater] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<CountryCode | undefined>('GB'); // Default to GB, can be updated from account
   const countryRef = useRef<CountryCode | undefined>('GB');
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+  const [scheduledDateTime, setScheduledDateTime] = useState<Date | null>(null);
   const navigate = useNavigate();
+
+  // Debug: Log when scheduleModalOpen changes
+  useEffect(() => {
+    console.log('📝 scheduleModalOpen changed to:', scheduleModalOpen);
+  }, [scheduleModalOpen]);
+
+  // Check if user has Pro or Business tier
+  const canSchedule = subscriptionTier === 'pro' || subscriptionTier === 'business';
+  
+  console.log('AddCustomer: subscriptionTier from context:', subscriptionTier, 'canSchedule:', canSchedule);
 
   // TODO: When account has a region/country field, use it here
   // For now, default to GB (no need to fetch account just for this)
@@ -125,11 +141,42 @@ export const AddCustomer = () => {
     }
   };
 
-  const handleSendLater = async (values: typeof form.values) => {
+  const handleRequestLaterClick = () => {
+    console.log('🔵 handleRequestLaterClick called', { canSchedule, subscriptionTier, scheduleModalOpen });
+    
+    // Validate form first
+    const validation = form.validate();
+    if (validation.hasErrors) {
+      console.log('❌ Form validation failed:', validation.errors);
+      // Scroll to first error
+      const firstErrorField = Object.keys(validation.errors)[0];
+      const errorElement = document.querySelector(`[name="${firstErrorField}"]`);
+      if (errorElement) {
+        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
+
+    // If user can schedule, show the modal
+    if (canSchedule) {
+      console.log('✅ Opening schedule modal, setting scheduleModalOpen to true');
+      setScheduleModalOpen(true);
+      console.log('✅ After setState, scheduleModalOpen should be true');
+    } else {
+      console.log('⚠️ Free tier - saving without scheduling');
+      // For free tier, just save without scheduling
+      handleSendLater(null);
+    }
+  };
+
+  const handleSendLater = async (scheduledTime: Date | null) => {
     setLoadingSendLater(true);
     setPhoneError(null);
+    setScheduleModalOpen(false);
 
     try {
+      const values = form.values;
+
       // Validate phone number with country context
       const validation = validatePhoneNumber(
         values.phoneNumber,
@@ -163,15 +210,19 @@ export const AddCustomer = () => {
           number: localNumber, // LOCAL format: "07780586444" (as user entered)
         },
         jobDescription: values.jobDescription || undefined,
+        scheduledSendAt: scheduledTime ? scheduledTime.toISOString() : undefined,
       });
 
       notifications.show({
         title: 'Success',
-        message: 'Customer added (pending SMS)',
+        message: scheduledTime
+          ? `Customer added. SMS scheduled for ${scheduledTime.toLocaleString()}`
+          : 'Customer added (pending SMS)',
         color: 'green',
       });
 
       form.reset();
+      setScheduledDateTime(null);
       navigate('/customers');
     } catch (error: any) {
       notifications.show({
@@ -345,29 +396,91 @@ export const AddCustomer = () => {
               </Tooltip>
             </div>
             <div className="w-full sm:flex-1">
-              <Button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  form.onSubmit(handleSendLater)();
-                }}
-                loading={loadingSendLater}
-                variant="light"
-                size="md"
-                className="w-full font-semibold !py-4 !h-auto min-h-[3.5rem]"
-                disabled={loadingSendNow}
+              <Tooltip
+                label={canSchedule ? 'Schedule when to send the review request' : 'Save customer without scheduling'}
+                position="top"
+                withArrow
               >
-                <div className="flex flex-col items-center gap-0.5">
-                  <span>Add Customer</span>
-                  <span>Request Later</span>
-                </div>
-              </Button>
+                <Button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleRequestLaterClick();
+                  }}
+                  loading={loadingSendLater}
+                  variant="light"
+                  size="md"
+                  className="w-full font-semibold !py-4 !h-auto min-h-[3.5rem]"
+                  disabled={loadingSendNow}
+                  leftSection={canSchedule ? <IconClock size={18} /> : undefined}
+                >
+                  <div className="flex flex-col items-center gap-0.5">
+                    <span>Add Customer</span>
+                    <span>{canSchedule ? 'Schedule Request' : 'Request Later'}</span>
+                  </div>
+                </Button>
+              </Tooltip>
             </div>
           </div>
         </Stack>
       </form>
       </div>
       </Paper>
+
+      {/* Schedule SMS Modal */}
+      <Modal
+        opened={scheduleModalOpen}
+        onClose={() => setScheduleModalOpen(false)}
+        title="Schedule Review Request"
+        size="md"
+        centered
+      >
+        <Stack gap="md">
+          <Text size="sm" className="text-gray-300">
+            Choose when to send the review request SMS to this customer.
+          </Text>
+
+          <DateTimePicker
+            label="Send Date & Time"
+            placeholder="Pick date and time"
+            value={scheduledDateTime}
+            onChange={setScheduledDateTime}
+            minDate={new Date()}
+            clearable
+            required
+            valueFormat="DD MMM YYYY hh:mm A"
+            description="Select a future date and time for sending the SMS"
+          />
+
+          <div className="flex gap-3 mt-4">
+            <Button
+              variant="light"
+              onClick={() => {
+                setScheduleModalOpen(false);
+                setScheduledDateTime(null);
+              }}
+              fullWidth
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => handleSendLater(scheduledDateTime)}
+              disabled={!scheduledDateTime}
+              loading={loadingSendLater}
+              fullWidth
+            >
+              Schedule SMS
+            </Button>
+          </div>
+
+          <Alert color="blue" className="bg-blue-900/20 border-blue-700/30">
+            <Text size="xs" className="text-gray-300">
+              The SMS will be sent automatically at the scheduled time. You can edit or cancel the
+              schedule from the Customer List page.
+            </Text>
+          </Alert>
+        </Stack>
+      </Modal>
     </Container>
   );
 };

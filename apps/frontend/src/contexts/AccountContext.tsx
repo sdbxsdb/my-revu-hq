@@ -3,12 +3,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { apiClient } from '@/lib/api';
 import { syncSession } from '@/lib/auth';
 import type { User } from '@/types';
+import type { PricingTier } from '@/lib/pricing';
 
 interface AccountContextType {
   account: User | null;
   loading: boolean;
   error: Error | null;
   refetch: () => Promise<void>;
+  subscriptionTier: PricingTier | null;
 }
 
 const AccountContext = createContext<AccountContextType | undefined>(undefined);
@@ -21,6 +23,7 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
   const [account, setAccount] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [subscriptionTier, setSubscriptionTier] = useState<PricingTier | null>(null);
   const hasFetchedRef = useRef(false);
 
   const fetchAccount = async () => {
@@ -35,6 +38,7 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
 
     if (!user) {
       setAccount(null);
+      setSubscriptionTier(null);
       setLoading(false);
       accountFetchPromise = null;
       hasFetchedRef.current = false;
@@ -84,8 +88,24 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
     accountFetchPromise = apiClient.getAccount();
 
     try {
-      const data = await accountFetchPromise;
-      setAccount(data);
+      // Fetch both account and subscription data in parallel
+      const [accountData, subscriptionData] = await Promise.all([
+        accountFetchPromise,
+        apiClient.getSubscription().catch(() => null), // Don't fail if subscription endpoint fails
+      ]);
+      
+      setAccount(accountData);
+      
+      // Store subscription tier
+      console.log('AccountContext: Fetched subscription data:', subscriptionData);
+      if (subscriptionData?.subscriptionTier) {
+        console.log('AccountContext: Setting subscriptionTier to:', subscriptionData.subscriptionTier);
+        setSubscriptionTier(subscriptionData.subscriptionTier as PricingTier);
+      } else {
+        console.log('AccountContext: No subscriptionTier found, setting to null');
+        setSubscriptionTier(null);
+      }
+      
       setError(null);
       hasFetchedRef.current = true;
     } catch (err: any) {
@@ -103,6 +123,7 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
       fetchAccount();
     } else if (!user) {
       setAccount(null);
+      setSubscriptionTier(null);
       setLoading(false);
       hasFetchedRef.current = false;
       accountFetchPromise = null;
@@ -119,7 +140,7 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AccountContext.Provider value={{ account, loading, error, refetch }}>
+    <AccountContext.Provider value={{ account, loading, error, refetch, subscriptionTier }}>
       {children}
     </AccountContext.Provider>
   );

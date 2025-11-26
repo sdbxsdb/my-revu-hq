@@ -11,6 +11,7 @@ const customerSchema = z.object({
     number: z.string(),
   }),
   jobDescription: z.string().max(250, 'Job description must be 250 characters or less').optional(),
+  scheduledSendAt: z.string().optional(),
 });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -90,7 +91,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           name: validated.name,
           phone: validated.phone,
           job_description: validated.jobDescription?.trim() || null,
-          sms_status: 'pending',
+          sms_status: validated.scheduledSendAt ? 'scheduled' : 'pending',
+          scheduled_send_at: validated.scheduledSendAt || null,
         } as any)
         .select()
         .single();

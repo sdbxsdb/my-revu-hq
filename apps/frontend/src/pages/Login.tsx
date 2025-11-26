@@ -10,7 +10,6 @@ import {
   Alert,
   Modal,
   Checkbox,
-  Title,
   Container,
   Tabs,
 } from '@mantine/core';
@@ -440,44 +439,6 @@ export const Login = () => {
     }
   };
 
-  const getModeTitle = () => {
-    switch (mode) {
-      case 'signup':
-        return 'Create New Account';
-      case 'password':
-        return 'Sign In';
-      case 'magic-link':
-        return 'Magic Link';
-      default:
-        return 'Sign in or create your account';
-    }
-  };
-
-  const getModeDescription = () => {
-    switch (mode) {
-      case 'signup':
-        return 'Create an account with email and password';
-      case 'password':
-        return 'Sign in with your email and password';
-      case 'magic-link':
-        return "We'll send you a link to sign in—no password needed!";
-      default:
-        return 'New users will have an account created automatically';
-    }
-  };
-
-  const getModeIcon = () => {
-    switch (mode) {
-      case 'signup':
-        return <IconUserPlus size={20} />;
-      case 'password':
-        return <IconLogin size={20} />;
-      case 'magic-link':
-        return <IconSparkles size={20} />;
-      default:
-        return null;
-    }
-  };
 
   return (
     <Container size="md" py="md" px="xs">
@@ -551,7 +512,6 @@ export const Login = () => {
             {mode === 'signup' ? 'Create account with Magic Link' : 'Sign in with Magic Link'}
           </Button>
 
-              {mode !== 'magic-link' && (
           <Alert color="blue" className="bg-blue-900/20 border-blue-700/30">
             <Text size="xs" className="text-gray-300">
                     <strong>What's a magic link?</strong> We'll send you an email with a special
@@ -559,7 +519,6 @@ export const Login = () => {
                     {mode === 'signup' && ' Once you create your account with a magic link, you can sign in with a magic link every time.'}
             </Text>
           </Alert>
-              )}
 
           <Divider label="OR" labelPosition="center" className="my-2" />
             </>

@@ -13,6 +13,7 @@ const updateCustomerSchema = z.object({
     })
     .optional(),
   jobDescription: z.string().max(250, 'Job description must be 250 characters or less').optional(),
+  scheduledSendAt: z.string().nullable().optional(),
 });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -47,6 +48,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (validated.jobDescription !== undefined) {
         // Convert empty string to null
         updateData.job_description = validated.jobDescription?.trim() || null;
+      }
+      if (validated.scheduledSendAt !== undefined) {
+        updateData.scheduled_send_at = validated.scheduledSendAt || null;
+        // Update SMS status based on scheduled time
+        if (validated.scheduledSendAt) {
+          updateData.sms_status = 'scheduled';
+        } else {
+          // If clearing schedule, set back to pending
+          updateData.sms_status = 'pending';
+        }
       }
 
       const { data, error } = await supabase

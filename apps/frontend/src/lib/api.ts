@@ -100,6 +100,7 @@ export const apiClient = {
     name: string;
     phone: { countryCode: string; country?: string; number: string };
     jobDescription?: string;
+    scheduledSendAt?: string;
   }): Promise<Customer> => {
     const { data } = await api.post('/api/customers', customer);
     return data;
@@ -111,6 +112,7 @@ export const apiClient = {
       name?: string;
       phone?: { countryCode: string; country?: string; number: string };
       jobDescription?: string;
+      scheduledSendAt?: string | null;
     }
   ): Promise<Customer> => {
     const { data } = await api.put(`/api/customers/${customerId}`, customer);

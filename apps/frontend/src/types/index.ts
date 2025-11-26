@@ -29,12 +29,13 @@ export interface Customer {
     number: string; // Local format number (e.g., "07911123456")
   };
   job_description?: string;
-  sms_status: 'sent' | 'pending';
+  sms_status: 'sent' | 'pending' | 'scheduled';
   sent_at?: string;
   sms_request_count?: number;
   opt_out?: boolean;
   created_at?: string;
   messages?: Array<{ sent_at: string }>;
+  scheduled_send_at?: string;
 }
 
 export interface Message {

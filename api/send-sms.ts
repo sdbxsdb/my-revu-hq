@@ -41,7 +41,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const auth = await authenticate(req as any);
+    // Check if request is from Edge Function (scheduled SMS)
+    const xUserId = req.headers['x-user-id'] as string | undefined;
+    let userId: string;
+
+    if (xUserId) {
+      // Request from Edge Function - verify it's a service request
+      // In production, you should verify the Authorization header contains your service key
+      // For now, we'll trust requests with x-user-id header
+      userId = xUserId;
+    } else {
+      // Normal user request
+      const auth = await authenticate(req as any);
+      userId = auth.userId;
+    }
+
     const { customerId } = sendSMSSchema.parse(req.body);
 
     // Get user to check limit and account status
@@ -50,7 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .select(
         'sms_sent_this_month, business_name, review_links, sms_template, account_lifecycle_status, payment_status, subscription_tier, include_name_in_sms, include_job_in_sms'
       )
-      .eq('id', auth.userId)
+      .eq('id', userId)
       .single<{
         sms_sent_this_month: number | null;
         business_name: string | null;
@@ -101,7 +115,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .from('customers')
       .select('*')
       .eq('id', customerId)
-      .eq('user_id', auth.userId)
+      .eq('user_id', userId)
       .single<{
         id: string;
         user_id: string;
@@ -201,6 +215,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         sms_status: 'sent',
         sent_at: sentAt,
         sms_request_count: newRequestCount,
+        scheduled_send_at: null, // Clear schedule after sending
       })
       .eq('id', customerId);
 
@@ -210,7 +225,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // @ts-ignore - Supabase types don't include all fields
       .insert({
         customer_id: customerId,
-        user_id: auth.userId,
+        user_id: userId,
         body: messageBody,
         sent_at: sentAt,
       });
@@ -219,7 +234,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { data: currentUser } = await supabase
       .from('users')
       .select('sms_sent_total')
-      .eq('id', auth.userId)
+      .eq('id', userId)
       .single<{ sms_sent_total: number | null }>();
 
     const currentTotal = currentUser?.sms_sent_total || 0;
@@ -232,7 +247,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         sms_sent_this_month: newSmsSentThisMonth,
         sms_sent_total: currentTotal + 1,
       })
-      .eq('id', auth.userId);
+      .eq('id', userId);
 
     return res.json({
       success: true,

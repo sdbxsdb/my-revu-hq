@@ -15,7 +15,9 @@ import {
   Text,
   Skeleton,
   Container,
+  Tooltip,
 } from '@mantine/core';
+import { DateTimePicker } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { useForm } from '@mantine/form';
 import { CountryCode } from 'libphonenumber-js';
@@ -30,15 +32,16 @@ import {
 } from '@/lib/phone-validation';
 import { parsePhoneNumberFromString, isValidPhoneNumber } from 'libphonenumber-js';
 import { usePayment } from '@/contexts/PaymentContext';
-import { IconAlertCircle, IconTrash } from '@tabler/icons-react';
+import { useAccount } from '@/contexts/AccountContext';
+import { IconAlertCircle, IconTrash, IconClock, IconCalendar } from '@tabler/icons-react';
 import { getSmsLimitFromTier, type PricingTier } from '@/lib/pricing';
 
 export const CustomerList = () => {
   const { hasPaid, loading: paymentLoading } = usePayment();
+  const { subscriptionTier } = useAccount();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [smsSent, setSmsSent] = useState<number | null>(null);
-  const [subscriptionTier, setSubscriptionTier] = useState<PricingTier | null>(null);
   const [loadingUsage, setLoadingUsage] = useState(true);
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
@@ -52,7 +55,14 @@ export const CustomerList = () => {
   const [deleting, setDeleting] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [sendingCustomerId, setSendingCustomerId] = useState<string | null>(null);
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+  const [schedulingCustomer, setSchedulingCustomer] = useState<Customer | null>(null);
+  const [scheduledDateTime, setScheduledDateTime] = useState<Date | null>(null);
+  const [updatingSchedule, setUpdatingSchedule] = useState(false);
   const limit = 10;
+
+  // Check if user has Pro or Business tier (can schedule)
+  const canSchedule = subscriptionTier === 'pro' || subscriptionTier === 'business';
 
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<CountryCode | undefined>('GB');
@@ -92,13 +102,8 @@ export const CustomerList = () => {
   const loadSmsUsage = async () => {
     try {
       setLoadingUsage(true);
-      const [account, subscription] = await Promise.all([
-        apiClient.getAccount(),
-        apiClient.getSubscription().catch(() => null), // Don't fail if subscription endpoint fails
-      ]);
-
+      const account = await apiClient.getAccount();
       setSmsSent(account.sms_sent_this_month || 0);
-      setSubscriptionTier(subscription?.subscriptionTier || null);
     } catch (error) {
       // Failed to load usage data - continue without it
     } finally {
@@ -391,6 +396,7 @@ export const CustomerList = () => {
           // Country is auto-detected from the number (not stored in DB)
         },
         jobDescription: values.jobDescription,
+        scheduledSendAt: editingCustomer.scheduled_send_at || null,
       });
 
       notifications.show({
@@ -521,6 +527,64 @@ export const CustomerList = () => {
     } finally {
       setDeleting(false);
     }
+  };
+
+  const handleOpenScheduleModal = (customer: Customer) => {
+    setSchedulingCustomer(customer);
+    setScheduledDateTime(customer.scheduled_send_at ? new Date(customer.scheduled_send_at) : null);
+    setScheduleModalOpen(true);
+  };
+
+  const handleUpdateSchedule = async () => {
+    if (!schedulingCustomer) return;
+
+    setUpdatingSchedule(true);
+    try {
+      const updated = await apiClient.updateCustomer(schedulingCustomer.id, {
+        scheduledSendAt: scheduledDateTime ? scheduledDateTime.toISOString() : null,
+      });
+
+      // Update customer in state
+      setCustomers((prev) =>
+        prev.map((c) => (c.id === schedulingCustomer.id ? { ...c, ...updated } : c))
+      );
+
+      notifications.show({
+        title: 'Success',
+        message: scheduledDateTime
+          ? `SMS scheduled for ${scheduledDateTime.toLocaleString()}`
+          : 'Schedule cleared',
+        color: 'green',
+      });
+
+      setScheduleModalOpen(false);
+      setSchedulingCustomer(null);
+      setScheduledDateTime(null);
+    } catch (error: any) {
+      notifications.show({
+        title: 'Error',
+        message: error.message || 'Failed to update schedule',
+        color: 'red',
+      });
+    } finally {
+      setUpdatingSchedule(false);
+    }
+  };
+
+  const handleSendNow = async (customer: Customer) => {
+    // If customer has a schedule, clear it first
+    if (customer.scheduled_send_at) {
+      try {
+        await apiClient.updateCustomer(customer.id, {
+          scheduledSendAt: null,
+        });
+      } catch (error) {
+        console.error('Failed to clear schedule:', error);
+      }
+    }
+
+    // Then send immediately
+    handleSendAgain(customer.id);
   };
 
   // Get flag emoji from country code
@@ -1013,9 +1077,32 @@ export const CustomerList = () => {
                     <Table.Td className="text-gray-400">{customer.job_description || '-'}</Table.Td>
                     <Table.Td>
                       <div className="flex flex-col gap-1">
-                        <Badge color={customer.sms_status === 'sent' ? 'green' : 'orange'}>
-                          {customer.sms_status === 'sent' ? 'Sent' : 'Not Sent'}
+                        <Badge
+                          color={
+                            customer.sms_status === 'sent'
+                              ? 'green'
+                              : customer.sms_status === 'scheduled'
+                                ? 'blue'
+                                : 'orange'
+                          }
+                        >
+                          {customer.sms_status === 'sent'
+                            ? 'Sent'
+                            : customer.sms_status === 'scheduled'
+                              ? 'Scheduled'
+                              : 'Not Sent'}
                         </Badge>
+                        {customer.sms_status === 'scheduled' && customer.scheduled_send_at && (
+                          <Text size="xs" className="text-gray-400">
+                            {new Date(customer.scheduled_send_at).toLocaleString('en-GB', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </Text>
+                        )}
                         {(() => {
                           const requestCount = customer.sms_request_count || 0;
                           const isOptedOut = customer.opt_out || false;
@@ -1133,17 +1220,35 @@ export const CustomerList = () => {
                             <Button
                               size="sm"
                               variant={customer.sms_status === 'sent' ? 'light' : 'filled'}
-                              onClick={() => handleSendAgain(customer.id)}
+                              onClick={() =>
+                                customer.sms_status === 'scheduled'
+                                  ? handleSendNow(customer)
+                                  : handleSendAgain(customer.id)
+                              }
                               radius="md"
                               className="font-medium w-full"
                               disabled={isDisabled}
                               loading={isSending}
                               title={getTooltip()}
                             >
-                              {getButtonText()}
+                              {customer.sms_status === 'scheduled' ? 'Send Now' : getButtonText()}
                             </Button>
                           );
                         })()}
+                        {canSchedule && customer.sms_status === 'scheduled' && (
+                          <Tooltip label="Edit or cancel the scheduled send time">
+                            <Button
+                              size="sm"
+                              variant="light"
+                              onClick={() => handleOpenScheduleModal(customer)}
+                              radius="md"
+                              className="font-medium w-full"
+                              leftSection={<IconCalendar size={16} />}
+                            >
+                              Edit Schedule
+                            </Button>
+                          </Tooltip>
+                        )}
                         <Button
                           size="sm"
                           variant="subtle"
@@ -1196,12 +1301,33 @@ export const CustomerList = () => {
                     </div>
                     <div className="flex flex-col items-end gap-1.5 ml-2">
                       <Badge
-                        color={customer.sms_status === 'sent' ? 'green' : 'orange'}
+                        color={
+                          customer.sms_status === 'sent'
+                            ? 'green'
+                            : customer.sms_status === 'scheduled'
+                              ? 'blue'
+                              : 'orange'
+                        }
                         size="md"
                         radius="md"
                       >
-                        {customer.sms_status === 'sent' ? 'Sent' : 'Not Sent'}
+                        {customer.sms_status === 'sent'
+                          ? 'Sent'
+                          : customer.sms_status === 'scheduled'
+                            ? 'Scheduled'
+                            : 'Not Sent'}
                       </Badge>
+                      {customer.sms_status === 'scheduled' && customer.scheduled_send_at && (
+                        <Text size="xs" className="text-gray-400">
+                          {new Date(customer.scheduled_send_at).toLocaleString('en-GB', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </Text>
+                      )}
                     </div>
                   </div>
 
@@ -1351,18 +1477,36 @@ export const CustomerList = () => {
                       };
 
                       return (
-                        <Button
-                          size="sm"
-                          variant={customer.sms_status === 'sent' ? 'light' : 'filled'}
-                          onClick={() => handleSendAgain(customer.id)}
-                          radius="md"
-                          className="font-medium"
-                          disabled={isDisabled}
-                          loading={isSending}
-                          title={getTooltip()}
-                        >
-                          {getButtonText()}
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            variant={customer.sms_status === 'sent' ? 'light' : 'filled'}
+                            onClick={() =>
+                              customer.sms_status === 'scheduled'
+                                ? handleSendNow(customer)
+                                : handleSendAgain(customer.id)
+                            }
+                            radius="md"
+                            className="font-medium"
+                            disabled={isDisabled}
+                            loading={isSending}
+                            title={getTooltip()}
+                          >
+                            {customer.sms_status === 'scheduled' ? 'Send Now' : getButtonText()}
+                          </Button>
+                          {canSchedule && customer.sms_status === 'scheduled' && (
+                            <Button
+                              size="sm"
+                              variant="light"
+                              onClick={() => handleOpenScheduleModal(customer)}
+                              radius="md"
+                              className="font-medium"
+                              leftSection={<IconCalendar size={16} />}
+                            >
+                              Edit Schedule
+                            </Button>
+                          )}
+                        </>
                       );
                     })()}
                   </div>
@@ -1495,6 +1639,38 @@ export const CustomerList = () => {
               description={`${editForm.values.jobDescription.length}/250 characters`}
             />
 
+            {canSchedule && editingCustomer?.sms_status !== 'sent' && (
+              <div>
+                <DateTimePicker
+                  label="Schedule SMS Request (Optional)"
+                  placeholder="Select date and time"
+                  value={
+                    editingCustomer?.scheduled_send_at
+                      ? new Date(editingCustomer.scheduled_send_at)
+                      : null
+                  }
+                  onChange={(date) => {
+                    if (editingCustomer) {
+                      setEditingCustomer({
+                        ...editingCustomer,
+                        scheduled_send_at: date ? date.toISOString() : null,
+                      });
+                    }
+                  }}
+                  minDate={new Date()}
+                  clearable
+                  className="w-full"
+                  valueFormat="DD MMM YYYY, HH:mm"
+                  description="Leave empty to save for manual send later"
+                />
+                {editingCustomer?.scheduled_send_at && (
+                  <Text size="xs" className="text-blue-400 mt-1">
+                    SMS will be sent automatically at the scheduled time
+                  </Text>
+                )}
+              </div>
+            )}
+
             <div className="flex flex-col gap-3 pt-4 border-t border-[#2a2a2a]">
               <div className="flex gap-3">
                 <Button
@@ -1570,6 +1746,65 @@ export const CustomerList = () => {
               className="flex-1 font-semibold"
             >
               Delete
+            </Button>
+          </div>
+        </Stack>
+      </Modal>
+
+      {/* Schedule SMS Modal */}
+      <Modal
+        opened={scheduleModalOpen}
+        onClose={() => !updatingSchedule && setScheduleModalOpen(false)}
+        title="Schedule SMS Request"
+        size="md"
+        centered
+        classNames={{
+          body: 'p-0',
+        }}
+      >
+        <Stack gap="md">
+          <Text size="sm" className="text-gray-300">
+            {schedulingCustomer && (
+              <>
+                Schedule a review request for <strong>{schedulingCustomer.name}</strong>
+              </>
+            )}
+          </Text>
+
+          <DateTimePicker
+            label="Send At"
+            placeholder="Select date and time"
+            value={scheduledDateTime}
+            onChange={setScheduledDateTime}
+            minDate={new Date()}
+            clearable
+            className="w-full"
+            valueFormat="DD MMM YYYY, HH:mm"
+          />
+
+          <Alert color="blue" icon={<IconClock size={16} />}>
+            <Text size="xs">
+              {scheduledDateTime
+                ? `SMS will be sent automatically at ${scheduledDateTime.toLocaleString()}`
+                : 'Clear the date to remove the schedule'}
+            </Text>
+          </Alert>
+
+          <div className="flex gap-3 pt-4">
+            <Button
+              variant="subtle"
+              onClick={() => setScheduleModalOpen(false)}
+              className="flex-1"
+              disabled={updatingSchedule}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdateSchedule}
+              loading={updatingSchedule}
+              className="flex-1 font-semibold"
+            >
+              {scheduledDateTime ? 'Update Schedule' : 'Clear Schedule'}
             </Button>
           </div>
         </Stack>
