@@ -11,6 +11,7 @@ import {
   Badge,
   Button,
   Accordion,
+  Tooltip as MantineTooltip,
 } from '@mantine/core';
 import {
   IconChartBar,
@@ -50,6 +51,7 @@ interface MonthlyStat {
     phone: string;
     job_description: string | null;
     sent_at: string;
+    was_scheduled?: boolean;
   }>;
 }
 
@@ -60,49 +62,49 @@ export const Analytics = () => {
     tier: string;
     monthlyStats: MonthlyStat[];
     totalMessages: number;
-      insights?: {
-        notContacted5Days: Array<{
-          id: string;
-          name: string;
-          phone: { countryCode: string; number: string };
-          job_description: string | null;
-          lastContacted: string | null;
-          daysSinceContact: number;
-          createdAt: string;
-          sms_status?: 'sent' | 'pending' | 'scheduled';
-          scheduled_send_at?: string | null;
-        }>;
-        notContacted10Days: Array<{
-          id: string;
-          name: string;
-          phone: { countryCode: string; number: string };
-          job_description: string | null;
-          lastContacted: string | null;
-          daysSinceContact: number;
-          createdAt: string;
-          sms_status?: 'sent' | 'pending' | 'scheduled';
-          scheduled_send_at?: string | null;
-        }>;
-        notContacted30Days: Array<{
-          id: string;
-          name: string;
-          phone: { countryCode: string; number: string };
-          job_description: string | null;
-          lastContacted: string | null;
-          daysSinceContact: number;
-          createdAt: string;
-          sms_status?: 'sent' | 'pending' | 'scheduled';
-          scheduled_send_at?: string | null;
-        }>;
-        approachingLimit: Array<{
-          id: string;
-          name: string;
-          phone: { countryCode: string; number: string };
-          job_description: string | null;
-          messageCount: number;
-          createdAt: string;
-        }>;
-      };
+    insights?: {
+      notContacted5Days: Array<{
+        id: string;
+        name: string;
+        phone: { countryCode: string; number: string };
+        job_description: string | null;
+        lastContacted: string | null;
+        daysSinceContact: number;
+        createdAt: string;
+        sms_status?: 'sent' | 'pending' | 'scheduled';
+        scheduled_send_at?: string | null;
+      }>;
+      notContacted10Days: Array<{
+        id: string;
+        name: string;
+        phone: { countryCode: string; number: string };
+        job_description: string | null;
+        lastContacted: string | null;
+        daysSinceContact: number;
+        createdAt: string;
+        sms_status?: 'sent' | 'pending' | 'scheduled';
+        scheduled_send_at?: string | null;
+      }>;
+      notContacted30Days: Array<{
+        id: string;
+        name: string;
+        phone: { countryCode: string; number: string };
+        job_description: string | null;
+        lastContacted: string | null;
+        daysSinceContact: number;
+        createdAt: string;
+        sms_status?: 'sent' | 'pending' | 'scheduled';
+        scheduled_send_at?: string | null;
+      }>;
+      approachingLimit: Array<{
+        id: string;
+        name: string;
+        phone: { countryCode: string; number: string };
+        job_description: string | null;
+        messageCount: number;
+        createdAt: string;
+      }>;
+    };
   } | null>(null);
   const [subscriptionTier, setSubscriptionTier] = useState<PricingTier | null>(null);
   const [smsSent, setSmsSent] = useState<number | null>(null);
@@ -132,7 +134,6 @@ export const Analytics = () => {
       setLoadingUsage(false);
     }
   };
-
 
   const loadAnalytics = async () => {
     try {
@@ -181,9 +182,12 @@ export const Analytics = () => {
   };
 
   // Format phone number for display
-  const formatPhone = (phone: { countryCode?: string; number: string }): { flag: string; number: string } => {
+  const formatPhone = (phone: {
+    countryCode?: string;
+    number: string;
+  }): { flag: string; number: string } => {
     if (!phone || !phone.number) return { flag: '', number: '-' };
-    
+
     let displayNumber = phone.number;
     if (phone.number.startsWith('+')) {
       try {
@@ -206,7 +210,7 @@ export const Analytics = () => {
     setSendingCustomerId(customerId);
     try {
       const result = await apiClient.sendSMS(customerId);
-      
+
       // Update SMS usage in state
       setSmsSent(result.usage.sms_sent_this_month);
 
@@ -215,7 +219,7 @@ export const Analytics = () => {
         message: 'SMS sent successfully',
         color: 'green',
       });
-      
+
       // Reload analytics to update the insights lists (customer moved from not contacted to contacted)
       await loadAnalytics();
     } catch (error: any) {
@@ -331,7 +335,9 @@ export const Analytics = () => {
                       Analytics
                     </Title>
                     <Text size="sm" className="text-gray-300 text-center max-w-md">
-                      See detailed insights about your SMS campaigns, schedule review requests for future dates, and track monthly trends, customer engagement, and performance metrics.
+                      See detailed insights about your SMS campaigns, schedule review requests for
+                      future dates, and track monthly trends, customer engagement, and performance
+                      metrics.
                     </Text>
                     <Button
                       color="teal"
@@ -660,9 +666,7 @@ export const Analytics = () => {
                     <div className="flex items-center gap-2">
                       <IconClock size={18} className="text-yellow-400" />
                       <div className="flex-1">
-                        <Text className="text-white font-semibold">
-                          Not Contacted (5-9 days)
-                        </Text>
+                        <Text className="text-white font-semibold">Not Contacted (5-9 days)</Text>
                         <Text size="xs" className="text-gray-400">
                           {analytics.insights.notContacted5Days.length} customer
                           {analytics.insights.notContacted5Days.length !== 1 ? 's' : ''}
@@ -673,86 +677,95 @@ export const Analytics = () => {
                   <Accordion.Panel>
                     {analytics.insights.notContacted5Days.length > 0 ? (
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 max-h-96 overflow-y-auto mt-2">
-                      {analytics.insights.notContacted5Days.map((customer) => {
-                        const createdDate = new Date(customer.createdAt);
-                        const formattedCreated = createdDate.toLocaleDateString('en-GB', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        });
-                        const isSending = sendingCustomerId === customer.id;
-                        const phoneDisplay = formatPhone(customer.phone);
+                        {analytics.insights.notContacted5Days.map((customer) => {
+                          const createdDate = new Date(customer.createdAt);
+                          const formattedCreated = createdDate.toLocaleDateString('en-GB', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          });
+                          const isSending = sendingCustomerId === customer.id;
+                          const phoneDisplay = formatPhone(customer.phone);
 
-                        return (
-                          <Paper
-                            key={customer.id}
-                            shadow="sm"
-                            className="bg-[#141414] border border-[#2a2a2a] hover:border-[#333333] transition-colors"
-                            style={{ padding: '1rem' }}
-                          >
-                            <div className="flex justify-between items-start mb-2">
-                              <div className="flex-1">
-                                <div className="font-semibold text-lg text-white mb-1">
-                                  {customer.name}
+                          return (
+                            <Paper
+                              key={customer.id}
+                              shadow="sm"
+                              className="bg-[#141414] border border-[#2a2a2a] hover:border-[#333333] transition-colors"
+                              style={{ padding: '1rem' }}
+                            >
+                              <div className="flex justify-between items-start mb-2">
+                                <div className="flex-1">
+                                  <div className="font-semibold text-lg text-white mb-1">
+                                    {customer.name}
+                                  </div>
+                                  <div className="text-sm text-gray-400 font-medium flex items-center gap-1.5">
+                                    <span className="flex items-center justify-center text-base leading-none">
+                                      {phoneDisplay.flag}
+                                    </span>
+                                    <span>{phoneDisplay.number}</span>
+                                  </div>
+                                  {customer.createdAt && (
+                                    <div className="mt-0.5 text-sm text-gray-500">
+                                      Added: {formattedCreated}
+                                    </div>
+                                  )}
+                                  {customer.daysSinceContact !== null &&
+                                    customer.daysSinceContact !== undefined && (
+                                      <div className="mt-1 text-xs text-yellow-400">
+                                        {customer.daysSinceContact}d ago. No request sent.
+                                      </div>
+                                    )}
+                                  {customer.sms_status === 'scheduled' &&
+                                    customer.scheduled_send_at && (
+                                      <div className="mt-1 text-xs text-blue-400 flex items-center gap-1">
+                                        <IconClock size={12} />
+                                        SMS scheduled{' '}
+                                        {new Date(customer.scheduled_send_at).toLocaleString(
+                                          'en-GB',
+                                          {
+                                            day: 'numeric',
+                                            month: 'short',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                          }
+                                        )}
+                                      </div>
+                                    )}
                                 </div>
-                                <div className="text-sm text-gray-400 font-medium flex items-center gap-1.5">
-                                  <span className="flex items-center justify-center text-base leading-none">
-                                    {phoneDisplay.flag}
-                                  </span>
-                                  <span>{phoneDisplay.number}</span>
+                                <div className="flex flex-col items-end gap-1 ml-2">
+                                  {customer.lastContacted && (
+                                    <div
+                                      className="font-medium"
+                                      style={{ fontSize: '0.875rem', color: '#9ca3af' }}
+                                    >
+                                      {formatDate(customer.lastContacted)}
+                                    </div>
+                                  )}
                                 </div>
-                                {customer.createdAt && (
-                                  <div className="mt-0.5 text-sm text-gray-500">
-                                    Added: {formattedCreated}
-                                  </div>
-                                )}
-                                {customer.daysSinceContact !== null && customer.daysSinceContact !== undefined && (
-                                  <div className="mt-1 text-xs text-yellow-400">
-                                    {customer.daysSinceContact}d ago. No request sent.
-                                  </div>
-                                )}
-                                {customer.sms_status === 'scheduled' && customer.scheduled_send_at && (
-                                  <div className="mt-1 text-xs text-blue-400 flex items-center gap-1">
-                                    <IconClock size={12} />
-                                    SMS scheduled {new Date(customer.scheduled_send_at).toLocaleString('en-GB', {
-                                      day: 'numeric',
-                                      month: 'short',
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                    })}
-                                  </div>
-                                )}
                               </div>
-                              <div className="flex flex-col items-end gap-1 ml-2">
-                                {customer.lastContacted && (
-                                  <div className="font-medium" style={{ fontSize: '0.875rem', color: '#9ca3af' }}>
-                                    {formatDate(customer.lastContacted)}
-                                  </div>
-                                )}
+                              {customer.job_description && (
+                                <div className="text-sm text-gray-300 mb-4 p-4 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
+                                  {customer.job_description}
+                                </div>
+                              )}
+                              <div className="flex justify-end items-center pt-2 border-t border-[#2a2a2a]">
+                                <Button
+                                  size="xs"
+                                  variant="filled"
+                                  color="teal"
+                                  onClick={() => handleSendSMS(customer.id)}
+                                  loading={isSending}
+                                  disabled={isSending}
+                                  radius="md"
+                                  className="font-medium"
+                                >
+                                  {isSending ? 'Sending...' : 'Request Review'}
+                                </Button>
                               </div>
-                            </div>
-                            {customer.job_description && (
-                              <div className="text-sm text-gray-300 mb-4 p-4 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
-                                {customer.job_description}
-                              </div>
-                            )}
-                            <div className="flex justify-end items-center pt-2 border-t border-[#2a2a2a]">
-                              <Button
-                                size="xs"
-                                variant="filled"
-                                color="teal"
-                                onClick={() => handleSendSMS(customer.id)}
-                                loading={isSending}
-                                disabled={isSending}
-                                radius="md"
-                                className="font-medium"
-                              >
-                                {isSending ? 'Sending...' : 'Request Review'}
-                              </Button>
-                            </div>
-                          </Paper>
-                        );
-                      })}
+                            </Paper>
+                          );
+                        })}
                       </div>
                     ) : (
                       <Text size="sm" className="text-gray-400 text-center py-4">
@@ -768,9 +781,7 @@ export const Analytics = () => {
                     <div className="flex items-center gap-2">
                       <IconClock size={18} className="text-orange-400" />
                       <div className="flex-1">
-                        <Text className="text-white font-semibold">
-                          Not Contacted (10-29 days)
-                        </Text>
+                        <Text className="text-white font-semibold">Not Contacted (10-29 days)</Text>
                         <Text size="xs" className="text-gray-400">
                           {analytics.insights.notContacted10Days.length} customer
                           {analytics.insights.notContacted10Days.length !== 1 ? 's' : ''}
@@ -781,86 +792,95 @@ export const Analytics = () => {
                   <Accordion.Panel>
                     {analytics.insights.notContacted10Days.length > 0 ? (
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 max-h-96 overflow-y-auto mt-2">
-                      {analytics.insights.notContacted10Days.map((customer) => {
-                        const createdDate = new Date(customer.createdAt);
-                        const formattedCreated = createdDate.toLocaleDateString('en-GB', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        });
-                        const isSending = sendingCustomerId === customer.id;
-                        const phoneDisplay = formatPhone(customer.phone);
+                        {analytics.insights.notContacted10Days.map((customer) => {
+                          const createdDate = new Date(customer.createdAt);
+                          const formattedCreated = createdDate.toLocaleDateString('en-GB', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          });
+                          const isSending = sendingCustomerId === customer.id;
+                          const phoneDisplay = formatPhone(customer.phone);
 
-                        return (
-                          <Paper
-                            key={customer.id}
-                            shadow="sm"
-                            className="bg-[#141414] border border-[#2a2a2a] hover:border-[#333333] transition-colors"
-                            style={{ padding: '1rem' }}
-                          >
-                            <div className="flex justify-between items-start mb-2">
-                              <div className="flex-1">
-                                <div className="font-semibold text-lg text-white mb-1">
-                                  {customer.name}
+                          return (
+                            <Paper
+                              key={customer.id}
+                              shadow="sm"
+                              className="bg-[#141414] border border-[#2a2a2a] hover:border-[#333333] transition-colors"
+                              style={{ padding: '1rem' }}
+                            >
+                              <div className="flex justify-between items-start mb-2">
+                                <div className="flex-1">
+                                  <div className="font-semibold text-lg text-white mb-1">
+                                    {customer.name}
+                                  </div>
+                                  <div className="text-sm text-gray-400 font-medium flex items-center gap-1.5">
+                                    <span className="flex items-center justify-center text-base leading-none">
+                                      {phoneDisplay.flag}
+                                    </span>
+                                    <span>{phoneDisplay.number}</span>
+                                  </div>
+                                  {customer.createdAt && (
+                                    <div className="mt-0.5 text-sm text-gray-500">
+                                      Added: {formattedCreated}
+                                    </div>
+                                  )}
+                                  {customer.daysSinceContact !== null &&
+                                    customer.daysSinceContact !== undefined && (
+                                      <div className="mt-1 text-xs text-orange-400">
+                                        {customer.daysSinceContact}d ago. No request sent.
+                                      </div>
+                                    )}
+                                  {customer.sms_status === 'scheduled' &&
+                                    customer.scheduled_send_at && (
+                                      <div className="mt-1 text-xs text-blue-400 flex items-center gap-1">
+                                        <IconClock size={12} />
+                                        SMS scheduled{' '}
+                                        {new Date(customer.scheduled_send_at).toLocaleString(
+                                          'en-GB',
+                                          {
+                                            day: 'numeric',
+                                            month: 'short',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                          }
+                                        )}
+                                      </div>
+                                    )}
                                 </div>
-                                <div className="text-sm text-gray-400 font-medium flex items-center gap-1.5">
-                                  <span className="flex items-center justify-center text-base leading-none">
-                                    {phoneDisplay.flag}
-                                  </span>
-                                  <span>{phoneDisplay.number}</span>
+                                <div className="flex flex-col items-end gap-1 ml-2">
+                                  {customer.lastContacted && (
+                                    <div
+                                      className="font-medium"
+                                      style={{ fontSize: '0.875rem', color: '#9ca3af' }}
+                                    >
+                                      {formatDate(customer.lastContacted)}
+                                    </div>
+                                  )}
                                 </div>
-                                {customer.createdAt && (
-                                  <div className="mt-0.5 text-sm text-gray-500">
-                                    Added: {formattedCreated}
-                                  </div>
-                                )}
-                                {customer.daysSinceContact !== null && customer.daysSinceContact !== undefined && (
-                                  <div className="mt-1 text-xs text-orange-400">
-                                    {customer.daysSinceContact}d ago. No request sent.
-                                  </div>
-                                )}
-                                {customer.sms_status === 'scheduled' && customer.scheduled_send_at && (
-                                  <div className="mt-1 text-xs text-blue-400 flex items-center gap-1">
-                                    <IconClock size={12} />
-                                    SMS scheduled {new Date(customer.scheduled_send_at).toLocaleString('en-GB', {
-                                      day: 'numeric',
-                                      month: 'short',
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                    })}
-                                  </div>
-                                )}
                               </div>
-                              <div className="flex flex-col items-end gap-1 ml-2">
-                                {customer.lastContacted && (
-                                  <div className="font-medium" style={{ fontSize: '0.875rem', color: '#9ca3af' }}>
-                                    {formatDate(customer.lastContacted)}
-                                  </div>
-                                )}
+                              {customer.job_description && (
+                                <div className="text-sm text-gray-300 mb-4 p-4 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
+                                  {customer.job_description}
+                                </div>
+                              )}
+                              <div className="flex justify-end items-center pt-2 border-t border-[#2a2a2a]">
+                                <Button
+                                  size="xs"
+                                  variant="filled"
+                                  color="teal"
+                                  onClick={() => handleSendSMS(customer.id)}
+                                  loading={isSending}
+                                  disabled={isSending}
+                                  radius="md"
+                                  className="font-medium"
+                                >
+                                  {isSending ? 'Sending...' : 'Request Review'}
+                                </Button>
                               </div>
-                            </div>
-                            {customer.job_description && (
-                              <div className="text-sm text-gray-300 mb-4 p-4 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
-                                {customer.job_description}
-                              </div>
-                            )}
-                            <div className="flex justify-end items-center pt-2 border-t border-[#2a2a2a]">
-                              <Button
-                                size="xs"
-                                variant="filled"
-                                color="teal"
-                                onClick={() => handleSendSMS(customer.id)}
-                                loading={isSending}
-                                disabled={isSending}
-                                radius="md"
-                                className="font-medium"
-                              >
-                                {isSending ? 'Sending...' : 'Request Review'}
-                              </Button>
-                            </div>
-                          </Paper>
-                        );
-                      })}
+                            </Paper>
+                          );
+                        })}
                       </div>
                     ) : (
                       <Text size="sm" className="text-gray-400 text-center py-4">
@@ -876,9 +896,7 @@ export const Analytics = () => {
                     <div className="flex items-center gap-2">
                       <IconClock size={18} className="text-red-400" />
                       <div className="flex-1">
-                        <Text className="text-white font-semibold">
-                          Not Contacted (30+ days)
-                        </Text>
+                        <Text className="text-white font-semibold">Not Contacted (30+ days)</Text>
                         <Text size="xs" className="text-gray-400">
                           {analytics.insights.notContacted30Days.length} customer
                           {analytics.insights.notContacted30Days.length !== 1 ? 's' : ''}
@@ -889,86 +907,95 @@ export const Analytics = () => {
                   <Accordion.Panel>
                     {analytics.insights.notContacted30Days.length > 0 ? (
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 max-h-96 overflow-y-auto mt-2">
-                      {analytics.insights.notContacted30Days.map((customer) => {
-                        const createdDate = new Date(customer.createdAt);
-                        const formattedCreated = createdDate.toLocaleDateString('en-GB', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        });
-                        const isSending = sendingCustomerId === customer.id;
-                        const phoneDisplay = formatPhone(customer.phone);
+                        {analytics.insights.notContacted30Days.map((customer) => {
+                          const createdDate = new Date(customer.createdAt);
+                          const formattedCreated = createdDate.toLocaleDateString('en-GB', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          });
+                          const isSending = sendingCustomerId === customer.id;
+                          const phoneDisplay = formatPhone(customer.phone);
 
-                        return (
-                          <Paper
-                            key={customer.id}
-                            shadow="sm"
-                            className="bg-[#141414] border border-[#2a2a2a] hover:border-[#333333] transition-colors"
-                            style={{ padding: '1rem' }}
-                          >
-                            <div className="flex justify-between items-start mb-2">
-                              <div className="flex-1">
-                                <div className="font-semibold text-lg text-white mb-1">
-                                  {customer.name}
+                          return (
+                            <Paper
+                              key={customer.id}
+                              shadow="sm"
+                              className="bg-[#141414] border border-[#2a2a2a] hover:border-[#333333] transition-colors"
+                              style={{ padding: '1rem' }}
+                            >
+                              <div className="flex justify-between items-start mb-2">
+                                <div className="flex-1">
+                                  <div className="font-semibold text-lg text-white mb-1">
+                                    {customer.name}
+                                  </div>
+                                  <div className="text-sm text-gray-400 font-medium flex items-center gap-1.5">
+                                    <span className="flex items-center justify-center text-base leading-none">
+                                      {phoneDisplay.flag}
+                                    </span>
+                                    <span>{phoneDisplay.number}</span>
+                                  </div>
+                                  {customer.createdAt && (
+                                    <div className="mt-0.5 text-sm text-gray-500">
+                                      Added: {formattedCreated}
+                                    </div>
+                                  )}
+                                  {customer.daysSinceContact !== null &&
+                                    customer.daysSinceContact !== undefined && (
+                                      <div className="mt-1 text-xs text-red-400">
+                                        {customer.daysSinceContact}d ago. No request sent.
+                                      </div>
+                                    )}
+                                  {customer.sms_status === 'scheduled' &&
+                                    customer.scheduled_send_at && (
+                                      <div className="mt-1 text-xs text-blue-400 flex items-center gap-1">
+                                        <IconClock size={12} />
+                                        SMS scheduled{' '}
+                                        {new Date(customer.scheduled_send_at).toLocaleString(
+                                          'en-GB',
+                                          {
+                                            day: 'numeric',
+                                            month: 'short',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                          }
+                                        )}
+                                      </div>
+                                    )}
                                 </div>
-                                <div className="text-sm text-gray-400 font-medium flex items-center gap-1.5">
-                                  <span className="flex items-center justify-center text-base leading-none">
-                                    {phoneDisplay.flag}
-                                  </span>
-                                  <span>{phoneDisplay.number}</span>
+                                <div className="flex flex-col items-end gap-1 ml-2">
+                                  {customer.lastContacted && (
+                                    <div
+                                      className="font-medium"
+                                      style={{ fontSize: '0.875rem', color: '#9ca3af' }}
+                                    >
+                                      {formatDate(customer.lastContacted)}
+                                    </div>
+                                  )}
                                 </div>
-                                {customer.createdAt && (
-                                  <div className="mt-0.5 text-sm text-gray-500">
-                                    Added: {formattedCreated}
-                                  </div>
-                                )}
-                                {customer.daysSinceContact !== null && customer.daysSinceContact !== undefined && (
-                                  <div className="mt-1 text-xs text-red-400">
-                                    {customer.daysSinceContact}d ago. No request sent.
-                                  </div>
-                                )}
-                                {customer.sms_status === 'scheduled' && customer.scheduled_send_at && (
-                                  <div className="mt-1 text-xs text-blue-400 flex items-center gap-1">
-                                    <IconClock size={12} />
-                                    SMS scheduled {new Date(customer.scheduled_send_at).toLocaleString('en-GB', {
-                                      day: 'numeric',
-                                      month: 'short',
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                    })}
-                                  </div>
-                                )}
                               </div>
-                              <div className="flex flex-col items-end gap-1 ml-2">
-                                {customer.lastContacted && (
-                                  <div className="font-medium" style={{ fontSize: '0.875rem', color: '#9ca3af' }}>
-                                    {formatDate(customer.lastContacted)}
-                                  </div>
-                                )}
+                              {customer.job_description && (
+                                <div className="text-sm text-gray-300 mb-4 p-4 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
+                                  {customer.job_description}
+                                </div>
+                              )}
+                              <div className="flex justify-end items-center pt-2 border-t border-[#2a2a2a]">
+                                <Button
+                                  size="xs"
+                                  variant="filled"
+                                  color="teal"
+                                  onClick={() => handleSendSMS(customer.id)}
+                                  loading={isSending}
+                                  disabled={isSending}
+                                  radius="md"
+                                  className="font-medium"
+                                >
+                                  {isSending ? 'Sending...' : 'Request Review'}
+                                </Button>
                               </div>
-                            </div>
-                            {customer.job_description && (
-                              <div className="text-sm text-gray-300 mb-4 p-4 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a]">
-                                {customer.job_description}
-                              </div>
-                            )}
-                            <div className="flex justify-end items-center pt-2 border-t border-[#2a2a2a]">
-                              <Button
-                                size="xs"
-                                variant="filled"
-                                color="teal"
-                                onClick={() => handleSendSMS(customer.id)}
-                                loading={isSending}
-                                disabled={isSending}
-                                radius="md"
-                                className="font-medium"
-                              >
-                                {isSending ? 'Sending...' : 'Request Review'}
-                              </Button>
-                            </div>
-                          </Paper>
-                        );
-                      })}
+                            </Paper>
+                          );
+                        })}
                       </div>
                     ) : (
                       <Text size="sm" className="text-gray-400 text-center py-4">
@@ -984,12 +1011,11 @@ export const Analytics = () => {
                     <div className="flex items-center gap-2">
                       <IconAlertTriangle size={18} className="text-orange-400" />
                       <div className="flex-1">
-                        <Text className="text-white font-semibold">
-                          Approaching Message Limit
-                        </Text>
+                        <Text className="text-white font-semibold">Approaching Message Limit</Text>
                         <Text size="xs" className="text-gray-400">
                           {analytics.insights.approachingLimit.length} customer
-                          {analytics.insights.approachingLimit.length !== 1 ? 's' : ''} have 2/3 messages
+                          {analytics.insights.approachingLimit.length !== 1 ? 's' : ''} have 2/3
+                          messages
                         </Text>
                       </div>
                     </div>
@@ -997,53 +1023,53 @@ export const Analytics = () => {
                   <Accordion.Panel>
                     {analytics.insights.approachingLimit.length > 0 ? (
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 max-h-96 overflow-y-auto mt-2">
-                      {analytics.insights.approachingLimit.map((customer) => {
-                        const createdDate = new Date(customer.createdAt);
-                        const formattedCreated = createdDate.toLocaleDateString('en-GB', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        });
-                        const phoneDisplay = formatPhone(customer.phone);
-                        
-                        return (
-                          <Paper
-                            key={customer.id}
-                            shadow="sm"
-                            className="bg-[#141414] border border-[#2a2a2a] hover:border-[#333333] transition-colors"
-                            style={{ padding: '1rem' }}
-                          >
-                            <div className="flex justify-between items-start mb-2">
-                              <div className="flex-1">
-                                <div className="font-semibold text-lg text-white mb-1">
-                                  {customer.name}
-                                </div>
-                                <div className="text-sm text-gray-400 font-medium flex items-center gap-1.5">
-                                  <span className="flex items-center justify-center text-base leading-none">
-                                    {phoneDisplay.flag}
-                                  </span>
-                                  <span>{phoneDisplay.number}</span>
-                                </div>
-                                {customer.createdAt && (
-                                  <div className="mt-0.5 text-sm text-gray-500">
-                                    Added: {formattedCreated}
+                        {analytics.insights.approachingLimit.map((customer) => {
+                          const createdDate = new Date(customer.createdAt);
+                          const formattedCreated = createdDate.toLocaleDateString('en-GB', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          });
+                          const phoneDisplay = formatPhone(customer.phone);
+
+                          return (
+                            <Paper
+                              key={customer.id}
+                              shadow="sm"
+                              className="bg-[#141414] border border-[#2a2a2a] hover:border-[#333333] transition-colors"
+                              style={{ padding: '1rem' }}
+                            >
+                              <div className="flex justify-between items-start mb-2">
+                                <div className="flex-1">
+                                  <div className="font-semibold text-lg text-white mb-1">
+                                    {customer.name}
                                   </div>
-                                )}
+                                  <div className="text-sm text-gray-400 font-medium flex items-center gap-1.5">
+                                    <span className="flex items-center justify-center text-base leading-none">
+                                      {phoneDisplay.flag}
+                                    </span>
+                                    <span>{phoneDisplay.number}</span>
+                                  </div>
+                                  {customer.createdAt && (
+                                    <div className="mt-0.5 text-sm text-gray-500">
+                                      Added: {formattedCreated}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex flex-col items-end gap-1.5 ml-2">
+                                  <Badge color="orange" size="sm" radius="md">
+                                    {customer.messageCount}/3
+                                  </Badge>
+                                </div>
                               </div>
-                              <div className="flex flex-col items-end gap-1.5 ml-2">
-                                <Badge color="orange" size="sm" radius="md">
-                                  {customer.messageCount}/3
-                                </Badge>
-                              </div>
-                            </div>
-                            {customer.job_description && (
-                              <div className="text-sm text-gray-300 p-4 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a] mb-4">
-                                {customer.job_description}
-                              </div>
-                            )}
-                          </Paper>
-                        );
-                      })}
+                              {customer.job_description && (
+                                <div className="text-sm text-gray-300 p-4 bg-[#2a2a2a]/50 rounded-lg border border-[#2a2a2a] mb-4">
+                                  {customer.job_description}
+                                </div>
+                              )}
+                            </Paper>
+                          );
+                        })}
                       </div>
                     ) : (
                       <Text size="sm" className="text-gray-400 text-center py-4">
@@ -1100,31 +1126,171 @@ export const Analytics = () => {
                       </div>
                     </Accordion.Control>
                     <Accordion.Panel>
-
-                    {/* Customer details - blurred for Pro, visible for Business */}
-                    {analytics.tier === 'pro' && stat.count > 0 && (
-                      <div className="mt-4 pt-4 border-t border-[#3a3a3a] relative">
-                        <div className="blur-sm pointer-events-none select-none">
+                      {/* Customer details - blurred for Pro, visible for Business */}
+                      {analytics.tier === 'pro' && stat.count > 0 && (
+                        <div className="mt-4 pt-4 border-t border-[#3a3a3a] relative">
+                          <div className="blur-sm pointer-events-none select-none">
+                            <Text size="sm" className="text-gray-400 mb-2 font-medium">
+                              Customer Details ({stat.count})
+                            </Text>
+                            {/* Mobile: Compact Accordion */}
+                            <div className="block md:hidden">
+                              <Accordion
+                                key={`pro-accordion-${stat.month}-${stat.year}`}
+                                multiple
+                                variant="separated"
+                                radius="sm"
+                                value={expandedItems[`pro-${stat.month}-${stat.year}`] || []}
+                                onChange={(value) =>
+                                  setExpandedItems((prev) => ({
+                                    ...prev,
+                                    [`pro-${stat.month}-${stat.year}`]: value,
+                                  }))
+                                }
+                                classNames={{
+                                  item: 'bg-[#1a1a1a] border-[#3a3a3a]',
+                                  control: 'py-3 px-4 hover:bg-[#2a2a2a]',
+                                  label: 'text-white text-sm font-medium',
+                                  content: 'text-gray-300 text-sm p-4',
+                                  chevron: 'text-teal-400',
+                                }}
+                                styles={{
+                                  label: {
+                                    paddingTop: 0,
+                                    paddingBottom: 0,
+                                  },
+                                  control: {
+                                    paddingTop: '0.75rem',
+                                    paddingBottom: '0.75rem',
+                                  },
+                                  item: {
+                                    marginTop: '0.25rem',
+                                    marginBottom: 0,
+                                  },
+                                }}
+                              >
+                                {[...Array(Math.min(stat.count, 3))].map((_, idx) => (
+                                  <Accordion.Item
+                                    key={idx}
+                                    value={`${stat.month}-${stat.year}-${idx}`}
+                                  >
+                                    <Accordion.Control>
+                                      <div className="flex items-center justify-between w-full pr-2">
+                                        <Text size="sm" className="text-white font-medium">
+                                          John Smith
+                                        </Text>
+                                        <Text size="sm" className="text-gray-400">
+                                          {new Date().toLocaleDateString('en-GB', {
+                                            day: 'numeric',
+                                            month: 'short',
+                                          })}
+                                        </Text>
+                                      </div>
+                                    </Accordion.Control>
+                                    <Accordion.Panel>
+                                      <div className="space-y-2">
+                                        <div className="flex justify-between">
+                                          <Text size="sm" className="text-gray-400">
+                                            Phone:
+                                          </Text>
+                                          <Text size="sm" className="text-gray-200 font-medium">
+                                            07780586444
+                                          </Text>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <Text size="sm" className="text-gray-400">
+                                            Job:
+                                          </Text>
+                                          <Text size="sm" className="text-gray-200">
+                                            Kitchen renovation
+                                          </Text>
+                                        </div>
+                                      </div>
+                                    </Accordion.Panel>
+                                  </Accordion.Item>
+                                ))}
+                              </Accordion>
+                            </div>
+                            {/* Desktop: Compact Table */}
+                            <div className="hidden md:block">
+                              <div className="overflow-x-auto">
+                                <Table verticalSpacing="xs">
+                                  <Table.Thead>
+                                    <Table.Tr>
+                                      <Table.Th className="text-gray-400 text-xs">
+                                        Customer
+                                      </Table.Th>
+                                      <Table.Th className="text-gray-400 text-xs">Job</Table.Th>
+                                      <Table.Th className="text-gray-400 text-xs">Phone</Table.Th>
+                                      <Table.Th className="text-gray-400 text-xs">Sent</Table.Th>
+                                    </Table.Tr>
+                                  </Table.Thead>
+                                  <Table.Tbody>
+                                    {[...Array(Math.min(stat.count, 3))].map((_, idx) => (
+                                      <Table.Tr key={idx}>
+                                        <Table.Td className="text-white text-sm">
+                                          John Smith
+                                        </Table.Td>
+                                        <Table.Td className="text-gray-300 text-sm">
+                                          Kitchen renovation
+                                        </Table.Td>
+                                        <Table.Td className="text-gray-300 text-sm">
+                                          07780586444
+                                        </Table.Td>
+                                        <Table.Td className="text-gray-400 text-xs">
+                                          {new Date().toLocaleDateString('en-GB', {
+                                            day: 'numeric',
+                                            month: 'short',
+                                            year: 'numeric',
+                                          })}
+                                        </Table.Td>
+                                      </Table.Tr>
+                                    ))}
+                                  </Table.Tbody>
+                                </Table>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <Paper
+                              p="md"
+                              className="bg-[#1a1a1a]/95 border-2 border-teal-500/50 rounded-lg"
+                            >
+                              <Stack gap="sm" align="center">
+                                <IconChartBar size={32} className="text-teal-400" />
+                                <Text size="sm" className="text-white font-semibold text-center">
+                                  Upgrade to Business to see customer details
+                                </Text>
+                                <Button color="teal" size="sm" onClick={() => navigate('/billing')}>
+                                  Upgrade to Business
+                                </Button>
+                              </Stack>
+                            </Paper>
+                          </div>
+                        </div>
+                      )}
+                      {isBusiness && stat.customers && stat.customers.length > 0 && (
+                        <div className="mt-4 pt-4 border-t border-[#3a3a3a]">
                           <Text size="sm" className="text-gray-400 mb-2 font-medium">
-                            Customer Details ({stat.count})
+                            Customer Details ({stat.customers.length})
                           </Text>
                           {/* Mobile: Compact Accordion */}
                           <div className="block md:hidden">
                             <Accordion
-                              key={`pro-accordion-${stat.month}-${stat.year}`}
+                              key={`business-accordion-${stat.month}-${stat.year}`}
                               multiple
                               variant="separated"
                               radius="sm"
-                              value={expandedItems[`pro-${stat.month}-${stat.year}`] || []}
+                              value={expandedItems[`business-${stat.month}-${stat.year}`] || []}
                               onChange={(value) =>
                                 setExpandedItems((prev) => ({
                                   ...prev,
-                                  [`pro-${stat.month}-${stat.year}`]: value,
+                                  [`business-${stat.month}-${stat.year}`]: value,
                                 }))
                               }
                               classNames={{
                                 item: 'bg-[#1a1a1a] border-[#3a3a3a]',
-                                control: 'py-3 px-4 hover:bg-[#2a2a2a]',
+                                control: 'py-0 px-1 hover:bg-[#2a2a2a]',
                                 label: 'text-white text-sm font-medium',
                                 content: 'text-gray-300 text-sm p-4',
                                 chevron: 'text-teal-400',
@@ -1135,8 +1301,8 @@ export const Analytics = () => {
                                   paddingBottom: 0,
                                 },
                                 control: {
-                                  paddingTop: '0.75rem',
-                                  paddingBottom: '0.75rem',
+                                  paddingTop: '0.125rem',
+                                  paddingBottom: '0.125rem',
                                 },
                                 item: {
                                   marginTop: '0.25rem',
@@ -1144,15 +1310,18 @@ export const Analytics = () => {
                                 },
                               }}
                             >
-                              {[...Array(Math.min(stat.count, 3))].map((_, idx) => (
-                                <Accordion.Item key={idx} value={`${stat.month}-${stat.year}-${idx}`}>
+                              {stat.customers.map((customer, idx) => (
+                                <Accordion.Item
+                                  key={`${customer.id}-${customer.sent_at}`}
+                                  value={`${stat.month}-${stat.year}-${customer.id}-${idx}`}
+                                >
                                   <Accordion.Control>
                                     <div className="flex items-center justify-between w-full pr-2">
                                       <Text size="sm" className="text-white font-medium">
-                                        John Smith
+                                        {customer.name}
                                       </Text>
                                       <Text size="sm" className="text-gray-400">
-                                        {new Date().toLocaleDateString('en-GB', {
+                                        {new Date(customer.sent_at).toLocaleDateString('en-GB', {
                                           day: 'numeric',
                                           month: 'short',
                                         })}
@@ -1166,16 +1335,36 @@ export const Analytics = () => {
                                           Phone:
                                         </Text>
                                         <Text size="sm" className="text-gray-200 font-medium">
-                                          07780586444
+                                          {customer.phone}
                                         </Text>
                                       </div>
+                                      {customer.job_description && (
+                                        <div className="flex justify-between">
+                                          <Text size="sm" className="text-gray-400">
+                                            Job:
+                                          </Text>
+                                          <Text
+                                            size="sm"
+                                            className="text-gray-200 text-right max-w-[60%]"
+                                          >
+                                            {customer.job_description}
+                                          </Text>
+                                        </div>
+                                      )}
                                       <div className="flex justify-between">
                                         <Text size="sm" className="text-gray-400">
-                                          Job:
+                                          Sent:
                                         </Text>
-                                        <Text size="sm" className="text-gray-200">
-                                          Kitchen renovation
-                                        </Text>
+                                        <div className="flex items-center gap-1.5">
+                                          <Text size="sm" className="text-gray-300">
+                                            {formatDate(customer.sent_at)}
+                                          </Text>
+                                          {customer.was_scheduled && (
+                                            <MantineTooltip label="Sent via scheduled automation">
+                                              <IconClock size={14} className="text-blue-400" />
+                                            </MantineTooltip>
+                                          )}
+                                        </div>
                                       </div>
                                     </div>
                                   </Accordion.Panel>
@@ -1196,21 +1385,26 @@ export const Analytics = () => {
                                   </Table.Tr>
                                 </Table.Thead>
                                 <Table.Tbody>
-                                  {[...Array(Math.min(stat.count, 3))].map((_, idx) => (
-                                    <Table.Tr key={idx}>
-                                      <Table.Td className="text-white text-sm">John Smith</Table.Td>
-                                      <Table.Td className="text-gray-300 text-sm">
-                                        Kitchen renovation
+                                  {stat.customers.map((customer) => (
+                                    <Table.Tr key={`${customer.id}-${customer.sent_at}`}>
+                                      <Table.Td className="text-white text-sm">
+                                        {customer.name}
                                       </Table.Td>
                                       <Table.Td className="text-gray-300 text-sm">
-                                        07780586444
+                                        {customer.job_description || '-'}
+                                      </Table.Td>
+                                      <Table.Td className="text-gray-300 text-sm">
+                                        {customer.phone}
                                       </Table.Td>
                                       <Table.Td className="text-gray-400 text-xs">
-                                        {new Date().toLocaleDateString('en-GB', {
-                                          day: 'numeric',
-                                          month: 'short',
-                                          year: 'numeric',
-                                        })}
+                                        <div className="flex items-center gap-1.5">
+                                          {formatDate(customer.sent_at)}
+                                          {customer.was_scheduled && (
+                                            <MantineTooltip label="Sent via scheduled automation">
+                                              <IconClock size={14} className="text-blue-400" />
+                                            </MantineTooltip>
+                                          )}
+                                        </div>
                                       </Table.Td>
                                     </Table.Tr>
                                   ))}
@@ -1219,152 +1413,7 @@ export const Analytics = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <Paper
-                            p="md"
-                            className="bg-[#1a1a1a]/95 border-2 border-teal-500/50 rounded-lg"
-                          >
-                            <Stack gap="sm" align="center">
-                              <IconChartBar size={32} className="text-teal-400" />
-                              <Text size="sm" className="text-white font-semibold text-center">
-                                Upgrade to Business to see customer details
-                              </Text>
-                              <Button color="teal" size="sm" onClick={() => navigate('/billing')}>
-                                Upgrade to Business
-                              </Button>
-                            </Stack>
-                          </Paper>
-                        </div>
-                      </div>
-                    )}
-                    {isBusiness && stat.customers && stat.customers.length > 0 && (
-                      <div className="mt-4 pt-4 border-t border-[#3a3a3a]">
-                        <Text size="sm" className="text-gray-400 mb-2 font-medium">
-                          Customer Details ({stat.customers.length})
-                        </Text>
-                        {/* Mobile: Compact Accordion */}
-                        <div className="block md:hidden">
-                          <Accordion
-                            key={`business-accordion-${stat.month}-${stat.year}`}
-                            multiple
-                            variant="separated"
-                            radius="sm"
-                            value={expandedItems[`business-${stat.month}-${stat.year}`] || []}
-                            onChange={(value) =>
-                              setExpandedItems((prev) => ({
-                                ...prev,
-                                [`business-${stat.month}-${stat.year}`]: value,
-                              }))
-                            }
-                            classNames={{
-                              item: 'bg-[#1a1a1a] border-[#3a3a3a]',
-                              control: 'py-0 px-1 hover:bg-[#2a2a2a]',
-                              label: 'text-white text-sm font-medium',
-                              content: 'text-gray-300 text-sm p-4',
-                              chevron: 'text-teal-400',
-                            }}
-                            styles={{
-                              label: {
-                                paddingTop: 0,
-                                paddingBottom: 0,
-                              },
-                              control: {
-                                paddingTop: '0.125rem',
-                                paddingBottom: '0.125rem',
-                              },
-                              item: {
-                                marginTop: '0.25rem',
-                                marginBottom: 0,
-                              },
-                            }}
-                          >
-                            {stat.customers.map((customer, idx) => (
-                              <Accordion.Item
-                                key={`${customer.id}-${customer.sent_at}`}
-                                value={`${stat.month}-${stat.year}-${customer.id}-${idx}`}
-                              >
-                                <Accordion.Control>
-                                  <div className="flex items-center justify-between w-full pr-2">
-                                    <Text size="sm" className="text-white font-medium">
-                                      {customer.name}
-                                    </Text>
-                                    <Text size="sm" className="text-gray-400">
-                                      {new Date(customer.sent_at).toLocaleDateString('en-GB', {
-                                        day: 'numeric',
-                                        month: 'short',
-                                      })}
-                                    </Text>
-                                  </div>
-                                </Accordion.Control>
-                                <Accordion.Panel>
-                                  <div className="space-y-2">
-                                    <div className="flex justify-between">
-                                      <Text size="sm" className="text-gray-400">
-                                        Phone:
-                                      </Text>
-                                      <Text size="sm" className="text-gray-200 font-medium">
-                                        {customer.phone}
-                                      </Text>
-                                    </div>
-                                    {customer.job_description && (
-                                      <div className="flex justify-between">
-                                        <Text size="sm" className="text-gray-400">
-                                          Job:
-                                        </Text>
-                                        <Text size="sm" className="text-gray-200 text-right max-w-[60%]">
-                                          {customer.job_description}
-                                        </Text>
-                                      </div>
-                                    )}
-                                    <div className="flex justify-between">
-                                      <Text size="sm" className="text-gray-400">
-                                        Sent:
-                                      </Text>
-                                      <Text size="sm" className="text-gray-300">
-                                        {formatDate(customer.sent_at)}
-                                      </Text>
-                                    </div>
-                                  </div>
-                                </Accordion.Panel>
-                              </Accordion.Item>
-                            ))}
-                          </Accordion>
-                        </div>
-                        {/* Desktop: Compact Table */}
-                        <div className="hidden md:block">
-                          <div className="overflow-x-auto">
-                            <Table verticalSpacing="xs">
-                              <Table.Thead>
-                                <Table.Tr>
-                                  <Table.Th className="text-gray-400 text-xs">Customer</Table.Th>
-                                  <Table.Th className="text-gray-400 text-xs">Job</Table.Th>
-                                  <Table.Th className="text-gray-400 text-xs">Phone</Table.Th>
-                                  <Table.Th className="text-gray-400 text-xs">Sent</Table.Th>
-                                </Table.Tr>
-                              </Table.Thead>
-                              <Table.Tbody>
-                                {stat.customers.map((customer) => (
-                                  <Table.Tr key={`${customer.id}-${customer.sent_at}`}>
-                                    <Table.Td className="text-white text-sm">
-                                      {customer.name}
-                                    </Table.Td>
-                                    <Table.Td className="text-gray-300 text-sm">
-                                      {customer.job_description || '-'}
-                                    </Table.Td>
-                                    <Table.Td className="text-gray-300 text-sm">
-                                      {customer.phone}
-                                    </Table.Td>
-                                    <Table.Td className="text-gray-400 text-xs">
-                                      {formatDate(customer.sent_at)}
-                                    </Table.Td>
-                                  </Table.Tr>
-                                ))}
-                              </Table.Tbody>
-                            </Table>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                      )}
                     </Accordion.Panel>
                   </Accordion.Item>
                 ))}

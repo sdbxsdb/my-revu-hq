@@ -67,6 +67,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           phone: string;
           job_description: string | null;
           sent_at: string;
+          was_scheduled?: boolean;
         }>;
       }
     > = {};
@@ -124,6 +125,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             phone: customer.phone,
             job_description: customer.job_description,
             sent_at: message.sent_at,
+            was_scheduled: message.was_scheduled,
           });
         }
       });
