@@ -325,8 +325,7 @@ export const Analytics = () => {
                       Analytics
                     </Title>
                     <Text size="sm" className="text-gray-300 text-center max-w-md">
-                      See detailed insights about your SMS campaigns, including monthly trends,
-                      customer engagement, and performance metrics.
+                      See detailed insights about your SMS campaigns, schedule review requests for future dates, and track monthly trends, customer engagement, and performance metrics.
                     </Text>
                     <Button
                       color="teal"
@@ -706,6 +705,17 @@ export const Analytics = () => {
                                     {customer.daysSinceContact}d ago. No request sent.
                                   </div>
                                 )}
+                                {customer.sms_status === 'scheduled' && customer.scheduled_send_at && (
+                                  <div className="mt-1 text-xs text-blue-400 flex items-center gap-1">
+                                    <IconClock size={12} />
+                                    Scheduled: {new Date(customer.scheduled_send_at).toLocaleString('en-GB', {
+                                      day: 'numeric',
+                                      month: 'short',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
+                                  </div>
+                                )}
                               </div>
                               <div className="flex flex-col items-end gap-1 ml-2">
                                 {customer.lastContacted && (
@@ -803,6 +813,17 @@ export const Analytics = () => {
                                     {customer.daysSinceContact}d ago. No request sent.
                                   </div>
                                 )}
+                                {customer.sms_status === 'scheduled' && customer.scheduled_send_at && (
+                                  <div className="mt-1 text-xs text-blue-400 flex items-center gap-1">
+                                    <IconClock size={12} />
+                                    Scheduled: {new Date(customer.scheduled_send_at).toLocaleString('en-GB', {
+                                      day: 'numeric',
+                                      month: 'short',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
+                                  </div>
+                                )}
                               </div>
                               <div className="flex flex-col items-end gap-1 ml-2">
                                 {customer.lastContacted && (
@@ -898,6 +919,17 @@ export const Analytics = () => {
                                 {customer.daysSinceContact !== null && customer.daysSinceContact !== undefined && (
                                   <div className="mt-1 text-xs text-red-400">
                                     {customer.daysSinceContact}d ago. No request sent.
+                                  </div>
+                                )}
+                                {customer.sms_status === 'scheduled' && customer.scheduled_send_at && (
+                                  <div className="mt-1 text-xs text-blue-400 flex items-center gap-1">
+                                    <IconClock size={12} />
+                                    Scheduled: {new Date(customer.scheduled_send_at).toLocaleString('en-GB', {
+                                      day: 'numeric',
+                                      month: 'short',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
                                   </div>
                                 )}
                               </div>

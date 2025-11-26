@@ -97,12 +97,9 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
       setAccount(accountData);
       
       // Store subscription tier
-      console.log('AccountContext: Fetched subscription data:', subscriptionData);
       if (subscriptionData?.subscriptionTier) {
-        console.log('AccountContext: Setting subscriptionTier to:', subscriptionData.subscriptionTier);
         setSubscriptionTier(subscriptionData.subscriptionTier as PricingTier);
       } else {
-        console.log('AccountContext: No subscriptionTier found, setting to null');
         setSubscriptionTier(null);
       }
       

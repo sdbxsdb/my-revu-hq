@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useForm } from '@mantine/form';
 import { useNavigate, Link } from 'react-router-dom';
 import {
@@ -23,7 +23,7 @@ import { validatePhoneNumber, formatPhoneNumberForApi } from '@/lib/phone-valida
 import { usePayment } from '@/contexts/PaymentContext';
 import { useAccount } from '@/contexts/AccountContext';
 import { AccountErrorAlert } from '@/components/AccountErrorAlert';
-import { IconAlertCircle, IconClock } from '@tabler/icons-react';
+import { IconAlertCircle, IconClock, IconSparkles } from '@tabler/icons-react';
 
 export const AddCustomer = () => {
   const { hasPaid, loading: paymentLoading } = usePayment();
@@ -35,17 +35,11 @@ export const AddCustomer = () => {
   const countryRef = useRef<CountryCode | undefined>('GB');
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [scheduledDateTime, setScheduledDateTime] = useState<Date | null>(null);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const navigate = useNavigate();
-
-  // Debug: Log when scheduleModalOpen changes
-  useEffect(() => {
-    console.log('📝 scheduleModalOpen changed to:', scheduleModalOpen);
-  }, [scheduleModalOpen]);
 
   // Check if user has Pro or Business tier
   const canSchedule = subscriptionTier === 'pro' || subscriptionTier === 'business';
-  
-  console.log('AddCustomer: subscriptionTier from context:', subscriptionTier, 'canSchedule:', canSchedule);
 
   // TODO: When account has a region/country field, use it here
   // For now, default to GB (no need to fetch account just for this)
@@ -142,12 +136,9 @@ export const AddCustomer = () => {
   };
 
   const handleRequestLaterClick = () => {
-    console.log('🔵 handleRequestLaterClick called', { canSchedule, subscriptionTier, scheduleModalOpen });
-    
     // Validate form first
     const validation = form.validate();
     if (validation.hasErrors) {
-      console.log('❌ Form validation failed:', validation.errors);
       // Scroll to first error
       const firstErrorField = Object.keys(validation.errors)[0];
       const errorElement = document.querySelector(`[name="${firstErrorField}"]`);
@@ -159,13 +150,10 @@ export const AddCustomer = () => {
 
     // If user can schedule, show the modal
     if (canSchedule) {
-      console.log('✅ Opening schedule modal, setting scheduleModalOpen to true');
       setScheduleModalOpen(true);
-      console.log('✅ After setState, scheduleModalOpen should be true');
     } else {
-      console.log('⚠️ Free tier - saving without scheduling');
-      // For free tier, just save without scheduling
-      handleSendLater(null);
+      // For starter tier, show upgrade modal
+      setUpgradeModalOpen(true);
     }
   };
 
@@ -216,7 +204,14 @@ export const AddCustomer = () => {
       notifications.show({
         title: 'Success',
         message: scheduledTime
-          ? `Customer added. SMS scheduled for ${scheduledTime.toLocaleString()}`
+          ? `Customer added. SMS scheduled for ${scheduledTime.toLocaleDateString('en-GB', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+            })} at ${scheduledTime.toLocaleTimeString('en-GB', {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}`
           : 'Customer added (pending SMS)',
         color: 'green',
       });
@@ -397,7 +392,7 @@ export const AddCustomer = () => {
             </div>
             <div className="w-full sm:flex-1">
               <Tooltip
-                label={canSchedule ? 'Schedule when to send the review request' : 'Save customer without scheduling'}
+                label="Schedule when to send the review request"
                 position="top"
                 withArrow
               >
@@ -412,11 +407,11 @@ export const AddCustomer = () => {
                   size="md"
                   className="w-full font-semibold !py-4 !h-auto min-h-[3.5rem]"
                   disabled={loadingSendNow}
-                  leftSection={canSchedule ? <IconClock size={18} /> : undefined}
+                  leftSection={<IconClock size={18} />}
                 >
                   <div className="flex flex-col items-center gap-0.5">
                     <span>Add Customer</span>
-                    <span>{canSchedule ? 'Schedule Request' : 'Request Later'}</span>
+                    <span>Schedule Request</span>
                   </div>
                 </Button>
               </Tooltip>
@@ -448,7 +443,7 @@ export const AddCustomer = () => {
             minDate={new Date()}
             clearable
             required
-            valueFormat="DD MMM YYYY hh:mm A"
+            valueFormat="Do MMM YYYY, HH:mm"
             description="Select a future date and time for sending the SMS"
           />
 
@@ -479,6 +474,69 @@ export const AddCustomer = () => {
               schedule from the Customer List page.
             </Text>
           </Alert>
+        </Stack>
+      </Modal>
+
+      {/* Upgrade Modal for Starter Users */}
+      <Modal
+        opened={upgradeModalOpen}
+        onClose={() => setUpgradeModalOpen(false)}
+        title="Unlock SMS Scheduling"
+        size="md"
+        centered
+        classNames={{
+          body: 'p-0',
+        }}
+      >
+        <Stack gap="lg" align="center" className="text-center">
+          <div className="bg-gradient-to-br from-teal-500/20 to-blue-500/20 p-6 rounded-full">
+            <IconSparkles size={64} className="text-teal-400" />
+          </div>
+          
+          <div>
+            <Title order={3} className="text-white mb-2">
+              Schedule SMS for Perfect Timing
+            </Title>
+            <Text size="sm" className="text-gray-300 max-w-md">
+              Pro and Business customers can schedule review requests for a specific date and time. 
+              Perfect for sending requests when you know the completion date or at the optimal time for your industry.
+            </Text>
+          </div>
+
+          <Stack gap="sm" className="w-full text-left">
+            <Text size="sm" className="text-gray-300">
+              <strong className="text-teal-400">✓</strong> Schedule SMS weeks in advance
+            </Text>
+            <Text size="sm" className="text-gray-300">
+              <strong className="text-teal-400">✓</strong> Automatic sending at the perfect time
+            </Text>
+            <Text size="sm" className="text-gray-300">
+              <strong className="text-teal-400">✓</strong> Edit or cancel schedules anytime
+            </Text>
+            <Text size="sm" className="text-gray-300">
+              <strong className="text-teal-400">✓</strong> Set it once, we'll handle the rest
+            </Text>
+          </Stack>
+
+          <div className="flex gap-3 w-full pt-4">
+            <Button
+              variant="subtle"
+              onClick={() => setUpgradeModalOpen(false)}
+              className="flex-1"
+            >
+              Maybe Later
+            </Button>
+            <Button
+              component={Link}
+              to="/billing"
+              className="flex-1 font-semibold !h-auto !py-2"
+            >
+              <div className="flex flex-col items-center gap-0">
+                <span>Upgrade to Pro</span>
+                <span>or Business</span>
+              </div>
+            </Button>
+          </div>
         </Stack>
       </Modal>
     </Container>

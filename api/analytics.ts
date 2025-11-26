@@ -47,7 +47,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { data: messages, error: messagesError } = await supabase
       .from('messages')
-      .select('sent_at, customer_id')
+      .select('sent_at, customer_id, was_scheduled')
       .eq('user_id', auth.userId)
       .gte('sent_at', twelveMonthsAgo.toISOString())
       .order('sent_at', { ascending: false });

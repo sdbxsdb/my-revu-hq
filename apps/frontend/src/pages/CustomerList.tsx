@@ -33,7 +33,7 @@ import {
 import { parsePhoneNumberFromString, isValidPhoneNumber } from 'libphonenumber-js';
 import { usePayment } from '@/contexts/PaymentContext';
 import { useAccount } from '@/contexts/AccountContext';
-import { IconAlertCircle, IconTrash, IconClock, IconCalendar } from '@tabler/icons-react';
+import { IconAlertCircle, IconTrash, IconClock, IconCalendar, IconLock } from '@tabler/icons-react';
 import { getSmsLimitFromTier } from '@/lib/pricing';
 
 export const CustomerList = () => {
@@ -1093,15 +1093,23 @@ export const CustomerList = () => {
                               : 'Not Sent'}
                         </Badge>
                         {customer.sms_status === 'scheduled' && customer.scheduled_send_at && (
-                          <Text size="xs" className="text-gray-400">
-                            {new Date(customer.scheduled_send_at).toLocaleString('en-GB', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </Text>
+                          canSchedule ? (
+                            <Text size="xs" className="text-gray-400">
+                              {new Date(customer.scheduled_send_at).toLocaleString('en-GB', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </Text>
+                          ) : (
+                            <Tooltip label="Upgrade to Pro to schedule SMS">
+                              <Text size="xs" className="text-teal-400 flex items-center gap-1">
+                                <IconLock size={12} /> Pro Feature
+                              </Text>
+                            </Tooltip>
+                          )
                         )}
                         {(() => {
                           const requestCount = customer.sms_request_count || 0;
@@ -1318,15 +1326,23 @@ export const CustomerList = () => {
                             : 'Not Sent'}
                       </Badge>
                       {customer.sms_status === 'scheduled' && customer.scheduled_send_at && (
-                        <Text size="xs" className="text-gray-400">
-                          {new Date(customer.scheduled_send_at).toLocaleString('en-GB', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </Text>
+                        canSchedule ? (
+                          <Text size="xs" className="text-gray-400">
+                            {new Date(customer.scheduled_send_at).toLocaleString('en-GB', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </Text>
+                        ) : (
+                          <Tooltip label="Upgrade to Pro to schedule SMS">
+                            <Text size="xs" className="text-teal-400 flex items-center gap-1">
+                              <IconLock size={12} /> Pro Feature
+                            </Text>
+                          </Tooltip>
+                        )
                       )}
                     </div>
                   </div>
@@ -1364,6 +1380,11 @@ export const CustomerList = () => {
                                 hour: '2-digit',
                                 minute: '2-digit',
                               })}
+                              {message.was_scheduled && (
+                                <Tooltip label="Sent via scheduled automation">
+                                  <IconClock size={14} className="text-blue-400" />
+                                </Tooltip>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -1660,7 +1681,7 @@ export const CustomerList = () => {
                   minDate={new Date()}
                   clearable
                   className="w-full"
-                  valueFormat="DD MMM YYYY, HH:mm"
+                  valueFormat="Do MMM YYYY, HH:mm"
                   description="Leave empty to save for manual send later"
                 />
                 {editingCustomer?.scheduled_send_at && (
@@ -1779,7 +1800,7 @@ export const CustomerList = () => {
             minDate={new Date()}
             clearable
             className="w-full"
-            valueFormat="DD MMM YYYY, HH:mm"
+            valueFormat="Do MMM YYYY, HH:mm"
           />
 
           <Alert color="blue" icon={<IconClock size={16} />}>

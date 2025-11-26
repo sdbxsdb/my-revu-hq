@@ -6,7 +6,7 @@ import {
   IconLink,
   IconChartBar,
   IconLogin,
-  IconRocket,
+  IconClock,
 } from '@tabler/icons-react';
 import { useLocationPricing } from '@/hooks/useLocationPricing';
 import { useNavigate } from 'react-router-dom';
@@ -122,15 +122,14 @@ export const About = () => {
 
               <div className="flex gap-4">
                 <ThemeIcon size={48} radius="md" className="bg-teal-500/20 flex-shrink-0">
-                  <IconRocket size={28} className="text-teal-400" />
+                  <IconClock size={28} className="text-teal-400" />
                 </ThemeIcon>
                 <div>
                   <Title order={3} size="h4" className="text-white mb-2">
-                    Quick Setup
+                    Schedule SMS
                   </Title>
                   <Text size="sm" className="text-gray-300">
-                    Get started in minutes with our simple setup process. No technical knowledge
-                    required—just add your details and start sending.
+                    Schedule review requests for any future date and time. Perfect for sending requests after project completion or at the optimal time for your industry.
                   </Text>
                 </div>
               </div>

@@ -9,7 +9,7 @@ import {
   IconCurrencyDollar,
   IconCurrencyPound,
   IconCurrencyEuro,
-  IconRocket,
+  IconClock,
 } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -134,13 +134,13 @@ export const Home = () => {
 
                 <div className="text-center sm:w-52">
                   <ThemeIcon size={56} radius="md" className="bg-teal-500/20 mx-auto mb-3">
-                    <IconRocket size={32} className="text-teal-400" />
+                    <IconClock size={32} className="text-teal-400" />
                   </ThemeIcon>
                   <Title order={3} size="h4" className="text-white mb-2 text-base">
-                    Quick Setup
+                    Schedule SMS
                   </Title>
                   <Text size="xs" className="text-gray-400">
-                    Get started in minutes with our simple setup process
+                    Schedule review requests for the perfect time — send automatically when it matters most
                   </Text>
                 </div>
               </div>

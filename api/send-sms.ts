@@ -126,6 +126,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         sent_at: string | null;
         sms_request_count: number | null;
         opt_out: boolean | null;
+        scheduled_send_at: string | null;
       }>();
 
     if (customerError) throw customerError;
@@ -208,6 +209,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Update customer status and increment request count
     const newRequestCount = requestCount + 1;
     const sentAt = new Date().toISOString();
+    // Check if this was a scheduled send
+    const wasScheduled = !!customer.scheduled_send_at;
+
+    console.log('[send-sms] Debug:', {
+      customerId: customer.id,
+      customerName: customer.name,
+      scheduled_send_at: customer.scheduled_send_at,
+      wasScheduled: wasScheduled,
+    });
+
     await supabase
       .from('customers')
       // @ts-ignore - Supabase types don't include all fields
@@ -220,15 +231,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .eq('id', customerId);
 
     // Log message
+    const messageData = {
+      customer_id: customerId,
+      user_id: userId,
+      body: messageBody,
+      sent_at: sentAt,
+      was_scheduled: wasScheduled, // Track if this message was scheduled
+    };
+
+    console.log('[send-sms] Inserting message:', messageData);
+
     await supabase
       .from('messages')
       // @ts-ignore - Supabase types don't include all fields
-      .insert({
-        customer_id: customerId,
-        user_id: userId,
-        body: messageBody,
-        sent_at: sentAt,
-      });
+      .insert(messageData);
 
     // Update user's monthly count and total count
     const { data: currentUser } = await supabase

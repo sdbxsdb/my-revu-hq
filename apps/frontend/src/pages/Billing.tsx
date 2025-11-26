@@ -626,6 +626,12 @@ export const Billing = () => {
                                 Custom onboarding
                               </Text>
                               <Text size="xs" className="text-gray-400">
+                                Scheduling:{' '}
+                                <span className="text-teal-400">
+                                  Advanced automation
+                                </span>
+                              </Text>
+                              <Text size="xs" className="text-gray-400">
                                 Analytics:{' '}
                                 <span className="text-teal-400">
                                   Advanced & custom
@@ -949,20 +955,32 @@ export const Billing = () => {
                                 </li>
                               );
                             })}
-                            {/* Analytics feature */}
+                            {/* Scheduling & Analytics features */}
                             {plan.id === 'pro' && (
-                              <li className="flex items-center gap-2 text-sm text-teal-400">
-                                <IconCheck size={16} className="text-teal-400 flex-shrink-0" />
-                                <span>Analytics: Visual insights & performance trends</span>
-                              </li>
+                              <>
+                                <li className="flex items-center gap-2 text-sm text-teal-400">
+                                  <IconCheck size={16} className="text-teal-400 flex-shrink-0" />
+                                  <span>Schedule SMS for future dates</span>
+                                </li>
+                                <li className="flex items-center gap-2 text-sm text-teal-400">
+                                  <IconCheck size={16} className="text-teal-400 flex-shrink-0" />
+                                  <span>Analytics: Visual insights & performance trends</span>
+                                </li>
+                              </>
                             )}
                             {plan.id === 'business' && (
-                              <li className="flex items-center gap-2 text-sm text-teal-400">
-                                <IconCheck size={16} className="text-teal-400 flex-shrink-0" />
-                                <span>
-                                  Advanced Analytics: Customer-level insights & engagement tracking
-                                </span>
-                              </li>
+                              <>
+                                <li className="flex items-center gap-2 text-sm text-teal-400">
+                                  <IconCheck size={16} className="text-teal-400 flex-shrink-0" />
+                                  <span>Schedule SMS for future dates</span>
+                                </li>
+                                <li className="flex items-center gap-2 text-sm text-teal-400">
+                                  <IconCheck size={16} className="text-teal-400 flex-shrink-0" />
+                                  <span>
+                                    Advanced Analytics: Customer-level insights & engagement tracking
+                                  </span>
+                                </li>
+                              </>
                             )}
                           </ul>
                           <Button

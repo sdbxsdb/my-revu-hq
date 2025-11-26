@@ -57,7 +57,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         (data || []).map(async (customer) => {
           const { data: messages } = await supabase
             .from('messages')
-            .select('sent_at')
+            .select('sent_at, was_scheduled')
             .eq('customer_id', customer.id)
             .order('sent_at', { ascending: false });
 
