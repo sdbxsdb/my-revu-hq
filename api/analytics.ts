@@ -185,7 +185,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Get all customers
       const { data: allCustomers, error: customersError } = await supabase
         .from('customers')
-        .select('id, name, phone, job_description, sent_at, sms_request_count, opt_out, created_at')
+        .select(
+          'id, name, phone, job_description, sent_at, sms_request_count, opt_out, created_at, sms_status, scheduled_send_at'
+        )
         .eq('user_id', auth.userId)
         .eq('opt_out', false); // Exclude opted-out customers
 

@@ -69,6 +69,8 @@ export const Analytics = () => {
           lastContacted: string | null;
           daysSinceContact: number;
           createdAt: string;
+          sms_status?: 'sent' | 'pending' | 'scheduled';
+          scheduled_send_at?: string | null;
         }>;
         notContacted10Days: Array<{
           id: string;
@@ -78,6 +80,8 @@ export const Analytics = () => {
           lastContacted: string | null;
           daysSinceContact: number;
           createdAt: string;
+          sms_status?: 'sent' | 'pending' | 'scheduled';
+          scheduled_send_at?: string | null;
         }>;
         notContacted30Days: Array<{
           id: string;
@@ -87,6 +91,8 @@ export const Analytics = () => {
           lastContacted: string | null;
           daysSinceContact: number;
           createdAt: string;
+          sms_status?: 'sent' | 'pending' | 'scheduled';
+          scheduled_send_at?: string | null;
         }>;
         approachingLimit: Array<{
           id: string;
