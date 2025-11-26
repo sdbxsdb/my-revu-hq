@@ -34,7 +34,7 @@ import { parsePhoneNumberFromString, isValidPhoneNumber } from 'libphonenumber-j
 import { usePayment } from '@/contexts/PaymentContext';
 import { useAccount } from '@/contexts/AccountContext';
 import { IconAlertCircle, IconTrash, IconClock, IconCalendar } from '@tabler/icons-react';
-import { getSmsLimitFromTier, type PricingTier } from '@/lib/pricing';
+import { getSmsLimitFromTier } from '@/lib/pricing';
 
 export const CustomerList = () => {
   const { hasPaid, loading: paymentLoading } = usePayment();
@@ -1653,7 +1653,7 @@ export const CustomerList = () => {
                     if (editingCustomer) {
                       setEditingCustomer({
                         ...editingCustomer,
-                        scheduled_send_at: date ? date.toISOString() : null,
+                        scheduled_send_at: date ? date.toISOString() : undefined,
                       });
                     }
                   }}
