@@ -7,12 +7,23 @@ import {
   IconChartBar,
   IconLogin,
   IconClock,
+  IconCurrencyPound,
+  IconCurrencyEuro,
+  IconCurrencyDollar,
 } from '@tabler/icons-react';
 import { useLocationPricing } from '@/hooks/useLocationPricing';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { ReviewRevenueChart } from '@/components/ReviewRevenueChart';
 import { BusinessImpact } from '@/components/BusinessImpact';
+import {
+  AnimatedSMSIcon,
+  AnimatedCustomersIcon,
+  AnimatedClockIcon,
+  AnimatedPlatformsIcon,
+  AnimatedPricingIcon,
+  AnimatedAnalyticsIcon,
+} from '@/components/AnimatedFeatureIcons';
 
 export const About = () => {
   const navigate = useNavigate();
@@ -47,7 +58,7 @@ export const About = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex gap-4">
                 <ThemeIcon size={48} radius="md" className="bg-teal-500/20 flex-shrink-0">
-                  <IconMessageCircle size={28} className="text-teal-400" />
+                  <AnimatedSMSIcon delay={0} />
                 </ThemeIcon>
                 <div>
                   <Title order={3} size="h4" className="text-white mb-2">
@@ -62,7 +73,7 @@ export const About = () => {
 
               <div className="flex gap-4">
                 <ThemeIcon size={48} radius="md" className="bg-teal-500/20 flex-shrink-0">
-                  <IconUsers size={28} className="text-teal-400" />
+                  <AnimatedCustomersIcon delay={2500} />
                 </ThemeIcon>
                 <div>
                   <Title order={3} size="h4" className="text-white mb-2">
@@ -77,7 +88,7 @@ export const About = () => {
 
               <div className="flex gap-4">
                 <ThemeIcon size={48} radius="md" className="bg-teal-500/20 flex-shrink-0">
-                  <IconClock size={28} className="text-teal-400" />
+                  <AnimatedClockIcon delay={5000} />
                 </ThemeIcon>
                 <div>
                   <Title order={3} size="h4" className="text-white mb-2">
@@ -91,7 +102,7 @@ export const About = () => {
 
               <div className="flex gap-4">
                 <ThemeIcon size={48} radius="md" className="bg-teal-500/20 flex-shrink-0">
-                  <IconLink size={28} className="text-teal-400" />
+                  <AnimatedPlatformsIcon delay={7500} />
                 </ThemeIcon>
                 <div>
                   <Title order={3} size="h4" className="text-white mb-2">
@@ -106,7 +117,7 @@ export const About = () => {
 
               <div className="flex gap-4">
                 <ThemeIcon size={48} radius="md" className="bg-teal-500/20 flex-shrink-0">
-                  <IconChartBar size={28} className="text-teal-400" />
+                  <AnimatedAnalyticsIcon delay={10000} />
                 </ThemeIcon>
                 <div>
                   <Title order={3} size="h4" className="text-white mb-2">
@@ -121,7 +132,15 @@ export const About = () => {
 
               <div className="flex gap-4">
                 <ThemeIcon size={48} radius="md" className="bg-teal-500/20 flex-shrink-0">
-                  <IconCheck size={28} className="text-teal-400" />
+                  <AnimatedPricingIcon delay={12500}>
+                    {formattedPrice.includes('£') ? (
+                      <IconCurrencyPound size={28} className="text-teal-400" />
+                    ) : formattedPrice.includes('€') ? (
+                      <IconCurrencyEuro size={28} className="text-teal-400" />
+                    ) : (
+                      <IconCurrencyDollar size={28} className="text-teal-400" />
+                    )}
+                  </AnimatedPricingIcon>
                 </ThemeIcon>
                 <div>
                   <Title order={3} size="h4" className="text-white mb-2">

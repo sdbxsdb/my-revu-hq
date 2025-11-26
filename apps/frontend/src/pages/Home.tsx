@@ -85,7 +85,7 @@ export const Home = () => {
 
                 <div className="text-center sm:w-52">
                   <ThemeIcon size={56} radius="md" className="bg-teal-500/20 mx-auto mb-3">
-                    <AnimatedCustomersIcon delay={3000} />
+                    <AnimatedCustomersIcon delay={2500} />
                   </ThemeIcon>
                   <Title order={3} size="h4" className="text-white mb-2 text-base">
                     Manage Customers
@@ -97,7 +97,7 @@ export const Home = () => {
 
                 <div className="text-center sm:w-52">
                   <ThemeIcon size={56} radius="md" className="bg-teal-500/20 mx-auto mb-3">
-                    <AnimatedClockIcon delay={6000} />
+                    <AnimatedClockIcon delay={5000} />
                   </ThemeIcon>
                   <Title order={3} size="h4" className="text-white mb-2 text-base">
                     Schedule SMS
@@ -110,7 +110,7 @@ export const Home = () => {
 
                 <div className="text-center sm:w-52">
                   <ThemeIcon size={56} radius="md" className="bg-teal-500/20 mx-auto mb-3">
-                    <AnimatedPlatformsIcon delay={9000} />
+                    <AnimatedPlatformsIcon delay={7500} />
                   </ThemeIcon>
                   <Title order={3} size="h4" className="text-white mb-2 text-base">
                     Multiple Platforms
@@ -122,7 +122,7 @@ export const Home = () => {
 
                 <div className="text-center sm:w-52">
                   <ThemeIcon size={56} radius="md" className="bg-teal-500/20 mx-auto mb-3">
-                    <AnimatedPricingIcon delay={12000}>
+                    <AnimatedPricingIcon delay={10000}>
                       {formattedPrice.includes('£') ? (
                         <IconCurrencyPound size={32} className="text-teal-400" />
                       ) : formattedPrice.includes('€') ? (
@@ -142,7 +142,7 @@ export const Home = () => {
 
                 <div className="text-center sm:w-52">
                   <ThemeIcon size={56} radius="md" className="bg-teal-500/20 mx-auto mb-3">
-                    <AnimatedAnalyticsIcon delay={15000} />
+                    <AnimatedAnalyticsIcon delay={12500} />
                   </ThemeIcon>
                   <Title order={3} size="h4" className="text-white mb-2 text-base">
                     Track Analytics

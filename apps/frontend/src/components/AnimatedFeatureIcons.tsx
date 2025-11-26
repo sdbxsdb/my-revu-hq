@@ -23,18 +23,18 @@ export const AnimatedSMSIcon = ({ delay = 0 }: { delay?: number }) => {
   useEffect(() => {
     if (!inView) return;
 
-    const TOTAL_CYCLE = 28000; // 6 animations × 3s + 10s pause
+    const TOTAL_CYCLE = 25000; // 6 animations × 2.5s + 10s pause
     
     const animate = async () => {
       await new Promise((resolve) => setTimeout(resolve, delay));
       await progress.start({
         from: 0,
         to: 1,
-        config: { duration: 3000 },
+        config: { duration: 2500, easing: (t: number) => t * (2 - t) }, // ease out quad
       });
-      // Wait for the rest of the cycle before looping
-      await new Promise((resolve) => setTimeout(resolve, TOTAL_CYCLE - delay - 3000));
       progress.set(0);
+      // Wait for the full cycle before looping (maintaining the stagger)
+      await new Promise((resolve) => setTimeout(resolve, TOTAL_CYCLE - 2500));
       animate();
     };
     animate();
@@ -89,18 +89,18 @@ export const AnimatedCustomersIcon = ({ delay = 0 }: { delay?: number }) => {
   useEffect(() => {
     if (!inView) return;
 
-    const TOTAL_CYCLE = 28000; // 6 animations × 3s + 10s pause
+    const TOTAL_CYCLE = 25000; // 6 animations × 2.5s + 10s pause
     
     const animate = async () => {
       await new Promise((resolve) => setTimeout(resolve, delay));
       await fillProgress.start({
         from: 0,
         to: 1,
-        config: { duration: 3000 },
+        config: { duration: 2500, easing: (t: number) => t * (2 - t) }, // ease out quad
       });
-      // Wait for the rest of the cycle before looping
-      await new Promise((resolve) => setTimeout(resolve, TOTAL_CYCLE - delay - 3000));
       fillProgress.set(0);
+      // Wait for the full cycle before looping (maintaining the stagger)
+      await new Promise((resolve) => setTimeout(resolve, TOTAL_CYCLE - 2500));
       animate();
     };
     animate();
@@ -133,18 +133,18 @@ export const AnimatedClockIcon = ({ delay = 0 }: { delay?: number }) => {
   useEffect(() => {
     if (!inView) return;
 
-    const TOTAL_CYCLE = 28000; // 6 animations × 3s + 10s pause
+    const TOTAL_CYCLE = 25000; // 6 animations × 2.5s + 10s pause
     
     const animate = async () => {
       await new Promise((resolve) => setTimeout(resolve, delay));
       await progress.start({
         from: 0,
         to: 1,
-        config: { duration: 3000 },
+        config: { duration: 2500, easing: (t: number) => t * (2 - t) }, // ease out quad
       });
-      // Wait for the rest of the cycle before looping
-      await new Promise((resolve) => setTimeout(resolve, TOTAL_CYCLE - delay - 3000));
       progress.set(0);
+      // Wait for the full cycle before looping (maintaining the stagger)
+      await new Promise((resolve) => setTimeout(resolve, TOTAL_CYCLE - 2500));
       animate();
     };
     animate();
@@ -204,21 +204,21 @@ export const AnimatedPlatformsIcon = ({ delay = 0 }: { delay?: number }) => {
   useEffect(() => {
     if (!inView) return;
 
-    const TOTAL_CYCLE = 28000; // 6 animations × 3s + 10s pause
+    const TOTAL_CYCLE = 25000; // 6 animations × 2.5s + 10s pause
     
     const animate = async () => {
       await new Promise((resolve) => setTimeout(resolve, delay));
-      await link1.start({ from: 0, to: 1, config: { duration: 800, tension: 180, friction: 12 } });
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      await link2.start({ from: 0, to: 1, config: { duration: 800, tension: 180, friction: 12 } });
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      await link3.start({ from: 0, to: 1, config: { duration: 800, tension: 180, friction: 12 } });
-      // Wait for the rest of the cycle before looping
-      const animationTime = 800 * 3 + 300 * 2; // Total animation time
-      await new Promise((resolve) => setTimeout(resolve, TOTAL_CYCLE - delay - animationTime));
+      await link1.start({ from: 0, to: 1, config: { duration: 667, tension: 180, friction: 12, easing: (t: number) => t * (2 - t) } });
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      await link2.start({ from: 0, to: 1, config: { duration: 667, tension: 180, friction: 12, easing: (t: number) => t * (2 - t) } });
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      await link3.start({ from: 0, to: 1, config: { duration: 666, tension: 180, friction: 12, easing: (t: number) => t * (2 - t) } });
       link1.set(0);
       link2.set(0);
       link3.set(0);
+      // Wait for the full cycle before looping (maintaining the stagger)
+      const animationTime = 667 + 667 + 666 + 250 * 2; // Total animation time = 2500ms
+      await new Promise((resolve) => setTimeout(resolve, TOTAL_CYCLE - animationTime));
       animate();
     };
     animate();
@@ -261,26 +261,26 @@ export const AnimatedPricingIcon = ({ children, delay = 0 }: { children: React.R
   useEffect(() => {
     if (!inView) return;
 
-    const TOTAL_CYCLE = 28000; // 6 animations × 3s + 10s pause
+    const TOTAL_CYCLE = 25000; // 6 animations × 2.5s + 10s pause
     
     const animate = async () => {
       await new Promise((resolve) => setTimeout(resolve, delay));
       
       // Currency symbol pulses
-      await scale.start({ from: 1, to: 1.15, config: { duration: 600 } });
-      await scale.start({ from: 1.15, to: 1, config: { duration: 600 } });
+      await scale.start({ from: 1, to: 1.15, config: { duration: 500, easing: (t: number) => t * (2 - t) } });
+      await scale.start({ from: 1.15, to: 1, config: { duration: 500, easing: (t: number) => t * (2 - t) } });
       
       // Checkmarks appear
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      await check1.start({ from: 0, to: 1, config: { duration: 600 } });
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      await check2.start({ from: 0, to: 1, config: { duration: 600 } });
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      await check1.start({ from: 0, to: 1, config: { duration: 500, easing: (t: number) => t * (2 - t) } });
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      await check2.start({ from: 0, to: 1, config: { duration: 500, easing: (t: number) => t * (2 - t) } });
       
-      // Wait for the rest of the cycle before looping
-      const animationTime = 600 * 4 + 300 * 2; // Total animation time
-      await new Promise((resolve) => setTimeout(resolve, TOTAL_CYCLE - delay - animationTime));
       check1.set(0);
       check2.set(0);
+      // Wait for the full cycle before looping (maintaining the stagger)
+      const animationTime = 500 * 4 + 250 * 2; // Total animation time = 2500ms
+      await new Promise((resolve) => setTimeout(resolve, TOTAL_CYCLE - animationTime));
       animate();
     };
     animate();
@@ -327,21 +327,21 @@ export const AnimatedAnalyticsIcon = ({ delay = 0 }: { delay?: number }) => {
   useEffect(() => {
     if (!inView) return;
 
-    const TOTAL_CYCLE = 28000; // 6 animations × 3s + 10s pause
+    const TOTAL_CYCLE = 25000; // 6 animations × 2.5s + 10s pause
     
     const animate = async () => {
       await new Promise((resolve) => setTimeout(resolve, delay));
-      await bar1.start({ from: 0, to: 1, config: { duration: 800 } });
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      await bar2.start({ from: 0, to: 1, config: { duration: 900 } });
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      await bar3.start({ from: 0, to: 1, config: { duration: 700 } });
-      // Wait for the rest of the cycle before looping
-      const animationTime = 800 + 900 + 700 + 300 * 2; // Total animation time
-      await new Promise((resolve) => setTimeout(resolve, TOTAL_CYCLE - delay - animationTime));
+      await bar1.start({ from: 0, to: 1, config: { duration: 667, easing: (t: number) => t * (2 - t) } });
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      await bar2.start({ from: 0, to: 1, config: { duration: 750, easing: (t: number) => t * (2 - t) } });
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      await bar3.start({ from: 0, to: 1, config: { duration: 583, easing: (t: number) => t * (2 - t) } });
       bar1.set(0);
       bar2.set(0);
       bar3.set(0);
+      // Wait for the full cycle before looping (maintaining the stagger)
+      const animationTime = 667 + 750 + 583 + 250 * 2; // Total animation time = 2500ms
+      await new Promise((resolve) => setTimeout(resolve, TOTAL_CYCLE - animationTime));
       animate();
     };
     animate();
