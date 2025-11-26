@@ -1,20 +1,23 @@
 import { Paper, Title, Text, Button, Stack, Divider, ThemeIcon, Container } from '@mantine/core';
 import {
-  IconMessageCircle,
-  IconUsers,
-  IconLink,
-  IconChartBar,
   IconArrowRight,
   IconLogin,
   IconCurrencyDollar,
   IconCurrencyPound,
   IconCurrencyEuro,
-  IconClock,
 } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocationPricing } from '@/hooks/useLocationPricing';
 import { ReviewImpactStats } from '@/components/ReviewImpactStats';
+import {
+  AnimatedSMSIcon,
+  AnimatedCustomersIcon,
+  AnimatedClockIcon,
+  AnimatedPlatformsIcon,
+  AnimatedPricingIcon,
+  AnimatedAnalyticsIcon,
+} from '@/components/AnimatedFeatureIcons';
 
 export const Home = () => {
   const navigate = useNavigate();
@@ -70,7 +73,7 @@ export const Home = () => {
               <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:justify-center gap-4 sm:gap-6">
                 <div className="text-center sm:w-52">
                   <ThemeIcon size={56} radius="md" className="bg-teal-500/20 mx-auto mb-3">
-                    <IconMessageCircle size={32} className="text-teal-400" />
+                    <AnimatedSMSIcon delay={0} />
                   </ThemeIcon>
                   <Title order={3} size="h4" className="text-white mb-2 text-base">
                     SMS Requests
@@ -82,7 +85,7 @@ export const Home = () => {
 
                 <div className="text-center sm:w-52">
                   <ThemeIcon size={56} radius="md" className="bg-teal-500/20 mx-auto mb-3">
-                    <IconUsers size={32} className="text-teal-400" />
+                    <AnimatedCustomersIcon delay={3000} />
                   </ThemeIcon>
                   <Title order={3} size="h4" className="text-white mb-2 text-base">
                     Manage Customers
@@ -94,7 +97,7 @@ export const Home = () => {
 
                 <div className="text-center sm:w-52">
                   <ThemeIcon size={56} radius="md" className="bg-teal-500/20 mx-auto mb-3">
-                    <IconClock size={32} className="text-teal-400" />
+                    <AnimatedClockIcon delay={6000} />
                   </ThemeIcon>
                   <Title order={3} size="h4" className="text-white mb-2 text-base">
                     Schedule SMS
@@ -107,7 +110,7 @@ export const Home = () => {
 
                 <div className="text-center sm:w-52">
                   <ThemeIcon size={56} radius="md" className="bg-teal-500/20 mx-auto mb-3">
-                    <IconLink size={32} className="text-teal-400" />
+                    <AnimatedPlatformsIcon delay={9000} />
                   </ThemeIcon>
                   <Title order={3} size="h4" className="text-white mb-2 text-base">
                     Multiple Platforms
@@ -119,13 +122,15 @@ export const Home = () => {
 
                 <div className="text-center sm:w-52">
                   <ThemeIcon size={56} radius="md" className="bg-teal-500/20 mx-auto mb-3">
-                    {formattedPrice.includes('£') ? (
-                      <IconCurrencyPound size={32} className="text-teal-400" />
-                    ) : formattedPrice.includes('€') ? (
-                      <IconCurrencyEuro size={32} className="text-teal-400" />
-                    ) : (
-                      <IconCurrencyDollar size={32} className="text-teal-400" />
-                    )}
+                    <AnimatedPricingIcon delay={12000}>
+                      {formattedPrice.includes('£') ? (
+                        <IconCurrencyPound size={32} className="text-teal-400" />
+                      ) : formattedPrice.includes('€') ? (
+                        <IconCurrencyEuro size={32} className="text-teal-400" />
+                      ) : (
+                        <IconCurrencyDollar size={32} className="text-teal-400" />
+                      )}
+                    </AnimatedPricingIcon>
                   </ThemeIcon>
                   <Title order={3} size="h4" className="text-white mb-2 text-base">
                     Simple Pricing
@@ -137,7 +142,7 @@ export const Home = () => {
 
                 <div className="text-center sm:w-52">
                   <ThemeIcon size={56} radius="md" className="bg-teal-500/20 mx-auto mb-3">
-                    <IconChartBar size={32} className="text-teal-400" />
+                    <AnimatedAnalyticsIcon delay={15000} />
                   </ThemeIcon>
                   <Title order={3} size="h4" className="text-white mb-2 text-base">
                     Track Analytics
