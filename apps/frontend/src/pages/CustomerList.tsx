@@ -1094,8 +1094,8 @@ export const CustomerList = () => {
                         </Badge>
                         {customer.sms_status === 'scheduled' && customer.scheduled_send_at && (
                           canSchedule ? (
-                            <Text size="xs" className="text-gray-400">
-                              {new Date(customer.scheduled_send_at).toLocaleString('en-GB', {
+                            <Text size="xs" className="text-blue-400 text-right">
+                              SMS scheduled {new Date(customer.scheduled_send_at).toLocaleString('en-GB', {
                                 day: 'numeric',
                                 month: 'short',
                                 year: 'numeric',
@@ -1327,8 +1327,8 @@ export const CustomerList = () => {
                       </Badge>
                       {customer.sms_status === 'scheduled' && customer.scheduled_send_at && (
                         canSchedule ? (
-                          <Text size="xs" className="text-gray-400">
-                            {new Date(customer.scheduled_send_at).toLocaleString('en-GB', {
+                          <Text size="xs" className="text-blue-400 text-right">
+                            SMS scheduled {new Date(customer.scheduled_send_at).toLocaleString('en-GB', {
                               day: 'numeric',
                               month: 'short',
                               year: 'numeric',

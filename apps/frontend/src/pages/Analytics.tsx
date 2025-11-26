@@ -714,7 +714,7 @@ export const Analytics = () => {
                                 {customer.sms_status === 'scheduled' && customer.scheduled_send_at && (
                                   <div className="mt-1 text-xs text-blue-400 flex items-center gap-1">
                                     <IconClock size={12} />
-                                    Scheduled: {new Date(customer.scheduled_send_at).toLocaleString('en-GB', {
+                                    SMS scheduled {new Date(customer.scheduled_send_at).toLocaleString('en-GB', {
                                       day: 'numeric',
                                       month: 'short',
                                       hour: '2-digit',
@@ -822,7 +822,7 @@ export const Analytics = () => {
                                 {customer.sms_status === 'scheduled' && customer.scheduled_send_at && (
                                   <div className="mt-1 text-xs text-blue-400 flex items-center gap-1">
                                     <IconClock size={12} />
-                                    Scheduled: {new Date(customer.scheduled_send_at).toLocaleString('en-GB', {
+                                    SMS scheduled {new Date(customer.scheduled_send_at).toLocaleString('en-GB', {
                                       day: 'numeric',
                                       month: 'short',
                                       hour: '2-digit',
@@ -930,7 +930,7 @@ export const Analytics = () => {
                                 {customer.sms_status === 'scheduled' && customer.scheduled_send_at && (
                                   <div className="mt-1 text-xs text-blue-400 flex items-center gap-1">
                                     <IconClock size={12} />
-                                    Scheduled: {new Date(customer.scheduled_send_at).toLocaleString('en-GB', {
+                                    SMS scheduled {new Date(customer.scheduled_send_at).toLocaleString('en-GB', {
                                       day: 'numeric',
                                       month: 'short',
                                       hour: '2-digit',

@@ -212,13 +212,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Check if this was a scheduled send
     const wasScheduled = !!customer.scheduled_send_at;
 
-    console.log('[send-sms] Debug:', {
-      customerId: customer.id,
-      customerName: customer.name,
-      scheduled_send_at: customer.scheduled_send_at,
-      wasScheduled: wasScheduled,
-    });
-
     await supabase
       .from('customers')
       // @ts-ignore - Supabase types don't include all fields
@@ -231,20 +224,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .eq('id', customerId);
 
     // Log message
-    const messageData = {
-      customer_id: customerId,
-      user_id: userId,
-      body: messageBody,
-      sent_at: sentAt,
-      was_scheduled: wasScheduled, // Track if this message was scheduled
-    };
-
-    console.log('[send-sms] Inserting message:', messageData);
-
     await supabase
       .from('messages')
       // @ts-ignore - Supabase types don't include all fields
-      .insert(messageData);
+      .insert({
+        customer_id: customerId,
+        user_id: userId,
+        body: messageBody,
+        sent_at: sentAt,
+        was_scheduled: wasScheduled, // Track if this message was scheduled
+      });
 
     // Update user's monthly count and total count
     const { data: currentUser } = await supabase

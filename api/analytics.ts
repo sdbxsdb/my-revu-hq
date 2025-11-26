@@ -145,6 +145,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         lastContacted: string | null;
         daysSinceContact: number;
         createdAt: string;
+        sms_status?: string;
+        scheduled_send_at?: string | null;
       }>;
       notContacted10Days: Array<{
         id: string;
@@ -154,6 +156,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         lastContacted: string | null;
         daysSinceContact: number;
         createdAt: string;
+        sms_status?: string;
+        scheduled_send_at?: string | null;
       }>;
       notContacted30Days: Array<{
         id: string;
@@ -163,6 +167,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         lastContacted: string | null;
         daysSinceContact: number;
         createdAt: string;
+        sms_status?: string;
+        scheduled_send_at?: string | null;
       }>;
       approachingLimit: Array<{
         id: string;
@@ -216,6 +222,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             lastContacted: customer.sent_at,
             daysSinceContact,
             createdAt: customer.created_at,
+            sms_status: customer.sms_status,
+            scheduled_send_at: customer.scheduled_send_at,
           };
         };
 

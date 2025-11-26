@@ -58,8 +58,6 @@ serve(async (req) => {
     const results = await Promise.allSettled(
       scheduledCustomers.map(async (customer) => {
         try {
-          console.log(`[Edge Function] Processing customer ${customer.id}, scheduled_send_at: ${customer.scheduled_send_at}`)
-          
           // Call the Vercel /api/send-sms endpoint
           const response = await fetch(`${VERCEL_API_URL}/api/send-sms`, {
             method: 'POST',
