@@ -119,6 +119,7 @@ export const PhoneNumber = forwardRef<HTMLInputElement, PhoneNumberProps>(
         />
         <TextInput
           ref={ref}
+          type="tel"
           value={phoneValue}
           onChange={handlePhoneChange}
           placeholder="Enter local phone number"
