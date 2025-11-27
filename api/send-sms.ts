@@ -16,6 +16,8 @@ const sendSMSSchema = z.object({
  */
 function getSmsLimitFromTier(tier: string | null | undefined): number {
   switch (tier) {
+    case 'free':
+      return 60; // Same as Business for testing
     case 'starter':
       return 15;
     case 'pro':
