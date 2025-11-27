@@ -1,5 +1,4 @@
-import { NavLink, Link, useNavigate } from 'react-router-dom';
-import { Button } from '@mantine/core';
+import { NavLink, Link } from 'react-router-dom';
 import {
   IconDeviceMobile,
   IconUserPlus,
@@ -12,10 +11,8 @@ import {
   IconHelpCircle,
   IconChartBar,
   IconLayoutDashboard,
-  IconWand,
 } from '@tabler/icons-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useAccount } from '@/contexts/AccountContext';
 
 interface SidebarProps {
   onClose?: () => void;
@@ -23,8 +20,6 @@ interface SidebarProps {
 
 export const Sidebar = ({ onClose }: SidebarProps) => {
   const { signOut, user } = useAuth();
-  const { account } = useAccount();
-  const navigate = useNavigate();
 
   // Dashboard section
   const dashboardNavItem = user
@@ -115,25 +110,6 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
         {/* Dashboard Section */}
         {user && dashboardNavItem.length > 0 && (
           <div className="space-y-2">{dashboardNavItem.map(renderNavItem)}</div>
-        )}
-
-        {/* Continue Setup Button (only show if onboarding not completed) */}
-        {user && account && !account.onboarding_completed && (
-          <div className="px-4">
-            <Button
-              variant="light"
-              color="blue"
-              size="sm"
-              leftSection={<IconWand size={16} />}
-              onClick={() => {
-                navigate('/dashboard');
-                handleNavClick();
-              }}
-              fullWidth
-            >
-              Continue Setup
-            </Button>
-          </div>
         )}
 
         {/* Customers Section */}

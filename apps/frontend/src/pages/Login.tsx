@@ -619,11 +619,21 @@ export const Login = () => {
                   <div>
                     <TextInput
                       label="Password"
-                      type="password"
+                      type={showPassword ? 'text' : 'password'}
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       leftSection={<IconLock size={16} />}
+                      rightSection={
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="text-gray-400 hover:text-gray-300 transition-colors"
+                          tabIndex={-1}
+                        >
+                          {showPassword ? <IconEyeOff size={18} /> : <IconEye size={18} />}
+                        </button>
+                      }
                       description="Enter your account password"
                     />
                     <div className="text-right mt-1">

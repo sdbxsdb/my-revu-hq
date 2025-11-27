@@ -8,6 +8,7 @@ export interface User {
   sms_sent_total?: number;
   include_name_in_sms?: boolean; // Include customer name in SMS messages
   include_job_in_sms?: boolean; // Include job description in SMS messages
+  onboarding_completed?: boolean; // Whether user has completed initial setup
   // Billing & Subscription fields
   stripe_customer_id?: string;
   stripe_subscription_id?: string;

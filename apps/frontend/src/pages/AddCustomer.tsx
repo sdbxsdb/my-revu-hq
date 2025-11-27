@@ -451,8 +451,8 @@ export const AddCustomer = () => {
               <div className="flex flex-col gap-3 mt-8 pt-6 border-t border-[#2a2a2a]">
                 {progress && !progress.isComplete && (
                   <Button
-                    variant="subtle"
-                    color="gray"
+                    variant="light"
+                    color="blue"
                     leftSection={<IconHome size={16} />}
                     onClick={() => navigate('/dashboard')}
                     size="md"

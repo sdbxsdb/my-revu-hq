@@ -30,7 +30,7 @@ import { useAccount } from '@/contexts/AccountContext';
 
 export const Dashboard = () => {
   const navigate = useNavigate();
-  const { account, subscriptionTier, loading: accountLoading } = useAccount();
+  const { subscriptionTier, loading: accountLoading } = useAccount();
   const [stats, setStats] = useState<{
     hasAccountSetup: boolean;
     totalCustomers: number;

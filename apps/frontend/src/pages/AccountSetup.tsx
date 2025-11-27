@@ -814,7 +814,7 @@ export const AccountSetup = () => {
                       {progress && !progress.isComplete && (
                         <Button
                           variant="light"
-                          color="gray"
+                          color="blue"
                           leftSection={<IconHome size={16} />}
                           onClick={() => navigate('/dashboard')}
                           size="md"

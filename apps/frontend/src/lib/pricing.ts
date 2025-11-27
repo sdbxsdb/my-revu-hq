@@ -2,7 +2,7 @@
  * Pricing tiers configuration
  */
 
-export type PricingTier = 'starter' | 'pro' | 'business' | 'enterprise';
+export type PricingTier = 'free' | 'starter' | 'pro' | 'business' | 'enterprise';
 
 export interface PricingPlan {
   id: PricingTier;
@@ -15,6 +15,20 @@ export interface PricingPlan {
 }
 
 export const PRICING_PLANS: PricingPlan[] = [
+  {
+    id: 'free',
+    name: 'Free (Test)',
+    price: 0,
+    smsLimit: 5,
+    description: 'For testing only',
+    features: [
+      '5 SMS messages per month',
+      'Unlimited customers',
+      'Multiple review platforms',
+      'Custom SMS templates',
+      'Test mode only',
+    ],
+  },
   {
     id: 'starter',
     name: 'Starter',

@@ -94,7 +94,7 @@ export const SetupProgressModal = ({
           <Button
             size="md"
             variant="light"
-            color="gray"
+            color="blue"
             leftSection={<IconHome size={16} />}
             onClick={handleBackToDashboard}
             fullWidth
