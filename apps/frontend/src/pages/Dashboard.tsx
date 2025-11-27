@@ -163,14 +163,9 @@ export const Dashboard = () => {
                     </Text>
 
                     <div className="mb-2">
-                      <Group justify="space-between" className="mb-1">
-                        <Text size="xs" className="text-gray-400">
-                          {completedCount} of {setupSteps.length} completed
-                        </Text>
-                        <Text size="xs" className="text-teal-400 font-semibold">
-                          {Math.round(progressPercent)}%
-                        </Text>
-                      </Group>
+                      <Text size="xs" className="text-gray-400 mb-1">
+                        {completedCount} of {setupSteps.length} completed
+                      </Text>
                       <Progress value={progressPercent} color="teal" size="sm" className="w-full" />
                     </div>
                   </div>
@@ -239,7 +234,7 @@ export const Dashboard = () => {
                           </Text>
                         </div>
                         <Button color="teal" onClick={completeSetup} fullWidth size="md">
-                          Got It!
+                          Let's Get Started!
                         </Button>
                       </Stack>
                     </Card>

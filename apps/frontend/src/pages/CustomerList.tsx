@@ -304,7 +304,7 @@ export const CustomerList = () => {
       });
     } finally {
       if (!signal?.aborted) {
-        setLoading(false);
+      setLoading(false);
       }
     }
   };
@@ -727,55 +727,55 @@ export const CustomerList = () => {
         {/* Account Error Alert */}
         <AccountErrorAlert />
 
-        <div className="flex flex-col gap-6 mb-8 pb-6 border-b border-[#2a2a2a]">
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
-                  Customer List
-                </Title>
+      <div className="flex flex-col gap-6 mb-8 pb-6 border-b border-[#2a2a2a]">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
+                Customer List
+              </Title>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                  <p className="text-sm text-gray-400 hidden sm:block">
-                    Manage your customers and review requests
-                  </p>
+              <p className="text-sm text-gray-400 hidden sm:block">
+                Manage your customers and review requests
+              </p>
                   {totalCount !== null && (
                     <p className="text-sm text-gray-500">
                       {totalCount} {totalCount === 1 ? 'customer' : 'customers'} total
                     </p>
                   )}
                 </div>
-              </div>
-              {!paymentLoading && !hasPaid && (
-                <Alert
-                  icon={<IconAlertCircle size={16} />}
-                  title="Payment Required"
-                  color="yellow"
-                  className="w-full sm:w-auto relative"
-                >
-                  <div className="flex flex-col gap-3 pb-10">
-                    <Text size="sm" className="text-gray-300">
-                      You can add and manage customers, but you need to set up payment to send SMS
-                      messages.
-                    </Text>
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-4">
-                    <Button
-                      component={Link}
-                      to="/billing"
-                      size="sm"
-                      color="teal"
-                      className="font-semibold !px-3 !py-1 !h-auto !text-xs"
-                    >
-                      Set up payment
-                    </Button>
-                  </div>
-                </Alert>
-              )}
             </div>
+            {!paymentLoading && !hasPaid && (
+              <Alert
+                icon={<IconAlertCircle size={16} />}
+                title="Payment Required"
+                color="yellow"
+                className="w-full sm:w-auto relative"
+              >
+                <div className="flex flex-col gap-3 pb-10">
+                  <Text size="sm" className="text-gray-300">
+                    You can add and manage customers, but you need to set up payment to send SMS
+                    messages.
+                  </Text>
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-4">
+                  <Button
+                    component={Link}
+                    to="/billing"
+                    size="sm"
+                    color="teal"
+                    className="font-semibold !px-3 !py-1 !h-auto !text-xs"
+                  >
+                    Set up payment
+                  </Button>
+                </div>
+              </Alert>
+            )}
+          </div>
 
-            {/* SMS Usage Display */}
+          {/* SMS Usage Display */}
             {(smsSent !== null || loadingUsage) && subscriptionTier && (
-              <div className="p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
+            <div className="p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
                 {loadingUsage ? (
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div className="flex items-center gap-2">
@@ -793,82 +793,82 @@ export const CustomerList = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <Text size="sm" className="text-gray-400">
-                        SMS Usage:
-                      </Text>
-                      <Text size="sm" className="font-semibold text-white">
-                        {smsSent} / {getSmsLimitFromTier(subscriptionTier)}
-                      </Text>
-                      <Text size="xs" className="text-gray-500">
-                        this month
-                      </Text>
-                    </div>
-                    {(() => {
-                      const limit = getSmsLimitFromTier(subscriptionTier);
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Text size="sm" className="text-gray-400">
+                    SMS Usage:
+                  </Text>
+                  <Text size="sm" className="font-semibold text-white">
+                    {smsSent} / {getSmsLimitFromTier(subscriptionTier)}
+                  </Text>
+                  <Text size="xs" className="text-gray-500">
+                    this month
+                  </Text>
+                </div>
+                {(() => {
+                  const limit = getSmsLimitFromTier(subscriptionTier);
                       const percentage = limit > 0 ? (smsSent! / limit) * 100 : 0;
-                      const isWarning = percentage >= 80;
-                      const isDanger = percentage >= 100;
+                  const isWarning = percentage >= 80;
+                  const isDanger = percentage >= 100;
 
-                      return (
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 sm:w-32 h-2 bg-[#2a2a2a] rounded-full overflow-hidden">
-                            <div
-                              className={`h-full transition-all ${
+                  return (
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 sm:w-32 h-2 bg-[#2a2a2a] rounded-full overflow-hidden">
+                        <div
+                          className={`h-full transition-all ${
                                 isDanger
                                   ? 'bg-red-500'
                                   : isWarning
                                     ? 'bg-yellow-500'
                                     : 'bg-teal-500'
-                              }`}
-                              style={{ width: `${Math.min(percentage, 100)}%` }}
-                            />
-                          </div>
-                          {isDanger && (
-                            <Text size="xs" className="text-red-400 font-medium">
-                              Limit reached
-                            </Text>
-                          )}
-                          {isWarning && !isDanger && (
-                            <Text size="xs" className="text-yellow-400 font-medium">
-                              Approaching limit
-                            </Text>
-                          )}
-                        </div>
-                      );
-                    })()}
-                  </div>
-                )}
+                          }`}
+                          style={{ width: `${Math.min(percentage, 100)}%` }}
+                        />
+                      </div>
+                      {isDanger && (
+                        <Text size="xs" className="text-red-400 font-medium">
+                          Limit reached
+                        </Text>
+                      )}
+                      {isWarning && !isDanger && (
+                        <Text size="xs" className="text-yellow-400 font-medium">
+                          Approaching limit
+                        </Text>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
-            )}
-
-            <div className="w-full sm:flex sm:justify-end">
-              <Button
-                component={Link}
-                to="/customers/add"
-                size="md"
-                className="font-medium w-full sm:w-auto sm:max-w-xs"
-              >
-                {totalCount === 0 && !loading ? 'Add First Customer' : 'Add Customer'}
-              </Button>
+                )}
             </div>
+          )}
+
+          <div className="w-full sm:flex sm:justify-end">
+            <Button
+              component={Link}
+              to="/customers/add"
+              size="md"
+              className="font-medium w-full sm:w-auto sm:max-w-xs"
+            >
+                {totalCount === 0 && !loading ? 'Add First Customer' : 'Add Customer'}
+            </Button>
           </div>
+        </div>
           <div className="flex flex-col gap-2">
             <Text size="sm" className="text-gray-400">
               Search:
             </Text>
-            <TextInput
+        <TextInput
               placeholder="Name, phone number, or job description"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
                 setSelectedLetter(null); // Clear letter filter when searching
-                setPage(1);
-              }}
-              className="w-full sm:w-96"
-              size="md"
-            />
+            setPage(1);
+          }}
+          className="w-full sm:w-96"
+          size="md"
+        />
           </div>
           {/* Alphabet Filter */}
           <div className="flex flex-col gap-2">
@@ -992,112 +992,112 @@ export const CustomerList = () => {
               </div>
             </div>
           </div>
-        </div>
+      </div>
 
-        {loading ? (
-          <div className="space-y-4">
-            {/* Desktop skeleton */}
-            <div className="hidden lg:block">
-              <Table>
-                <Table.Thead>
-                  <Table.Tr>
-                    <Table.Th>Name</Table.Th>
-                    <Table.Th>Phone</Table.Th>
-                    <Table.Th>Job Description</Table.Th>
-                    <Table.Th>Status</Table.Th>
-                    <Table.Th>Date Sent</Table.Th>
-                    <Table.Th>Actions</Table.Th>
+      {loading ? (
+        <div className="space-y-4">
+          {/* Desktop skeleton */}
+          <div className="hidden lg:block">
+            <Table>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>Name</Table.Th>
+                  <Table.Th>Phone</Table.Th>
+                  <Table.Th>Job Description</Table.Th>
+                  <Table.Th>Status</Table.Th>
+                  <Table.Th>Date Sent</Table.Th>
+                  <Table.Th>Actions</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                {[...Array(5)].map((_, i) => (
+                  <Table.Tr key={i}>
+                    <Table.Td>
+                      <Skeleton height={20} />
+                    </Table.Td>
+                    <Table.Td>
+                      <Skeleton height={20} width={120} />
+                    </Table.Td>
+                    <Table.Td>
+                      <Skeleton height={20} width={150} />
+                    </Table.Td>
+                    <Table.Td>
+                      <Skeleton height={24} width={80} radius="xl" />
+                    </Table.Td>
+                    <Table.Td>
+                      <Skeleton height={20} width={100} />
+                    </Table.Td>
+                    <Table.Td>
+                      <Skeleton height={20} width={120} />
+                    </Table.Td>
+                    <Table.Td>
+                      <Skeleton height={32} width={100} />
+                    </Table.Td>
                   </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {[...Array(5)].map((_, i) => (
-                    <Table.Tr key={i}>
-                      <Table.Td>
-                        <Skeleton height={20} />
-                      </Table.Td>
-                      <Table.Td>
-                        <Skeleton height={20} width={120} />
-                      </Table.Td>
-                      <Table.Td>
-                        <Skeleton height={20} width={150} />
-                      </Table.Td>
-                      <Table.Td>
-                        <Skeleton height={24} width={80} radius="xl" />
-                      </Table.Td>
-                      <Table.Td>
-                        <Skeleton height={20} width={100} />
-                      </Table.Td>
-                      <Table.Td>
-                        <Skeleton height={20} width={120} />
-                      </Table.Td>
-                      <Table.Td>
-                        <Skeleton height={32} width={100} />
-                      </Table.Td>
-                    </Table.Tr>
-                  ))}
-                </Table.Tbody>
-              </Table>
-            </div>
-            {/* Mobile skeleton */}
-            <div className="lg:hidden space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <Paper key={i} p="md" className="bg-[#141414]">
-                  <Stack gap="sm">
-                    <Skeleton height={20} width="60%" />
-                    <Skeleton height={16} width="40%" />
-                    <Skeleton height={16} width="50%" />
-                    <Skeleton height={24} width={80} radius="xl" />
-                  </Stack>
-                </Paper>
-              ))}
-            </div>
+                ))}
+              </Table.Tbody>
+            </Table>
           </div>
-        ) : customers.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">No customers found</div>
-        ) : (
-          <>
-            {/* Desktop table view */}
-            <div className="hidden lg:block overflow-x-auto -mx-2 sm:mx-0">
-              <Table highlightOnHover>
-                <Table.Thead>
-                  <Table.Tr>
-                    <Table.Th>Name</Table.Th>
-                    <Table.Th>Phone</Table.Th>
-                    <Table.Th>Job Description</Table.Th>
-                    <Table.Th>Status</Table.Th>
-                    <Table.Th>Date Sent</Table.Th>
-                    <Table.Th>Actions</Table.Th>
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {customers.map((customer) => (
-                    <Table.Tr key={customer.id}>
-                      <Table.Td className="font-medium text-white">
-                        {customer.name}
-                        {!isPhoneValid(customer.phone) && (
-                          <div className="text-xs text-red-400 mt-1 font-medium">
-                            {getPhoneError(customer.phone) || 'Invalid phone number'}
+          {/* Mobile skeleton */}
+          <div className="lg:hidden space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <Paper key={i} p="md" className="bg-[#141414]">
+                <Stack gap="sm">
+                  <Skeleton height={20} width="60%" />
+                  <Skeleton height={16} width="40%" />
+                  <Skeleton height={16} width="50%" />
+                  <Skeleton height={24} width={80} radius="xl" />
+                </Stack>
+              </Paper>
+            ))}
+          </div>
+        </div>
+      ) : customers.length === 0 ? (
+        <div className="text-center py-16 text-gray-400">No customers found</div>
+      ) : (
+        <>
+          {/* Desktop table view */}
+          <div className="hidden lg:block overflow-x-auto -mx-2 sm:mx-0">
+            <Table highlightOnHover>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>Name</Table.Th>
+                  <Table.Th>Phone</Table.Th>
+                  <Table.Th>Job Description</Table.Th>
+                  <Table.Th>Status</Table.Th>
+                  <Table.Th>Date Sent</Table.Th>
+                  <Table.Th>Actions</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                {customers.map((customer) => (
+                  <Table.Tr key={customer.id}>
+                    <Table.Td className="font-medium text-white">
+                      {customer.name}
+                      {!isPhoneValid(customer.phone) && (
+                        <div className="text-xs text-red-400 mt-1 font-medium">
+                          {getPhoneError(customer.phone) || 'Invalid phone number'}
+                        </div>
+                      )}
+                    </Table.Td>
+                    <Table.Td className="text-gray-300">
+                      {(() => {
+                        const phoneDisplay = formatPhone(customer.phone);
+                        return (
+                          <div className="flex items-center gap-1.5">
+                            <span className="flex items-center justify-center text-base leading-none">
+                              {phoneDisplay.flag}
+                            </span>
+                            <span>{phoneDisplay.number}</span>
                           </div>
-                        )}
-                      </Table.Td>
-                      <Table.Td className="text-gray-300">
-                        {(() => {
-                          const phoneDisplay = formatPhone(customer.phone);
-                          return (
-                            <div className="flex items-center gap-1.5">
-                              <span className="flex items-center justify-center text-base leading-none">
-                                {phoneDisplay.flag}
-                              </span>
-                              <span>{phoneDisplay.number}</span>
-                            </div>
-                          );
-                        })()}
-                      </Table.Td>
+                        );
+                      })()}
+                    </Table.Td>
                       <Table.Td className="text-gray-400">
                         {customer.job_description || '-'}
                       </Table.Td>
-                      <Table.Td>
-                        <div className="flex flex-col gap-1">
+                    <Table.Td>
+                      <div className="flex flex-col gap-1">
                           <Badge
                             color={
                               customer.sms_status === 'sent'
@@ -1112,7 +1112,7 @@ export const CustomerList = () => {
                               : customer.sms_status === 'scheduled'
                                 ? 'Scheduled'
                                 : 'Not Sent'}
-                          </Badge>
+                        </Badge>
                           {customer.sms_status === 'scheduled' &&
                             customer.scheduled_send_at &&
                             (canSchedule ? (
@@ -1133,10 +1133,10 @@ export const CustomerList = () => {
                                 </Text>
                               </Tooltip>
                             ))}
-                          {(() => {
-                            const requestCount = customer.sms_request_count || 0;
-                            const isOptedOut = customer.opt_out || false;
-                            const isLimitReached = requestCount >= 3;
+                        {(() => {
+                          const requestCount = customer.sms_request_count || 0;
+                          const isOptedOut = customer.opt_out || false;
+                          const isLimitReached = requestCount >= 3;
 
                             // Calculate days since last contact
                             let daysSinceContact: number | null = null;
@@ -1159,20 +1159,20 @@ export const CustomerList = () => {
                             const showContactWarning =
                               daysSinceContact !== null && daysSinceContact >= 5;
 
-                            if (isOptedOut) {
-                              return (
-                                <Text size="xs" className="text-red-400">
-                                  Opted Out
-                                </Text>
-                              );
-                            }
-                            if (isLimitReached) {
-                              return (
-                                <Text size="xs" className="text-yellow-400">
-                                  Limit Reached (3/3)
-                                </Text>
-                              );
-                            }
+                          if (isOptedOut) {
+                            return (
+                              <Text size="xs" className="text-red-400">
+                                Opted Out
+                              </Text>
+                            );
+                          }
+                          if (isLimitReached) {
+                            return (
+                              <Text size="xs" className="text-yellow-400">
+                                Limit Reached (3/3)
+                              </Text>
+                            );
+                          }
                             if (showContactWarning) {
                               return (
                                 <Text
@@ -1189,15 +1189,15 @@ export const CustomerList = () => {
                                 </Text>
                               );
                             }
-                            if (requestCount > 0) {
-                              return (
-                                <Text size="xs" className="text-gray-400">
-                                  {requestCount}/3 requests
-                                </Text>
-                              );
-                            }
-                            return null;
-                          })()}
+                          if (requestCount > 0) {
+                            return (
+                              <Text size="xs" className="text-gray-400">
+                                {requestCount}/3 requests
+                              </Text>
+                            );
+                          }
+                          return null;
+                        })()}
                           {customer.created_at && (
                             <Text size="sm" className="text-gray-500 mt-1">
                               Added:{' '}
@@ -1208,67 +1208,67 @@ export const CustomerList = () => {
                               })}
                             </Text>
                           )}
-                        </div>
-                      </Table.Td>
-                      <Table.Td className="text-gray-400">{formatDate(customer.sent_at)}</Table.Td>
-                      <Table.Td>
+                      </div>
+                    </Table.Td>
+                    <Table.Td className="text-gray-400">{formatDate(customer.sent_at)}</Table.Td>
+                    <Table.Td>
                         <div className="flex flex-col gap-1.5 min-w-[200px]">
-                          {(() => {
-                            const requestCount = customer.sms_request_count || 0;
-                            const isOptedOut = customer.opt_out || false;
-                            const isLimitReached = requestCount >= 3;
-                            const isSending = sendingCustomerId === customer.id;
-                            const isDisabled =
-                              paymentLoading ||
-                              !hasPaid ||
-                              !isPhoneValid(customer.phone) ||
-                              isOptedOut ||
-                              isLimitReached ||
-                              isSending;
+                        {(() => {
+                          const requestCount = customer.sms_request_count || 0;
+                          const isOptedOut = customer.opt_out || false;
+                          const isLimitReached = requestCount >= 3;
+                          const isSending = sendingCustomerId === customer.id;
+                          const isDisabled =
+                            paymentLoading ||
+                            !hasPaid ||
+                            !isPhoneValid(customer.phone) ||
+                            isOptedOut ||
+                            isLimitReached ||
+                            isSending;
 
-                            const getButtonText = () => {
-                              if (isLimitReached) return 'Limit Reached (3/3)';
-                              if (isOptedOut) return 'Opted Out';
-                              if (isSending) return 'Sending...';
-                              const countText = requestCount > 0 ? ` (${requestCount}/3)` : '';
-                              return customer.sms_status === 'sent'
-                                ? `Request Review Again${countText}`
-                                : `Request Review${countText}`;
-                            };
+                          const getButtonText = () => {
+                            if (isLimitReached) return 'Limit Reached (3/3)';
+                            if (isOptedOut) return 'Opted Out';
+                            if (isSending) return 'Sending...';
+                            const countText = requestCount > 0 ? ` (${requestCount}/3)` : '';
+                            return customer.sms_status === 'sent'
+                              ? `Request Review Again${countText}`
+                              : `Request Review${countText}`;
+                          };
 
-                            const getTooltip = () => {
-                              if (paymentLoading) return 'Loading payment status...';
-                              if (!hasPaid) return 'Payment required to send SMS messages';
-                              if (!isPhoneValid(customer.phone))
-                                return getPhoneError(customer.phone) || 'Invalid phone number';
-                              if (isOptedOut)
-                                return 'This customer has opted out of receiving messages';
-                              if (isLimitReached)
-                                return 'Maximum of 3 review requests allowed per customer. Limit reached.';
-                              return '';
-                            };
+                          const getTooltip = () => {
+                            if (paymentLoading) return 'Loading payment status...';
+                            if (!hasPaid) return 'Payment required to send SMS messages';
+                            if (!isPhoneValid(customer.phone))
+                              return getPhoneError(customer.phone) || 'Invalid phone number';
+                            if (isOptedOut)
+                              return 'This customer has opted out of receiving messages';
+                            if (isLimitReached)
+                              return 'Maximum of 3 review requests allowed per customer. Limit reached.';
+                            return '';
+                          };
 
                             // Desktop: Send Now first, then Edit Schedule
-                            return (
+                          return (
                               <>
-                                <Button
-                                  size="sm"
-                                  variant={customer.sms_status === 'sent' ? 'light' : 'filled'}
+                            <Button
+                              size="sm"
+                              variant={customer.sms_status === 'sent' ? 'light' : 'filled'}
                                   onClick={() =>
                                     customer.sms_status === 'scheduled'
                                       ? handleSendNow(customer)
                                       : handleSendAgain(customer.id)
                                   }
-                                  radius="md"
+                              radius="md"
                                   className="font-medium w-full"
-                                  disabled={isDisabled}
-                                  loading={isSending}
-                                  title={getTooltip()}
-                                >
+                              disabled={isDisabled}
+                              loading={isSending}
+                              title={getTooltip()}
+                            >
                                   {customer.sms_status === 'scheduled'
                                     ? 'Send Now'
                                     : getButtonText()}
-                                </Button>
+                            </Button>
                                 {canSchedule && customer.sms_status === 'scheduled' && (
                                   <Tooltip label="Edit or cancel the scheduled send time">
                                     <Button
@@ -1284,8 +1284,8 @@ export const CustomerList = () => {
                                   </Tooltip>
                                 )}
                               </>
-                            );
-                          })()}
+                          );
+                        })()}
                           <Button
                             size="sm"
                             variant="subtle"
@@ -1295,49 +1295,49 @@ export const CustomerList = () => {
                           >
                             Edit
                           </Button>
-                        </div>
-                      </Table.Td>
-                    </Table.Tr>
-                  ))}
-                </Table.Tbody>
-              </Table>
-            </div>
+                      </div>
+                    </Table.Td>
+                  </Table.Tr>
+                ))}
+              </Table.Tbody>
+            </Table>
+          </div>
 
-            {/* Mobile/Tablet card view */}
-            <div className="lg:hidden space-y-4">
-              {customers.map((customer) => {
-                const phoneValid = isPhoneValid(customer.phone);
-                const phoneError = getPhoneError(customer.phone);
-                const phoneDisplay = formatPhone(customer.phone);
+          {/* Mobile/Tablet card view */}
+          <div className="lg:hidden space-y-4">
+            {customers.map((customer) => {
+              const phoneValid = isPhoneValid(customer.phone);
+              const phoneError = getPhoneError(customer.phone);
+              const phoneDisplay = formatPhone(customer.phone);
 
-                return (
-                  <Paper
-                    key={customer.id}
-                    p="md"
-                    shadow="sm"
-                    className={`bg-[#141414] border transition-colors sm:p-lg ${phoneValid ? 'border-[#2a2a2a] hover:border-[#333333]' : 'border-red-800/50'}`}
-                  >
+              return (
+                <Paper
+                  key={customer.id}
+                  p="md"
+                  shadow="sm"
+                  className={`bg-[#141414] border transition-colors sm:p-lg ${phoneValid ? 'border-[#2a2a2a] hover:border-[#333333]' : 'border-red-800/50'}`}
+                >
                     {/* Section 1: Customer Info */}
                     <div className="flex justify-between items-start mb-3 pb-3 border-b border-[#2a2a2a]">
-                      <div className="flex-1">
-                        <div className="font-semibold text-lg text-white mb-1">{customer.name}</div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-lg text-white mb-1">{customer.name}</div>
                         {customer.job_description && (
                           <div className="text-sm text-gray-300 mb-2">
                             {customer.job_description}
                           </div>
                         )}
-                        <div className="text-sm text-gray-400 font-medium flex items-center gap-1.5">
-                          <span className="flex items-center justify-center text-base leading-none">
-                            {phoneDisplay.flag}
-                          </span>
-                          <span>{phoneDisplay.number}</span>
-                        </div>
-                        {!phoneValid && phoneError && (
-                          <div className="text-xs text-red-400 mt-1 font-medium">{phoneError}</div>
-                        )}
+                      <div className="text-sm text-gray-400 font-medium flex items-center gap-1.5">
+                        <span className="flex items-center justify-center text-base leading-none">
+                          {phoneDisplay.flag}
+                        </span>
+                        <span>{phoneDisplay.number}</span>
                       </div>
-                      <div className="flex flex-col items-end gap-1.5 ml-2">
-                        <Badge
+                      {!phoneValid && phoneError && (
+                        <div className="text-xs text-red-400 mt-1 font-medium">{phoneError}</div>
+                      )}
+                    </div>
+                    <div className="flex flex-col items-end gap-1.5 ml-2">
+                      <Badge
                           color={
                             customer.sms_status === 'sent'
                               ? 'green'
@@ -1345,15 +1345,15 @@ export const CustomerList = () => {
                                 ? 'blue'
                                 : 'orange'
                           }
-                          size="md"
-                          radius="md"
-                        >
+                        size="md"
+                        radius="md"
+                      >
                           {customer.sms_status === 'sent'
                             ? 'Sent'
                             : customer.sms_status === 'scheduled'
                               ? 'Scheduled'
                               : 'Not Sent'}
-                        </Badge>
+                      </Badge>
                         {customer.sms_status === 'scheduled' &&
                           customer.scheduled_send_at &&
                           (canSchedule ? (
@@ -1396,7 +1396,7 @@ export const CustomerList = () => {
                         <div className="mb-2">
                           <div className="text-sm text-gray-400 font-medium mb-0.5">
                             Review Requests ({customer.messages.length}/3):
-                          </div>
+                    </div>
                           <div className="space-y-0.5">
                             {customer.messages.slice(0, 3).map((message, idx) => (
                               <div
@@ -1418,11 +1418,11 @@ export const CustomerList = () => {
                                     <IconClock size={14} className="text-blue-400" />
                                   </Tooltip>
                                 )}
-                              </div>
+                  </div>
                             ))}
                           </div>
-                        </div>
-                      )}
+                    </div>
+                  )}
                       {(() => {
                         // Calculate days since last contact
                         let daysSinceContact: number | null = null;
@@ -1457,10 +1457,10 @@ export const CustomerList = () => {
                           </div>
                         ) : null;
                       })()}
-                      {(() => {
-                        const requestCount = customer.sms_request_count || 0;
-                        const isOptedOut = customer.opt_out || false;
-                        const isLimitReached = requestCount >= 3;
+                  {(() => {
+                    const requestCount = customer.sms_request_count || 0;
+                    const isOptedOut = customer.opt_out || false;
+                    const isLimitReached = requestCount >= 3;
 
                         return isLimitReached || isOptedOut ? (
                           <details className="mt-2">
@@ -1486,62 +1486,62 @@ export const CustomerList = () => {
                                   : 'bg-yellow-900/10 text-gray-300'
                               }`}
                             >
-                              {isOptedOut
-                                ? 'This customer has opted out of receiving SMS messages.'
+                            {isOptedOut
+                              ? 'This customer has opted out of receiving SMS messages.'
                                 : 'Maximum of 3 review requests reached. No more messages can be sent to this customer. This limit helps maintain good customer relationships and comply with SMS regulations.'}
                             </div>
                           </details>
                         ) : null;
-                      })()}
+                  })()}
                     </div>
 
                     {/* Section 3: Action Buttons */}
                     <div className="flex justify-between items-center gap-2">
-                      <Button
-                        size="xs"
-                        variant="subtle"
-                        onClick={() => handleEdit(customer)}
-                        radius="md"
-                        className="font-medium flex items-center justify-center"
-                      >
-                        Edit
-                      </Button>
+                    <Button
+                      size="xs"
+                      variant="subtle"
+                      onClick={() => handleEdit(customer)}
+                      radius="md"
+                      className="font-medium flex items-center justify-center"
+                    >
+                      Edit
+                    </Button>
                       <div className="flex flex-col gap-2">
-                        {(() => {
-                          const requestCount = customer.sms_request_count || 0;
-                          const isOptedOut = customer.opt_out || false;
-                          const isLimitReached = requestCount >= 3;
-                          const isSending = sendingCustomerId === customer.id;
-                          const isDisabled =
-                            paymentLoading ||
-                            !hasPaid ||
-                            !phoneValid ||
-                            isOptedOut ||
-                            isLimitReached ||
-                            isSending;
+                    {(() => {
+                      const requestCount = customer.sms_request_count || 0;
+                      const isOptedOut = customer.opt_out || false;
+                      const isLimitReached = requestCount >= 3;
+                      const isSending = sendingCustomerId === customer.id;
+                      const isDisabled =
+                        paymentLoading ||
+                        !hasPaid ||
+                        !phoneValid ||
+                        isOptedOut ||
+                        isLimitReached ||
+                        isSending;
 
-                          const getButtonText = () => {
-                            if (isLimitReached) return 'Limit Reached (3/3)';
-                            if (isOptedOut) return 'Opted Out';
-                            if (isSending) return 'Sending...';
-                            const countText = requestCount > 0 ? ` (${requestCount}/3)` : '';
-                            return customer.sms_status === 'sent'
-                              ? `Request Review Again${countText}`
-                              : `Request Review${countText}`;
-                          };
+                      const getButtonText = () => {
+                        if (isLimitReached) return 'Limit Reached (3/3)';
+                        if (isOptedOut) return 'Opted Out';
+                        if (isSending) return 'Sending...';
+                        const countText = requestCount > 0 ? ` (${requestCount}/3)` : '';
+                        return customer.sms_status === 'sent'
+                          ? `Request Review Again${countText}`
+                          : `Request Review${countText}`;
+                      };
 
-                          const getTooltip = () => {
-                            if (paymentLoading) return 'Loading payment status...';
-                            if (!hasPaid) return 'Payment required to send SMS messages';
-                            if (!phoneValid) return phoneError || 'Invalid phone number';
+                      const getTooltip = () => {
+                        if (paymentLoading) return 'Loading payment status...';
+                        if (!hasPaid) return 'Payment required to send SMS messages';
+                        if (!phoneValid) return phoneError || 'Invalid phone number';
                             if (isOptedOut)
                               return 'This customer has opted out of receiving messages';
-                            if (isLimitReached)
-                              return 'Maximum of 3 review requests allowed per customer. Limit reached.';
-                            return '';
-                          };
+                        if (isLimitReached)
+                          return 'Maximum of 3 review requests allowed per customer. Limit reached.';
+                        return '';
+                      };
 
-                          return (
+                      return (
                             <>
                               {canSchedule && customer.sms_status === 'scheduled' && (
                                 <Button
@@ -1555,68 +1555,68 @@ export const CustomerList = () => {
                                   Edit Schedule
                                 </Button>
                               )}
-                              <Button
-                                size="sm"
-                                variant={customer.sms_status === 'sent' ? 'light' : 'filled'}
+                        <Button
+                          size="sm"
+                          variant={customer.sms_status === 'sent' ? 'light' : 'filled'}
                                 onClick={() =>
                                   customer.sms_status === 'scheduled'
                                     ? handleSendNow(customer)
                                     : handleSendAgain(customer.id)
                                 }
-                                radius="md"
-                                className="font-medium"
-                                disabled={isDisabled}
-                                loading={isSending}
-                                title={getTooltip()}
-                              >
+                          radius="md"
+                          className="font-medium"
+                          disabled={isDisabled}
+                          loading={isSending}
+                          title={getTooltip()}
+                        >
                                 {customer.sms_status === 'scheduled' ? 'Send Now' : getButtonText()}
-                              </Button>
+                        </Button>
                             </>
-                          );
-                        })()}
+                      );
+                    })()}
                       </div>
-                    </div>
-                  </Paper>
-                );
-              })}
-            </div>
-          </>
-        )}
-
-        {total > limit && (
-          <div className="mt-6 flex justify-center">
-            <Pagination value={page} onChange={setPage} total={Math.ceil(total / limit)} />
+                  </div>
+                </Paper>
+              );
+            })}
           </div>
-        )}
+        </>
+      )}
 
-        {/* Edit Customer Modal */}
-        <Modal
-          opened={editModalOpen}
-          onClose={() => {
-            setEditModalOpen(false);
-            setEditingCustomer(null);
-            setSelectedCountry('GB');
-            countryRef.current = 'GB';
-            editForm.reset();
-          }}
-          title="Edit Customer"
-          size="md"
-          className="modal-mobile-fullscreen"
+      {total > limit && (
+        <div className="mt-6 flex justify-center">
+          <Pagination value={page} onChange={setPage} total={Math.ceil(total / limit)} />
+        </div>
+      )}
+
+      {/* Edit Customer Modal */}
+      <Modal
+        opened={editModalOpen}
+        onClose={() => {
+          setEditModalOpen(false);
+          setEditingCustomer(null);
+          setSelectedCountry('GB');
+          countryRef.current = 'GB';
+          editForm.reset();
+        }}
+        title="Edit Customer"
+        size="md"
+        className="modal-mobile-fullscreen"
           classNames={{
             body: 'p-0',
           }}
-        >
-          <form onSubmit={editForm.onSubmit(handleSaveEdit)}>
-            <Stack gap="md">
-              <TextInput
-                label="Name"
-                placeholder="Customer Name"
-                required
-                {...editForm.getInputProps('name')}
-              />
+      >
+        <form onSubmit={editForm.onSubmit(handleSaveEdit)}>
+          <Stack gap="md">
+            <TextInput
+              label="Name"
+              placeholder="Customer Name"
+              required
+              {...editForm.getInputProps('name')}
+            />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-200 mb-1">
+            <div>
+              <label className="block text-sm font-medium text-gray-200 mb-1">
                   {(() => {
                     // Use "Mobile Number" for UK/Ireland, "Cell Number" for others
                     const phoneType =
@@ -1629,79 +1629,79 @@ export const CustomerList = () => {
                       </>
                     );
                   })()}
-                </label>
-                <PhoneNumber
-                  value={editForm.values.phoneNumber}
-                  onChange={(value) => {
-                    editForm.setFieldValue('phoneNumber', value || '');
-                    // NO auto-detection - country is only changed by user via dropdown
-                    // Validate immediately when typing - use current country from ref
+              </label>
+              <PhoneNumber
+                value={editForm.values.phoneNumber}
+                onChange={(value) => {
+                  editForm.setFieldValue('phoneNumber', value || '');
+                  // NO auto-detection - country is only changed by user via dropdown
+                  // Validate immediately when typing - use current country from ref
+                  const validation = validatePhoneNumber(
+                    value,
+                    countryRef.current as CountryCode | undefined
+                  );
+                  if (!validation.isValid) {
+                    setPhoneError(validation.error || 'Invalid phone number');
+                    editForm.setFieldError(
+                      'phoneNumber',
+                      validation.error || 'Invalid phone number'
+                    );
+                  } else {
+                    setPhoneError(null);
+                    editForm.setFieldError('phoneNumber', null);
+                  }
+                  editForm.validateField('phoneNumber');
+                }}
+                onCountryChange={(country) => {
+                  // Update country in both state and ref FIRST
+                  setSelectedCountry(country);
+                  countryRef.current = country;
+
+                  // Always validate when country changes if there's a phone number
+                  if (country && editForm.values.phoneNumber) {
+                    // Re-validate the existing number with the new country immediately
                     const validation = validatePhoneNumber(
-                      value,
-                      countryRef.current as CountryCode | undefined
+                      editForm.values.phoneNumber,
+                      country as CountryCode | undefined
                     );
                     if (!validation.isValid) {
                       setPhoneError(validation.error || 'Invalid phone number');
+                      // Also set form error
                       editForm.setFieldError(
                         'phoneNumber',
                         validation.error || 'Invalid phone number'
                       );
                     } else {
+                      // Clear error if number is valid for the new country
                       setPhoneError(null);
                       editForm.setFieldError('phoneNumber', null);
                     }
-                    editForm.validateField('phoneNumber');
-                  }}
-                  onCountryChange={(country) => {
-                    // Update country in both state and ref FIRST
-                    setSelectedCountry(country);
-                    countryRef.current = country;
+                    // Force re-validation to ensure form state is updated with new country
+                    setTimeout(() => {
+                      editForm.validateField('phoneNumber');
+                    }, 0);
+                  } else if (country) {
+                    // New country selected but no phone number - clear any errors
+                    setPhoneError(null);
+                    editForm.setFieldError('phoneNumber', null);
+                  } else {
+                    // No country selected - clear errors
+                    setPhoneError(null);
+                    editForm.setFieldError('phoneNumber', null);
+                  }
+                }}
+                error={phoneError}
+                defaultCountry={selectedCountry || 'GB'}
+                key={`phone-edit-${editingCustomer?.id}-${selectedCountry}`}
+              />
+            </div>
 
-                    // Always validate when country changes if there's a phone number
-                    if (country && editForm.values.phoneNumber) {
-                      // Re-validate the existing number with the new country immediately
-                      const validation = validatePhoneNumber(
-                        editForm.values.phoneNumber,
-                        country as CountryCode | undefined
-                      );
-                      if (!validation.isValid) {
-                        setPhoneError(validation.error || 'Invalid phone number');
-                        // Also set form error
-                        editForm.setFieldError(
-                          'phoneNumber',
-                          validation.error || 'Invalid phone number'
-                        );
-                      } else {
-                        // Clear error if number is valid for the new country
-                        setPhoneError(null);
-                        editForm.setFieldError('phoneNumber', null);
-                      }
-                      // Force re-validation to ensure form state is updated with new country
-                      setTimeout(() => {
-                        editForm.validateField('phoneNumber');
-                      }, 0);
-                    } else if (country) {
-                      // New country selected but no phone number - clear any errors
-                      setPhoneError(null);
-                      editForm.setFieldError('phoneNumber', null);
-                    } else {
-                      // No country selected - clear errors
-                      setPhoneError(null);
-                      editForm.setFieldError('phoneNumber', null);
-                    }
-                  }}
-                  error={phoneError}
-                  defaultCountry={selectedCountry || 'GB'}
-                  key={`phone-edit-${editingCustomer?.id}-${selectedCountry}`}
-                />
-              </div>
-
-              <Textarea
-                label="Job Description (Optional)"
-                placeholder="Brief description of the work done"
-                rows={3}
+            <Textarea
+              label="Job Description (Optional)"
+              placeholder="Brief description of the work done"
+              rows={3}
                 maxLength={250}
-                {...editForm.getInputProps('jobDescription')}
+              {...editForm.getInputProps('jobDescription')}
                 description={`${editForm.values.jobDescription.length}/250 characters`}
               />
 
@@ -1737,85 +1737,85 @@ export const CustomerList = () => {
                 </div>
               )}
 
-              <div className="flex flex-col gap-3 pt-4 border-t border-[#2a2a2a]">
-                <div className="flex gap-3">
-                  <Button
-                    type="button"
-                    variant="subtle"
-                    onClick={() => {
-                      setEditModalOpen(false);
-                      setEditingCustomer(null);
-                      editForm.reset();
-                    }}
-                    className="flex-1"
-                    disabled={saving || deleting}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    loading={saving}
-                    className="flex-1 font-semibold"
-                    disabled={deleting}
-                  >
-                    Save
-                  </Button>
-                </div>
+            <div className="flex flex-col gap-3 pt-4 border-t border-[#2a2a2a]">
+              <div className="flex gap-3">
                 <Button
                   type="button"
-                  variant="light"
-                  color="red"
+                  variant="subtle"
                   onClick={() => {
                     setEditModalOpen(false);
-                    setDeleteConfirmOpen(true);
+                    setEditingCustomer(null);
+                    editForm.reset();
                   }}
-                  className="w-full"
+                  className="flex-1"
                   disabled={saving || deleting}
-                  leftSection={<IconTrash size={16} />}
                 >
-                  Delete Customer
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  loading={saving}
+                  className="flex-1 font-semibold"
+                  disabled={deleting}
+                >
+                  Save
                 </Button>
               </div>
-            </Stack>
-          </form>
-        </Modal>
-
-        {/* Delete Confirmation Modal */}
-        <Modal
-          opened={deleteConfirmOpen}
-          onClose={() => !deleting && setDeleteConfirmOpen(false)}
-          title="Delete Customer"
-          size="md"
-          centered
-          classNames={{
-            body: 'p-0',
-          }}
-        >
-          <Stack gap="md">
-            <Text size="sm" className="text-gray-300">
-              Are you sure you want to delete <strong>{editingCustomer?.name}</strong>? This action
-              cannot be undone.
-            </Text>
-            <div className="flex gap-3 pt-4">
               <Button
-                variant="subtle"
-                onClick={() => setDeleteConfirmOpen(false)}
-                className="flex-1"
-                disabled={deleting}
-              >
-                Cancel
-              </Button>
-              <Button
+                type="button"
+                variant="light"
                 color="red"
-                onClick={handleDelete}
-                loading={deleting}
-                className="flex-1 font-semibold"
+                onClick={() => {
+                  setEditModalOpen(false);
+                  setDeleteConfirmOpen(true);
+                }}
+                className="w-full"
+                disabled={saving || deleting}
+                leftSection={<IconTrash size={16} />}
               >
-                Delete
+                Delete Customer
               </Button>
             </div>
           </Stack>
-        </Modal>
+        </form>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        opened={deleteConfirmOpen}
+        onClose={() => !deleting && setDeleteConfirmOpen(false)}
+        title="Delete Customer"
+        size="md"
+        centered
+          classNames={{
+            body: 'p-0',
+          }}
+      >
+        <Stack gap="md">
+          <Text size="sm" className="text-gray-300">
+            Are you sure you want to delete <strong>{editingCustomer?.name}</strong>? This action
+            cannot be undone.
+          </Text>
+          <div className="flex gap-3 pt-4">
+            <Button
+              variant="subtle"
+              onClick={() => setDeleteConfirmOpen(false)}
+              className="flex-1"
+              disabled={deleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              color="red"
+              onClick={handleDelete}
+              loading={deleting}
+              className="flex-1 font-semibold"
+            >
+              Delete
+            </Button>
+          </div>
+        </Stack>
+      </Modal>
 
         {/* Schedule SMS Modal */}
         <Modal
@@ -1878,7 +1878,7 @@ export const CustomerList = () => {
             </div>
           </Stack>
         </Modal>
-      </Paper>
+    </Paper>
     </Container>
   );
 };

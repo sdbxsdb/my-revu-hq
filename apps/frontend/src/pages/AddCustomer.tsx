@@ -50,7 +50,8 @@ export const AddCustomer = () => {
   const navigate = useNavigate();
 
   // Check if user has Pro or Business tier (or free tier for dev testing)
-  const canSchedule = subscriptionTier === 'free' || subscriptionTier === 'pro' || subscriptionTier === 'business';
+  const canSchedule =
+    subscriptionTier === 'free' || subscriptionTier === 'pro' || subscriptionTier === 'business';
 
   // TODO: When account has a region/country field, use it here
   // For now, default to GB (no need to fetch account just for this)
@@ -128,6 +129,8 @@ export const AddCustomer = () => {
       await apiClient.sendSMS(customer.id);
       await refreshSetup();
 
+      form.reset();
+
       // Show progress modal if setup not complete
       if (progress && !progress.isComplete) {
         setShowProgressModal(true);
@@ -137,10 +140,8 @@ export const AddCustomer = () => {
           message: 'Customer added and SMS sent',
           color: 'green',
         });
+        navigate('/customers');
       }
-
-      form.reset();
-      navigate('/customers');
     } catch (error: any) {
       notifications.show({
         title: 'Error',
@@ -193,6 +194,8 @@ export const AddCustomer = () => {
 
       await refreshSetup();
 
+      form.reset();
+
       // Show progress modal if setup not complete
       if (progress && !progress.isComplete) {
         setShowProgressModal(true);
@@ -202,10 +205,8 @@ export const AddCustomer = () => {
           message: 'Customer added successfully',
           color: 'green',
         });
+        navigate('/customers');
       }
-
-      form.reset();
-      navigate('/customers');
     } catch (error: any) {
       notifications.show({
         title: 'Error',
@@ -285,6 +286,9 @@ export const AddCustomer = () => {
 
       await refreshSetup();
 
+      form.reset();
+      setScheduledDateTime(null);
+
       // Show progress modal if setup not complete
       if (progress && !progress.isComplete) {
         setShowProgressModal(true);
@@ -303,11 +307,8 @@ export const AddCustomer = () => {
             : 'Customer added (pending SMS)',
           color: 'green',
         });
+        navigate('/customers');
       }
-
-      form.reset();
-      setScheduledDateTime(null);
-      navigate('/customers');
     } catch (error: any) {
       notifications.show({
         title: 'Error',

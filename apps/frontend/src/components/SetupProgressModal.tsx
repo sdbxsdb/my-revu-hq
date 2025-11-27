@@ -1,4 +1,4 @@
-import { Modal, Stack, Text, Button, Progress, Group, Badge } from '@mantine/core';
+import { Modal, Stack, Text, Button, Progress, Badge } from '@mantine/core';
 import { IconCheck, IconArrowRight, IconHome } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -68,14 +68,9 @@ export const SetupProgressModal = ({
         </div>
 
         <div>
-          <Group justify="space-between" className="mb-1">
-            <Text size="xs" className="text-gray-400">
-              Setup Progress
-            </Text>
-            <Text size="xs" className="text-teal-400 font-semibold">
-              {Math.round(progressPercent)}%
-            </Text>
-          </Group>
+          <Text size="xs" className="text-gray-400 mb-1">
+            Setup Progress
+          </Text>
           <Progress value={progressPercent} color="teal" size="md" />
         </div>
 
