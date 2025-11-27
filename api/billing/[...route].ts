@@ -568,7 +568,7 @@ async function handlePrices(req: VercelRequest, res: VercelResponse) {
     }
 
     // Get price IDs for all tiers and currencies
-    const tiers = ['starter', 'pro', 'business'];
+    const tiers = ['free', 'starter', 'pro', 'business'];
     const currencies = ['GBP', 'EUR', 'USD'];
     const prices: Record<
       string,
