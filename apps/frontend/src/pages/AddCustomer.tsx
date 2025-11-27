@@ -49,8 +49,8 @@ export const AddCustomer = () => {
   const [showProgressModal, setShowProgressModal] = useState(false);
   const navigate = useNavigate();
 
-  // Check if user has Pro or Business tier
-  const canSchedule = subscriptionTier === 'pro' || subscriptionTier === 'business';
+  // Check if user has Pro or Business tier (or free tier for dev testing)
+  const canSchedule = subscriptionTier === 'free' || subscriptionTier === 'pro' || subscriptionTier === 'business';
 
   // TODO: When account has a region/country field, use it here
   // For now, default to GB (no need to fetch account just for this)

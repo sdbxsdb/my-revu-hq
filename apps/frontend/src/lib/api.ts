@@ -156,7 +156,7 @@ export const apiClient = {
     cardLast4?: string;
     cardBrand?: string;
     accountStatus?: 'active' | 'cancelled' | 'deleted' | null;
-    subscriptionTier?: 'starter' | 'pro' | 'business' | 'enterprise' | null;
+    subscriptionTier?: 'free' | 'starter' | 'pro' | 'business' | 'enterprise' | null;
   }> => {
     const { data } = await api.get('/api/billing/subscription');
     return data;
@@ -164,6 +164,11 @@ export const apiClient = {
 
   cancelSubscription: async (): Promise<void> => {
     await api.post('/api/billing/cancel-subscription');
+  },
+
+  syncSubscription: async (): Promise<{ message: string; tier: string | null; status: string }> => {
+    const { data } = await api.post('/api/billing/sync-subscription');
+    return data;
   },
 
   createPortalSession: async (): Promise<{ url: string }> => {

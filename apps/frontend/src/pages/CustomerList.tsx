@@ -61,8 +61,9 @@ export const CustomerList = () => {
   const [updatingSchedule, setUpdatingSchedule] = useState(false);
   const limit = 10;
 
-  // Check if user has Pro or Business tier (can schedule)
-  const canSchedule = subscriptionTier === 'pro' || subscriptionTier === 'business';
+  // Check if user has Pro or Business tier (can schedule) or free tier for dev testing
+  const canSchedule =
+    subscriptionTier === 'free' || subscriptionTier === 'pro' || subscriptionTier === 'business';
 
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<CountryCode | undefined>('GB');
@@ -93,7 +94,7 @@ export const CustomerList = () => {
   useEffect(() => {
     const abortController = new AbortController();
     loadCustomers(abortController.signal);
-    
+
     return () => {
       abortController.abort(); // Cancel previous request when filters change
     };
@@ -295,7 +296,7 @@ export const CustomerList = () => {
       if (error.name === 'AbortError' || signal?.aborted) {
         return;
       }
-      
+
       notifications.show({
         title: 'Error',
         message: error.message || 'Failed to load customers',
@@ -461,7 +462,7 @@ export const CustomerList = () => {
     setSendingCustomerId(customerId);
     try {
       const result = await apiClient.sendSMS(customerId);
-      
+
       // Update the customer in state with new data
       setCustomers((prevCustomers) =>
         prevCustomers.map((c) =>
@@ -471,10 +472,7 @@ export const CustomerList = () => {
                 sms_status: result.customer.sms_status,
                 sent_at: result.customer.sent_at,
                 sms_request_count: result.customer.sms_request_count,
-                messages: [
-                  ...(c.messages || []),
-                  { sent_at: result.customer.sent_at }
-                ]
+                messages: [...(c.messages || []), { sent_at: result.customer.sent_at }],
               }
             : c
         )
@@ -726,374 +724,619 @@ export const CustomerList = () => {
   return (
     <Container size="md" py="md" px="xs">
       <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
-      {/* Account Error Alert */}
-      <AccountErrorAlert />
+        {/* Account Error Alert */}
+        <AccountErrorAlert />
 
-      <div className="flex flex-col gap-6 mb-8 pb-6 border-b border-[#2a2a2a]">
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
-                Customer List
-              </Title>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <p className="text-sm text-gray-400 hidden sm:block">
-                  Manage your customers and review requests
-                </p>
-                {totalCount !== null && (
-                  <p className="text-sm text-gray-500">
-                    {totalCount} {totalCount === 1 ? 'customer' : 'customers'} total
+        <div className="flex flex-col gap-6 mb-8 pb-6 border-b border-[#2a2a2a]">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
+                  Customer List
+                </Title>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <p className="text-sm text-gray-400 hidden sm:block">
+                    Manage your customers and review requests
                   </p>
-                )}
+                  {totalCount !== null && (
+                    <p className="text-sm text-gray-500">
+                      {totalCount} {totalCount === 1 ? 'customer' : 'customers'} total
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-            {!paymentLoading && !hasPaid && (
-              <Alert
-                icon={<IconAlertCircle size={16} />}
-                title="Payment Required"
-                color="yellow"
-                className="w-full sm:w-auto relative"
-              >
-                <div className="flex flex-col gap-3 pb-10">
-                  <Text size="sm" className="text-gray-300">
-                    You can add and manage customers, but you need to set up payment to send SMS
-                    messages.
-                  </Text>
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-4">
-                  <Button
-                    component={Link}
-                    to="/billing"
-                    size="sm"
-                    color="teal"
-                    className="font-semibold !px-3 !py-1 !h-auto !text-xs"
-                  >
-                    Set up payment
-                  </Button>
-                </div>
-              </Alert>
-            )}
-          </div>
-
-          {/* SMS Usage Display */}
-          {(smsSent !== null || loadingUsage) && subscriptionTier && (
-            <div className="p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
-              {loadingUsage ? (
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <Text size="sm" className="text-gray-400">
-                      SMS Usage:
-                    </Text>
-                    <Skeleton height={20} width={80} />
-                    <Text size="xs" className="text-gray-500">
-                      this month
+              {!paymentLoading && !hasPaid && (
+                <Alert
+                  icon={<IconAlertCircle size={16} />}
+                  title="Payment Required"
+                  color="yellow"
+                  className="w-full sm:w-auto relative"
+                >
+                  <div className="flex flex-col gap-3 pb-10">
+                    <Text size="sm" className="text-gray-300">
+                      You can add and manage customers, but you need to set up payment to send SMS
+                      messages.
                     </Text>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Skeleton height={8} width={128} radius="xl" />
-                    <Skeleton height={16} width={60} />
+                  <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-4">
+                    <Button
+                      component={Link}
+                      to="/billing"
+                      size="sm"
+                      color="teal"
+                      className="font-semibold !px-3 !py-1 !h-auto !text-xs"
+                    >
+                      Set up payment
+                    </Button>
                   </div>
-                </div>
-              ) : (
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <Text size="sm" className="text-gray-400">
-                      SMS Usage:
-                    </Text>
-                    <Text size="sm" className="font-semibold text-white">
-                      {smsSent} / {getSmsLimitFromTier(subscriptionTier)}
-                    </Text>
-                    <Text size="xs" className="text-gray-500">
-                      this month
-                    </Text>
-                  </div>
-                  {(() => {
-                    const limit = getSmsLimitFromTier(subscriptionTier);
-                    const percentage = limit > 0 ? (smsSent! / limit) * 100 : 0;
-                    const isWarning = percentage >= 80;
-                    const isDanger = percentage >= 100;
-
-                    return (
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 sm:w-32 h-2 bg-[#2a2a2a] rounded-full overflow-hidden">
-                          <div
-                            className={`h-full transition-all ${
-                              isDanger ? 'bg-red-500' : isWarning ? 'bg-yellow-500' : 'bg-teal-500'
-                            }`}
-                            style={{ width: `${Math.min(percentage, 100)}%` }}
-                          />
-                        </div>
-                        {isDanger && (
-                          <Text size="xs" className="text-red-400 font-medium">
-                            Limit reached
-                          </Text>
-                        )}
-                        {isWarning && !isDanger && (
-                          <Text size="xs" className="text-yellow-400 font-medium">
-                            Approaching limit
-                          </Text>
-                        )}
-                      </div>
-                    );
-                  })()}
-                </div>
+                </Alert>
               )}
             </div>
-          )}
 
-          <div className="w-full sm:flex sm:justify-end">
-            <Button
-              component={Link}
-              to="/customers/add"
-              size="md"
-              className="font-medium w-full sm:w-auto sm:max-w-xs"
-            >
-              {totalCount === 0 && !loading ? 'Add First Customer' : 'Add Customer'}
-            </Button>
+            {/* SMS Usage Display */}
+            {(smsSent !== null || loadingUsage) && subscriptionTier && (
+              <div className="p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
+                {loadingUsage ? (
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Text size="sm" className="text-gray-400">
+                        SMS Usage:
+                      </Text>
+                      <Skeleton height={20} width={80} />
+                      <Text size="xs" className="text-gray-500">
+                        this month
+                      </Text>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Skeleton height={8} width={128} radius="xl" />
+                      <Skeleton height={16} width={60} />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Text size="sm" className="text-gray-400">
+                        SMS Usage:
+                      </Text>
+                      <Text size="sm" className="font-semibold text-white">
+                        {smsSent} / {getSmsLimitFromTier(subscriptionTier)}
+                      </Text>
+                      <Text size="xs" className="text-gray-500">
+                        this month
+                      </Text>
+                    </div>
+                    {(() => {
+                      const limit = getSmsLimitFromTier(subscriptionTier);
+                      const percentage = limit > 0 ? (smsSent! / limit) * 100 : 0;
+                      const isWarning = percentage >= 80;
+                      const isDanger = percentage >= 100;
+
+                      return (
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 sm:w-32 h-2 bg-[#2a2a2a] rounded-full overflow-hidden">
+                            <div
+                              className={`h-full transition-all ${
+                                isDanger
+                                  ? 'bg-red-500'
+                                  : isWarning
+                                    ? 'bg-yellow-500'
+                                    : 'bg-teal-500'
+                              }`}
+                              style={{ width: `${Math.min(percentage, 100)}%` }}
+                            />
+                          </div>
+                          {isDanger && (
+                            <Text size="xs" className="text-red-400 font-medium">
+                              Limit reached
+                            </Text>
+                          )}
+                          {isWarning && !isDanger && (
+                            <Text size="xs" className="text-yellow-400 font-medium">
+                              Approaching limit
+                            </Text>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="w-full sm:flex sm:justify-end">
+              <Button
+                component={Link}
+                to="/customers/add"
+                size="md"
+                className="font-medium w-full sm:w-auto sm:max-w-xs"
+              >
+                {totalCount === 0 && !loading ? 'Add First Customer' : 'Add Customer'}
+              </Button>
+            </div>
           </div>
-        </div>
-        <div className="flex flex-col gap-2">
-          <Text size="sm" className="text-gray-400">
-            Search:
-          </Text>
-          <TextInput
-            placeholder="Name, phone number, or job description"
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setSelectedLetter(null); // Clear letter filter when searching
-              setPage(1);
-            }}
-            className="w-full sm:w-96"
-            size="md"
-          />
-        </div>
-        {/* Alphabet Filter */}
-        <div className="flex flex-col gap-2">
-          <Text size="sm" className="text-gray-400">
-            Filter by letter:
-          </Text>
-          <div className="flex gap-1.5 overflow-x-auto sm:overflow-x-visible sm:flex-wrap pb-2 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
-            <Button
-              size="xs"
-              variant={selectedLetter === null ? 'filled' : 'outline'}
-              onClick={() => {
-                setSelectedLetter(null);
+          <div className="flex flex-col gap-2">
+            <Text size="sm" className="text-gray-400">
+              Search:
+            </Text>
+            <TextInput
+              placeholder="Name, phone number, or job description"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setSelectedLetter(null); // Clear letter filter when searching
                 setPage(1);
               }}
-              className={`flex-shrink-0 sm:flex-shrink ${
-                selectedLetter === null
-                  ? 'bg-teal-600 border-teal-600 text-white'
-                  : 'border-gray-600 text-gray-300 hover:border-teal-600 hover:text-teal-400'
-              }`}
-            >
-              All
-            </Button>
-            {[
-              'A',
-              'B',
-              'C',
-              'D',
-              'E',
-              'F',
-              'G',
-              'H',
-              'I',
-              'J',
-              'K',
-              'L',
-              'M',
-              'N',
-              'O',
-              'P',
-              'Q',
-              'R',
-              'S',
-              'T',
-              'U',
-              'V',
-              'W',
-              'X',
-              'Y',
-              'Z',
-            ].map((letter) => (
+              className="w-full sm:w-96"
+              size="md"
+            />
+          </div>
+          {/* Alphabet Filter */}
+          <div className="flex flex-col gap-2">
+            <Text size="sm" className="text-gray-400">
+              Filter by letter:
+            </Text>
+            <div className="flex gap-1.5 overflow-x-auto sm:overflow-x-visible sm:flex-wrap pb-2 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
               <Button
-                key={letter}
                 size="xs"
-                variant={selectedLetter === letter ? 'filled' : 'outline'}
+                variant={selectedLetter === null ? 'filled' : 'outline'}
                 onClick={() => {
-                  setSelectedLetter(selectedLetter === letter ? null : letter);
-                  setSearchQuery(''); // Clear search when selecting letter
+                  setSelectedLetter(null);
                   setPage(1);
                 }}
-                className={`min-w-[2rem] flex-shrink-0 sm:flex-shrink ${
-                  selectedLetter === letter
+                className={`flex-shrink-0 sm:flex-shrink ${
+                  selectedLetter === null
                     ? 'bg-teal-600 border-teal-600 text-white'
                     : 'border-gray-600 text-gray-300 hover:border-teal-600 hover:text-teal-400'
                 }`}
               >
-                {letter}
-              </Button>
-            ))}
-          </div>
-          {/* Status Filter Buttons */}
-          <div className="flex flex-col gap-2">
-            <Text size="sm" className="text-gray-400">
-              Filter by status:
-            </Text>
-            <div className="flex gap-2">
-              <Button
-                size="xs"
-                variant={statusFilter === null ? 'filled' : 'outline'}
-                onClick={() => {
-                  setStatusFilter(null);
-                  setPage(1);
-                }}
-                className={
-                  statusFilter === null
-                    ? 'bg-teal-600 border-teal-600 text-white'
-                    : 'border-gray-600 text-gray-300 hover:border-teal-600 hover:text-teal-400'
-                }
-              >
                 All
               </Button>
-              <Button
-                size="xs"
-                variant={statusFilter === 'sent' ? 'filled' : 'outline'}
-                onClick={() => {
-                  setStatusFilter('sent');
-                  setPage(1);
-                }}
-                className={
-                  statusFilter === 'sent'
-                    ? 'bg-teal-600 border-teal-600 text-white'
-                    : 'border-gray-600 text-gray-300 hover:border-teal-600 hover:text-teal-400'
-                }
-              >
-                Sent
-              </Button>
-              <Button
-                size="xs"
-                variant={statusFilter === 'pending' ? 'filled' : 'outline'}
-                onClick={() => {
-                  setStatusFilter('pending');
-                  setPage(1);
-                }}
-                className={
-                  statusFilter === 'pending'
-                    ? 'bg-teal-600 border-teal-600 text-white'
-                    : 'border-gray-600 text-gray-300 hover:border-teal-600 hover:text-teal-400'
-                }
-              >
-                Not Sent
-              </Button>
+              {[
+                'A',
+                'B',
+                'C',
+                'D',
+                'E',
+                'F',
+                'G',
+                'H',
+                'I',
+                'J',
+                'K',
+                'L',
+                'M',
+                'N',
+                'O',
+                'P',
+                'Q',
+                'R',
+                'S',
+                'T',
+                'U',
+                'V',
+                'W',
+                'X',
+                'Y',
+                'Z',
+              ].map((letter) => (
+                <Button
+                  key={letter}
+                  size="xs"
+                  variant={selectedLetter === letter ? 'filled' : 'outline'}
+                  onClick={() => {
+                    setSelectedLetter(selectedLetter === letter ? null : letter);
+                    setSearchQuery(''); // Clear search when selecting letter
+                    setPage(1);
+                  }}
+                  className={`min-w-[2rem] flex-shrink-0 sm:flex-shrink ${
+                    selectedLetter === letter
+                      ? 'bg-teal-600 border-teal-600 text-white'
+                      : 'border-gray-600 text-gray-300 hover:border-teal-600 hover:text-teal-400'
+                  }`}
+                >
+                  {letter}
+                </Button>
+              ))}
+            </div>
+            {/* Status Filter Buttons */}
+            <div className="flex flex-col gap-2">
+              <Text size="sm" className="text-gray-400">
+                Filter by status:
+              </Text>
+              <div className="flex gap-2">
+                <Button
+                  size="xs"
+                  variant={statusFilter === null ? 'filled' : 'outline'}
+                  onClick={() => {
+                    setStatusFilter(null);
+                    setPage(1);
+                  }}
+                  className={
+                    statusFilter === null
+                      ? 'bg-teal-600 border-teal-600 text-white'
+                      : 'border-gray-600 text-gray-300 hover:border-teal-600 hover:text-teal-400'
+                  }
+                >
+                  All
+                </Button>
+                <Button
+                  size="xs"
+                  variant={statusFilter === 'sent' ? 'filled' : 'outline'}
+                  onClick={() => {
+                    setStatusFilter('sent');
+                    setPage(1);
+                  }}
+                  className={
+                    statusFilter === 'sent'
+                      ? 'bg-teal-600 border-teal-600 text-white'
+                      : 'border-gray-600 text-gray-300 hover:border-teal-600 hover:text-teal-400'
+                  }
+                >
+                  Sent
+                </Button>
+                <Button
+                  size="xs"
+                  variant={statusFilter === 'pending' ? 'filled' : 'outline'}
+                  onClick={() => {
+                    setStatusFilter('pending');
+                    setPage(1);
+                  }}
+                  className={
+                    statusFilter === 'pending'
+                      ? 'bg-teal-600 border-teal-600 text-white'
+                      : 'border-gray-600 text-gray-300 hover:border-teal-600 hover:text-teal-400'
+                  }
+                >
+                  Not Sent
+                </Button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {loading ? (
-        <div className="space-y-4">
-          {/* Desktop skeleton */}
-          <div className="hidden lg:block">
-            <Table>
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>Name</Table.Th>
-                  <Table.Th>Phone</Table.Th>
-                  <Table.Th>Job Description</Table.Th>
-                  <Table.Th>Status</Table.Th>
-                  <Table.Th>Date Sent</Table.Th>
-                  <Table.Th>Actions</Table.Th>
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {[...Array(5)].map((_, i) => (
-                  <Table.Tr key={i}>
-                    <Table.Td>
-                      <Skeleton height={20} />
-                    </Table.Td>
-                    <Table.Td>
-                      <Skeleton height={20} width={120} />
-                    </Table.Td>
-                    <Table.Td>
-                      <Skeleton height={20} width={150} />
-                    </Table.Td>
-                    <Table.Td>
-                      <Skeleton height={24} width={80} radius="xl" />
-                    </Table.Td>
-                    <Table.Td>
-                      <Skeleton height={20} width={100} />
-                    </Table.Td>
-                    <Table.Td>
-                      <Skeleton height={20} width={120} />
-                    </Table.Td>
-                    <Table.Td>
-                      <Skeleton height={32} width={100} />
-                    </Table.Td>
+        {loading ? (
+          <div className="space-y-4">
+            {/* Desktop skeleton */}
+            <div className="hidden lg:block">
+              <Table>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>Name</Table.Th>
+                    <Table.Th>Phone</Table.Th>
+                    <Table.Th>Job Description</Table.Th>
+                    <Table.Th>Status</Table.Th>
+                    <Table.Th>Date Sent</Table.Th>
+                    <Table.Th>Actions</Table.Th>
                   </Table.Tr>
-                ))}
-              </Table.Tbody>
-            </Table>
+                </Table.Thead>
+                <Table.Tbody>
+                  {[...Array(5)].map((_, i) => (
+                    <Table.Tr key={i}>
+                      <Table.Td>
+                        <Skeleton height={20} />
+                      </Table.Td>
+                      <Table.Td>
+                        <Skeleton height={20} width={120} />
+                      </Table.Td>
+                      <Table.Td>
+                        <Skeleton height={20} width={150} />
+                      </Table.Td>
+                      <Table.Td>
+                        <Skeleton height={24} width={80} radius="xl" />
+                      </Table.Td>
+                      <Table.Td>
+                        <Skeleton height={20} width={100} />
+                      </Table.Td>
+                      <Table.Td>
+                        <Skeleton height={20} width={120} />
+                      </Table.Td>
+                      <Table.Td>
+                        <Skeleton height={32} width={100} />
+                      </Table.Td>
+                    </Table.Tr>
+                  ))}
+                </Table.Tbody>
+              </Table>
+            </div>
+            {/* Mobile skeleton */}
+            <div className="lg:hidden space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <Paper key={i} p="md" className="bg-[#141414]">
+                  <Stack gap="sm">
+                    <Skeleton height={20} width="60%" />
+                    <Skeleton height={16} width="40%" />
+                    <Skeleton height={16} width="50%" />
+                    <Skeleton height={24} width={80} radius="xl" />
+                  </Stack>
+                </Paper>
+              ))}
+            </div>
           </div>
-          {/* Mobile skeleton */}
-          <div className="lg:hidden space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <Paper key={i} p="md" className="bg-[#141414]">
-                <Stack gap="sm">
-                  <Skeleton height={20} width="60%" />
-                  <Skeleton height={16} width="40%" />
-                  <Skeleton height={16} width="50%" />
-                  <Skeleton height={24} width={80} radius="xl" />
-                </Stack>
-              </Paper>
-            ))}
-          </div>
-        </div>
-      ) : customers.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">No customers found</div>
-      ) : (
-        <>
-          {/* Desktop table view */}
-          <div className="hidden lg:block overflow-x-auto -mx-2 sm:mx-0">
-            <Table highlightOnHover>
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>Name</Table.Th>
-                  <Table.Th>Phone</Table.Th>
-                  <Table.Th>Job Description</Table.Th>
-                  <Table.Th>Status</Table.Th>
-                  <Table.Th>Date Sent</Table.Th>
-                  <Table.Th>Actions</Table.Th>
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {customers.map((customer) => (
-                  <Table.Tr key={customer.id}>
-                    <Table.Td className="font-medium text-white">
-                      {customer.name}
-                      {!isPhoneValid(customer.phone) && (
-                        <div className="text-xs text-red-400 mt-1 font-medium">
-                          {getPhoneError(customer.phone) || 'Invalid phone number'}
-                        </div>
-                      )}
-                    </Table.Td>
-                    <Table.Td className="text-gray-300">
-                      {(() => {
-                        const phoneDisplay = formatPhone(customer.phone);
-                        return (
-                          <div className="flex items-center gap-1.5">
-                            <span className="flex items-center justify-center text-base leading-none">
-                              {phoneDisplay.flag}
-                            </span>
-                            <span>{phoneDisplay.number}</span>
+        ) : customers.length === 0 ? (
+          <div className="text-center py-16 text-gray-400">No customers found</div>
+        ) : (
+          <>
+            {/* Desktop table view */}
+            <div className="hidden lg:block overflow-x-auto -mx-2 sm:mx-0">
+              <Table highlightOnHover>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>Name</Table.Th>
+                    <Table.Th>Phone</Table.Th>
+                    <Table.Th>Job Description</Table.Th>
+                    <Table.Th>Status</Table.Th>
+                    <Table.Th>Date Sent</Table.Th>
+                    <Table.Th>Actions</Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                  {customers.map((customer) => (
+                    <Table.Tr key={customer.id}>
+                      <Table.Td className="font-medium text-white">
+                        {customer.name}
+                        {!isPhoneValid(customer.phone) && (
+                          <div className="text-xs text-red-400 mt-1 font-medium">
+                            {getPhoneError(customer.phone) || 'Invalid phone number'}
                           </div>
-                        );
-                      })()}
-                    </Table.Td>
-                    <Table.Td className="text-gray-400">{customer.job_description || '-'}</Table.Td>
-                    <Table.Td>
-                      <div className="flex flex-col gap-1">
+                        )}
+                      </Table.Td>
+                      <Table.Td className="text-gray-300">
+                        {(() => {
+                          const phoneDisplay = formatPhone(customer.phone);
+                          return (
+                            <div className="flex items-center gap-1.5">
+                              <span className="flex items-center justify-center text-base leading-none">
+                                {phoneDisplay.flag}
+                              </span>
+                              <span>{phoneDisplay.number}</span>
+                            </div>
+                          );
+                        })()}
+                      </Table.Td>
+                      <Table.Td className="text-gray-400">
+                        {customer.job_description || '-'}
+                      </Table.Td>
+                      <Table.Td>
+                        <div className="flex flex-col gap-1">
+                          <Badge
+                            color={
+                              customer.sms_status === 'sent'
+                                ? 'green'
+                                : customer.sms_status === 'scheduled'
+                                  ? 'blue'
+                                  : 'orange'
+                            }
+                          >
+                            {customer.sms_status === 'sent'
+                              ? 'Sent'
+                              : customer.sms_status === 'scheduled'
+                                ? 'Scheduled'
+                                : 'Not Sent'}
+                          </Badge>
+                          {customer.sms_status === 'scheduled' &&
+                            customer.scheduled_send_at &&
+                            (canSchedule ? (
+                              <Text size="xs" className="text-blue-400">
+                                SMS scheduled{' '}
+                                {new Date(customer.scheduled_send_at).toLocaleString('en-GB', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </Text>
+                            ) : (
+                              <Tooltip label="Upgrade to Pro to schedule SMS">
+                                <Text size="xs" className="text-teal-400 flex items-center gap-1">
+                                  <IconLock size={12} /> Pro Feature
+                                </Text>
+                              </Tooltip>
+                            ))}
+                          {(() => {
+                            const requestCount = customer.sms_request_count || 0;
+                            const isOptedOut = customer.opt_out || false;
+                            const isLimitReached = requestCount >= 3;
+
+                            // Calculate days since last contact
+                            let daysSinceContact: number | null = null;
+                            if (customer.sent_at) {
+                              // Customer was contacted before - check days since last contact
+                              const lastContacted = new Date(customer.sent_at);
+                              const now = new Date();
+                              daysSinceContact = Math.floor(
+                                (now.getTime() - lastContacted.getTime()) / (1000 * 60 * 60 * 24)
+                              );
+                            } else if (customer.created_at) {
+                              // Never contacted - use created date
+                              const created = new Date(customer.created_at);
+                              const now = new Date();
+                              daysSinceContact = Math.floor(
+                                (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24)
+                              );
+                            }
+
+                            const showContactWarning =
+                              daysSinceContact !== null && daysSinceContact >= 5;
+
+                            if (isOptedOut) {
+                              return (
+                                <Text size="xs" className="text-red-400">
+                                  Opted Out
+                                </Text>
+                              );
+                            }
+                            if (isLimitReached) {
+                              return (
+                                <Text size="xs" className="text-yellow-400">
+                                  Limit Reached (3/3)
+                                </Text>
+                              );
+                            }
+                            if (showContactWarning) {
+                              return (
+                                <Text
+                                  size="xs"
+                                  className={
+                                    daysSinceContact! >= 30
+                                      ? 'text-red-400'
+                                      : daysSinceContact! >= 10
+                                        ? 'text-orange-400'
+                                        : 'text-yellow-400'
+                                  }
+                                >
+                                  {daysSinceContact}d ago. No request sent.
+                                </Text>
+                              );
+                            }
+                            if (requestCount > 0) {
+                              return (
+                                <Text size="xs" className="text-gray-400">
+                                  {requestCount}/3 requests
+                                </Text>
+                              );
+                            }
+                            return null;
+                          })()}
+                          {customer.created_at && (
+                            <Text size="sm" className="text-gray-500 mt-1">
+                              Added:{' '}
+                              {new Date(customer.created_at).toLocaleDateString('en-GB', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              })}
+                            </Text>
+                          )}
+                        </div>
+                      </Table.Td>
+                      <Table.Td className="text-gray-400">{formatDate(customer.sent_at)}</Table.Td>
+                      <Table.Td>
+                        <div className="flex flex-col gap-1.5 min-w-[200px]">
+                          {(() => {
+                            const requestCount = customer.sms_request_count || 0;
+                            const isOptedOut = customer.opt_out || false;
+                            const isLimitReached = requestCount >= 3;
+                            const isSending = sendingCustomerId === customer.id;
+                            const isDisabled =
+                              paymentLoading ||
+                              !hasPaid ||
+                              !isPhoneValid(customer.phone) ||
+                              isOptedOut ||
+                              isLimitReached ||
+                              isSending;
+
+                            const getButtonText = () => {
+                              if (isLimitReached) return 'Limit Reached (3/3)';
+                              if (isOptedOut) return 'Opted Out';
+                              if (isSending) return 'Sending...';
+                              const countText = requestCount > 0 ? ` (${requestCount}/3)` : '';
+                              return customer.sms_status === 'sent'
+                                ? `Request Review Again${countText}`
+                                : `Request Review${countText}`;
+                            };
+
+                            const getTooltip = () => {
+                              if (paymentLoading) return 'Loading payment status...';
+                              if (!hasPaid) return 'Payment required to send SMS messages';
+                              if (!isPhoneValid(customer.phone))
+                                return getPhoneError(customer.phone) || 'Invalid phone number';
+                              if (isOptedOut)
+                                return 'This customer has opted out of receiving messages';
+                              if (isLimitReached)
+                                return 'Maximum of 3 review requests allowed per customer. Limit reached.';
+                              return '';
+                            };
+
+                            // Desktop: Send Now first, then Edit Schedule
+                            return (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant={customer.sms_status === 'sent' ? 'light' : 'filled'}
+                                  onClick={() =>
+                                    customer.sms_status === 'scheduled'
+                                      ? handleSendNow(customer)
+                                      : handleSendAgain(customer.id)
+                                  }
+                                  radius="md"
+                                  className="font-medium w-full"
+                                  disabled={isDisabled}
+                                  loading={isSending}
+                                  title={getTooltip()}
+                                >
+                                  {customer.sms_status === 'scheduled'
+                                    ? 'Send Now'
+                                    : getButtonText()}
+                                </Button>
+                                {canSchedule && customer.sms_status === 'scheduled' && (
+                                  <Tooltip label="Edit or cancel the scheduled send time">
+                                    <Button
+                                      size="sm"
+                                      variant="light"
+                                      onClick={() => handleOpenScheduleModal(customer)}
+                                      radius="md"
+                                      className="font-medium w-full"
+                                      leftSection={<IconCalendar size={16} />}
+                                    >
+                                      Edit Schedule
+                                    </Button>
+                                  </Tooltip>
+                                )}
+                              </>
+                            );
+                          })()}
+                          <Button
+                            size="sm"
+                            variant="subtle"
+                            onClick={() => handleEdit(customer)}
+                            radius="md"
+                            className="font-medium w-full"
+                          >
+                            Edit
+                          </Button>
+                        </div>
+                      </Table.Td>
+                    </Table.Tr>
+                  ))}
+                </Table.Tbody>
+              </Table>
+            </div>
+
+            {/* Mobile/Tablet card view */}
+            <div className="lg:hidden space-y-4">
+              {customers.map((customer) => {
+                const phoneValid = isPhoneValid(customer.phone);
+                const phoneError = getPhoneError(customer.phone);
+                const phoneDisplay = formatPhone(customer.phone);
+
+                return (
+                  <Paper
+                    key={customer.id}
+                    p="md"
+                    shadow="sm"
+                    className={`bg-[#141414] border transition-colors sm:p-lg ${phoneValid ? 'border-[#2a2a2a] hover:border-[#333333]' : 'border-red-800/50'}`}
+                  >
+                    {/* Section 1: Customer Info */}
+                    <div className="flex justify-between items-start mb-3 pb-3 border-b border-[#2a2a2a]">
+                      <div className="flex-1">
+                        <div className="font-semibold text-lg text-white mb-1">{customer.name}</div>
+                        {customer.job_description && (
+                          <div className="text-sm text-gray-300 mb-2">
+                            {customer.job_description}
+                          </div>
+                        )}
+                        <div className="text-sm text-gray-400 font-medium flex items-center gap-1.5">
+                          <span className="flex items-center justify-center text-base leading-none">
+                            {phoneDisplay.flag}
+                          </span>
+                          <span>{phoneDisplay.number}</span>
+                        </div>
+                        {!phoneValid && phoneError && (
+                          <div className="text-xs text-red-400 mt-1 font-medium">{phoneError}</div>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-end gap-1.5 ml-2">
                         <Badge
                           color={
                             customer.sms_status === 'sent'
@@ -1102,6 +1345,8 @@ export const CustomerList = () => {
                                 ? 'blue'
                                 : 'orange'
                           }
+                          size="md"
+                          radius="md"
                         >
                           {customer.sms_status === 'sent'
                             ? 'Sent'
@@ -1109,10 +1354,12 @@ export const CustomerList = () => {
                               ? 'Scheduled'
                               : 'Not Sent'}
                         </Badge>
-                        {customer.sms_status === 'scheduled' && customer.scheduled_send_at && (
-                          canSchedule ? (
-                            <Text size="xs" className="text-blue-400">
-                              SMS scheduled {new Date(customer.scheduled_send_at).toLocaleString('en-GB', {
+                        {customer.sms_status === 'scheduled' &&
+                          customer.scheduled_send_at &&
+                          (canSchedule ? (
+                            <Text size="xs" className="text-blue-400 text-right">
+                              SMS scheduled{' '}
+                              {new Date(customer.scheduled_send_at).toLocaleString('en-GB', {
                                 day: 'numeric',
                                 month: 'short',
                                 year: 'numeric',
@@ -1126,86 +1373,140 @@ export const CustomerList = () => {
                                 <IconLock size={12} /> Pro Feature
                               </Text>
                             </Tooltip>
-                          )
-                        )}
-                        {(() => {
-                          const requestCount = customer.sms_request_count || 0;
-                          const isOptedOut = customer.opt_out || false;
-                          const isLimitReached = requestCount >= 3;
-                          
-                          // Calculate days since last contact
-                          let daysSinceContact: number | null = null;
-                          if (customer.sent_at) {
-                            // Customer was contacted before - check days since last contact
-                            const lastContacted = new Date(customer.sent_at);
-                            const now = new Date();
-                            daysSinceContact = Math.floor(
-                              (now.getTime() - lastContacted.getTime()) / (1000 * 60 * 60 * 24)
-                            );
-                          } else if (customer.created_at) {
-                            // Never contacted - use created date
-                            const created = new Date(customer.created_at);
-                            const now = new Date();
-                            daysSinceContact = Math.floor(
-                              (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24)
-                            );
-                          }
+                          ))}
+                      </div>
+                    </div>
 
-                          const showContactWarning = daysSinceContact !== null && daysSinceContact >= 5;
-
-                          if (isOptedOut) {
-                            return (
-                              <Text size="xs" className="text-red-400">
-                                Opted Out
-                              </Text>
-                            );
-                          }
-                          if (isLimitReached) {
-                            return (
-                              <Text size="xs" className="text-yellow-400">
-                                Limit Reached (3/3)
-                              </Text>
-                            );
-                          }
-                          if (showContactWarning) {
-                            return (
-                              <Text
-                                size="xs"
-                                className={
-                                  daysSinceContact! >= 30
-                                    ? 'text-red-400'
-                                    : daysSinceContact! >= 10
-                                    ? 'text-orange-400'
-                                    : 'text-yellow-400'
-                                }
-                              >
-                                {daysSinceContact}d ago. No request sent.
-                              </Text>
-                            );
-                          }
-                          if (requestCount > 0) {
-                            return (
-                              <Text size="xs" className="text-gray-400">
-                                {requestCount}/3 requests
-                              </Text>
-                            );
-                          }
-                          return null;
-                        })()}
-                        {customer.created_at && (
-                          <Text size="sm" className="text-gray-500 mt-1">
-                            Added: {new Date(customer.created_at).toLocaleDateString('en-GB', {
+                    {/* Section 2: Activity Tracking */}
+                    <div className="mb-3 pb-3 border-b border-[#2a2a2a]">
+                      {customer.created_at && (
+                        <div className="mb-2">
+                          <div className="text-sm text-gray-400 font-medium mb-0.5">Added:</div>
+                          <div className="text-sm text-gray-500 flex items-center gap-1.5">
+                            <span className="text-teal-400">•</span>
+                            {new Date(customer.created_at).toLocaleDateString('en-GB', {
                               day: 'numeric',
                               month: 'short',
                               year: 'numeric',
                             })}
-                          </Text>
-                        )}
-                      </div>
-                    </Table.Td>
-                    <Table.Td className="text-gray-400">{formatDate(customer.sent_at)}</Table.Td>
-                    <Table.Td>
-                      <div className="flex flex-col gap-1.5 min-w-[200px]">
+                          </div>
+                        </div>
+                      )}
+                      {customer.messages && customer.messages.length > 0 && (
+                        <div className="mb-2">
+                          <div className="text-sm text-gray-400 font-medium mb-0.5">
+                            Review Requests ({customer.messages.length}/3):
+                          </div>
+                          <div className="space-y-0.5">
+                            {customer.messages.slice(0, 3).map((message, idx) => (
+                              <div
+                                key={idx}
+                                className="text-sm text-gray-500 flex items-center gap-1.5"
+                              >
+                                <span className="text-teal-400">•</span>
+                                {new Date(message.sent_at).toLocaleDateString('en-GB', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                })}
+                                ,{' '}
+                                {new Date(message.sent_at).toLocaleTimeString('en-GB', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                                {message.was_scheduled && (
+                                  <Tooltip label="Sent via scheduled automation">
+                                    <IconClock size={14} className="text-blue-400" />
+                                  </Tooltip>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {(() => {
+                        // Calculate days since last contact
+                        let daysSinceContact: number | null = null;
+                        if (customer.sent_at) {
+                          const lastContacted = new Date(customer.sent_at);
+                          const now = new Date();
+                          daysSinceContact = Math.floor(
+                            (now.getTime() - lastContacted.getTime()) / (1000 * 60 * 60 * 24)
+                          );
+                        } else if (customer.created_at) {
+                          const created = new Date(customer.created_at);
+                          const now = new Date();
+                          daysSinceContact = Math.floor(
+                            (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24)
+                          );
+                        }
+
+                        const showContactWarning =
+                          daysSinceContact !== null && daysSinceContact >= 5;
+
+                        return showContactWarning ? (
+                          <div
+                            className={`text-xs ${
+                              daysSinceContact! >= 30
+                                ? 'text-red-400'
+                                : daysSinceContact! >= 10
+                                  ? 'text-orange-400'
+                                  : 'text-yellow-400'
+                            }`}
+                          >
+                            {daysSinceContact}d ago. No request sent.
+                          </div>
+                        ) : null;
+                      })()}
+                      {(() => {
+                        const requestCount = customer.sms_request_count || 0;
+                        const isOptedOut = customer.opt_out || false;
+                        const isLimitReached = requestCount >= 3;
+
+                        return isLimitReached || isOptedOut ? (
+                          <details className="mt-2">
+                            <summary
+                              className={`text-sm cursor-pointer list-none flex items-center justify-between p-2 rounded ${
+                                isOptedOut
+                                  ? 'bg-red-900/20 text-red-400'
+                                  : 'bg-yellow-900/20 text-yellow-400'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <IconAlertCircle size={16} />
+                                <span className="font-medium">
+                                  {isOptedOut ? 'Opted Out' : `Limit Reached (${requestCount}/3)`}
+                                </span>
+                              </div>
+                              <span className="text-xs opacity-70 underline">Learn more</span>
+                            </summary>
+                            <div
+                              className={`text-sm mt-2 p-2 rounded ${
+                                isOptedOut
+                                  ? 'bg-red-900/10 text-gray-300'
+                                  : 'bg-yellow-900/10 text-gray-300'
+                              }`}
+                            >
+                              {isOptedOut
+                                ? 'This customer has opted out of receiving SMS messages.'
+                                : 'Maximum of 3 review requests reached. No more messages can be sent to this customer. This limit helps maintain good customer relationships and comply with SMS regulations.'}
+                            </div>
+                          </details>
+                        ) : null;
+                      })()}
+                    </div>
+
+                    {/* Section 3: Action Buttons */}
+                    <div className="flex justify-between items-center gap-2">
+                      <Button
+                        size="xs"
+                        variant="subtle"
+                        onClick={() => handleEdit(customer)}
+                        radius="md"
+                        className="font-medium flex items-center justify-center"
+                      >
+                        Edit
+                      </Button>
+                      <div className="flex gap-2">
                         {(() => {
                           const requestCount = customer.sms_request_count || 0;
                           const isOptedOut = customer.opt_out || false;
@@ -1214,7 +1515,7 @@ export const CustomerList = () => {
                           const isDisabled =
                             paymentLoading ||
                             !hasPaid ||
-                            !isPhoneValid(customer.phone) ||
+                            !phoneValid ||
                             isOptedOut ||
                             isLimitReached ||
                             isSending;
@@ -1232,8 +1533,7 @@ export const CustomerList = () => {
                           const getTooltip = () => {
                             if (paymentLoading) return 'Loading payment status...';
                             if (!hasPaid) return 'Payment required to send SMS messages';
-                            if (!isPhoneValid(customer.phone))
-                              return getPhoneError(customer.phone) || 'Invalid phone number';
+                            if (!phoneValid) return phoneError || 'Invalid phone number';
                             if (isOptedOut)
                               return 'This customer has opted out of receiving messages';
                             if (isLimitReached)
@@ -1241,9 +1541,20 @@ export const CustomerList = () => {
                             return '';
                           };
 
-                          // Desktop: Send Now first, then Edit Schedule
                           return (
                             <>
+                              {canSchedule && customer.sms_status === 'scheduled' && (
+                                <Button
+                                  size="sm"
+                                  variant="light"
+                                  onClick={() => handleOpenScheduleModal(customer)}
+                                  radius="md"
+                                  className="font-medium"
+                                  leftSection={<IconCalendar size={16} />}
+                                >
+                                  Edit Schedule
+                                </Button>
+                              )}
                               <Button
                                 size="sm"
                                 variant={customer.sms_status === 'sent' ? 'light' : 'filled'}
@@ -1253,605 +1564,317 @@ export const CustomerList = () => {
                                     : handleSendAgain(customer.id)
                                 }
                                 radius="md"
-                                className="font-medium w-full"
+                                className="font-medium"
                                 disabled={isDisabled}
                                 loading={isSending}
                                 title={getTooltip()}
                               >
                                 {customer.sms_status === 'scheduled' ? 'Send Now' : getButtonText()}
                               </Button>
-                              {canSchedule && customer.sms_status === 'scheduled' && (
-                                <Tooltip label="Edit or cancel the scheduled send time">
-                                  <Button
-                                    size="sm"
-                                    variant="light"
-                                    onClick={() => handleOpenScheduleModal(customer)}
-                                    radius="md"
-                                    className="font-medium w-full"
-                                    leftSection={<IconCalendar size={16} />}
-                                  >
-                                    Edit Schedule
-                                  </Button>
-                                </Tooltip>
-                              )}
                             </>
                           );
                         })()}
-                        <Button
-                          size="sm"
-                          variant="subtle"
-                          onClick={() => handleEdit(customer)}
-                          radius="md"
-                          className="font-medium w-full"
-                        >
-                          Edit
-                        </Button>
                       </div>
-                    </Table.Td>
-                  </Table.Tr>
-                ))}
-              </Table.Tbody>
-            </Table>
+                    </div>
+                  </Paper>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {total > limit && (
+          <div className="mt-6 flex justify-center">
+            <Pagination value={page} onChange={setPage} total={Math.ceil(total / limit)} />
           </div>
+        )}
 
-          {/* Mobile/Tablet card view */}
-          <div className="lg:hidden space-y-4">
-            {customers.map((customer) => {
-              const phoneValid = isPhoneValid(customer.phone);
-              const phoneError = getPhoneError(customer.phone);
-              const phoneDisplay = formatPhone(customer.phone);
+        {/* Edit Customer Modal */}
+        <Modal
+          opened={editModalOpen}
+          onClose={() => {
+            setEditModalOpen(false);
+            setEditingCustomer(null);
+            setSelectedCountry('GB');
+            countryRef.current = 'GB';
+            editForm.reset();
+          }}
+          title="Edit Customer"
+          size="md"
+          className="modal-mobile-fullscreen"
+          classNames={{
+            body: 'p-0',
+          }}
+        >
+          <form onSubmit={editForm.onSubmit(handleSaveEdit)}>
+            <Stack gap="md">
+              <TextInput
+                label="Name"
+                placeholder="Customer Name"
+                required
+                {...editForm.getInputProps('name')}
+              />
 
-              return (
-                <Paper
-                  key={customer.id}
-                  p="md"
-                  shadow="sm"
-                  className={`bg-[#141414] border transition-colors sm:p-lg ${phoneValid ? 'border-[#2a2a2a] hover:border-[#333333]' : 'border-red-800/50'}`}
-                >
-                  {/* Section 1: Customer Info */}
-                  <div className="flex justify-between items-start mb-3 pb-3 border-b border-[#2a2a2a]">
-                    <div className="flex-1">
-                      <div className="font-semibold text-lg text-white mb-1">{customer.name}</div>
-                      {customer.job_description && (
-                        <div className="text-sm text-gray-300 mb-2">
-                          {customer.job_description}
-                        </div>
-                      )}
-                      <div className="text-sm text-gray-400 font-medium flex items-center gap-1.5">
-                        <span className="flex items-center justify-center text-base leading-none">
-                          {phoneDisplay.flag}
-                        </span>
-                        <span>{phoneDisplay.number}</span>
-                      </div>
-                      {!phoneValid && phoneError && (
-                        <div className="text-xs text-red-400 mt-1 font-medium">{phoneError}</div>
-                      )}
-                    </div>
-                    <div className="flex flex-col items-end gap-1.5 ml-2">
-                      <Badge
-                        color={
-                          customer.sms_status === 'sent'
-                            ? 'green'
-                            : customer.sms_status === 'scheduled'
-                              ? 'blue'
-                              : 'orange'
-                        }
-                        size="md"
-                        radius="md"
-                      >
-                        {customer.sms_status === 'sent'
-                          ? 'Sent'
-                          : customer.sms_status === 'scheduled'
-                            ? 'Scheduled'
-                            : 'Not Sent'}
-                      </Badge>
-                      {customer.sms_status === 'scheduled' && customer.scheduled_send_at && (
-                        canSchedule ? (
-                          <Text size="xs" className="text-blue-400 text-right">
-                            SMS scheduled {new Date(customer.scheduled_send_at).toLocaleString('en-GB', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </Text>
-                        ) : (
-                          <Tooltip label="Upgrade to Pro to schedule SMS">
-                            <Text size="xs" className="text-teal-400 flex items-center gap-1">
-                              <IconLock size={12} /> Pro Feature
-                            </Text>
-                          </Tooltip>
-                        )
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Section 2: Activity Tracking */}
-                  <div className="mb-3 pb-3 border-b border-[#2a2a2a]">
-                    {customer.created_at && (
-                      <div className="mb-2">
-                        <div className="text-sm text-gray-400 font-medium mb-0.5">
-                          Added:
-                        </div>
-                        <div className="text-sm text-gray-500 flex items-center gap-1.5">
-                          <span className="text-teal-400">•</span>
-                          {new Date(customer.created_at).toLocaleDateString('en-GB', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                          })}
-                        </div>
-                      </div>
-                    )}
-                    {customer.messages && customer.messages.length > 0 && (
-                      <div className="mb-2">
-                        <div className="text-sm text-gray-400 font-medium mb-0.5">
-                          Review Requests ({customer.messages.length}/3):
-                        </div>
-                        <div className="space-y-0.5">
-                          {customer.messages.slice(0, 3).map((message, idx) => (
-                            <div key={idx} className="text-sm text-gray-500 flex items-center gap-1.5">
-                              <span className="text-teal-400">•</span>
-                              {new Date(message.sent_at).toLocaleDateString('en-GB', {
-                                day: 'numeric',
-                                month: 'short',
-                              })}, {new Date(message.sent_at).toLocaleTimeString('en-GB', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                              {message.was_scheduled && (
-                                <Tooltip label="Sent via scheduled automation">
-                                  <IconClock size={14} className="text-blue-400" />
-                                </Tooltip>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {(() => {
-                      // Calculate days since last contact
-                      let daysSinceContact: number | null = null;
-                      if (customer.sent_at) {
-                        const lastContacted = new Date(customer.sent_at);
-                        const now = new Date();
-                        daysSinceContact = Math.floor(
-                          (now.getTime() - lastContacted.getTime()) / (1000 * 60 * 60 * 24)
-                        );
-                      } else if (customer.created_at) {
-                        const created = new Date(customer.created_at);
-                        const now = new Date();
-                        daysSinceContact = Math.floor(
-                          (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24)
-                        );
-                      }
-
-                      const showContactWarning = daysSinceContact !== null && daysSinceContact >= 5;
-
-                      return showContactWarning ? (
-                        <div
-                          className={`text-xs ${
-                            daysSinceContact! >= 30
-                              ? 'text-red-400'
-                              : daysSinceContact! >= 10
-                              ? 'text-orange-400'
-                              : 'text-yellow-400'
-                          }`}
-                        >
-                          {daysSinceContact}d ago. No request sent.
-                        </div>
-                      ) : null;
-                    })()}
-                    {(() => {
-                      const requestCount = customer.sms_request_count || 0;
-                      const isOptedOut = customer.opt_out || false;
-                      const isLimitReached = requestCount >= 3;
-
-                      return (isLimitReached || isOptedOut) ? (
-                        <details className="mt-2">
-                          <summary className={`text-sm cursor-pointer list-none flex items-center justify-between p-2 rounded ${
-                            isOptedOut ? 'bg-red-900/20 text-red-400' : 'bg-yellow-900/20 text-yellow-400'
-                          }`}>
-                            <div className="flex items-center gap-2">
-                              <IconAlertCircle size={16} />
-                              <span className="font-medium">
-                                {isOptedOut ? 'Opted Out' : `Limit Reached (${requestCount}/3)`}
-                              </span>
-                            </div>
-                            <span className="text-xs opacity-70 underline">Learn more</span>
-                          </summary>
-                          <div className={`text-sm mt-2 p-2 rounded ${
-                            isOptedOut ? 'bg-red-900/10 text-gray-300' : 'bg-yellow-900/10 text-gray-300'
-                          }`}>
-                            {isOptedOut
-                              ? 'This customer has opted out of receiving SMS messages.'
-                              : 'Maximum of 3 review requests reached. No more messages can be sent to this customer. This limit helps maintain good customer relationships and comply with SMS regulations.'}
-                          </div>
-                        </details>
-                      ) : null;
-                    })()}
-                  </div>
-
-                  {/* Section 3: Action Buttons */}
-                  <div className="flex justify-between items-center gap-2">
-                    <Button
-                      size="xs"
-                      variant="subtle"
-                      onClick={() => handleEdit(customer)}
-                      radius="md"
-                      className="font-medium flex items-center justify-center"
-                    >
-                      Edit
-                    </Button>
-                    <div className="flex gap-2">
-                    {(() => {
-                      const requestCount = customer.sms_request_count || 0;
-                      const isOptedOut = customer.opt_out || false;
-                      const isLimitReached = requestCount >= 3;
-                      const isSending = sendingCustomerId === customer.id;
-                      const isDisabled =
-                        paymentLoading ||
-                        !hasPaid ||
-                        !phoneValid ||
-                        isOptedOut ||
-                        isLimitReached ||
-                        isSending;
-
-                      const getButtonText = () => {
-                        if (isLimitReached) return 'Limit Reached (3/3)';
-                        if (isOptedOut) return 'Opted Out';
-                        if (isSending) return 'Sending...';
-                        const countText = requestCount > 0 ? ` (${requestCount}/3)` : '';
-                        return customer.sms_status === 'sent'
-                          ? `Request Review Again${countText}`
-                          : `Request Review${countText}`;
-                      };
-
-                      const getTooltip = () => {
-                        if (paymentLoading) return 'Loading payment status...';
-                        if (!hasPaid) return 'Payment required to send SMS messages';
-                        if (!phoneValid) return phoneError || 'Invalid phone number';
-                        if (isOptedOut) return 'This customer has opted out of receiving messages';
-                        if (isLimitReached)
-                          return 'Maximum of 3 review requests allowed per customer. Limit reached.';
-                        return '';
-                      };
-
-                      return (
-                        <>
-                          {canSchedule && customer.sms_status === 'scheduled' && (
-                            <Button
-                              size="sm"
-                              variant="light"
-                              onClick={() => handleOpenScheduleModal(customer)}
-                              radius="md"
-                              className="font-medium"
-                              leftSection={<IconCalendar size={16} />}
-                            >
-                              Edit Schedule
-                            </Button>
-                          )}
-                          <Button
-                            size="sm"
-                            variant={customer.sms_status === 'sent' ? 'light' : 'filled'}
-                            onClick={() =>
-                              customer.sms_status === 'scheduled'
-                                ? handleSendNow(customer)
-                                : handleSendAgain(customer.id)
-                            }
-                            radius="md"
-                            className="font-medium"
-                            disabled={isDisabled}
-                            loading={isSending}
-                            title={getTooltip()}
-                          >
-                            {customer.sms_status === 'scheduled' ? 'Send Now' : getButtonText()}
-                          </Button>
-                        </>
-                      );
-                    })()}
-                    </div>
-                  </div>
-                </Paper>
-              );
-            })}
-          </div>
-        </>
-      )}
-
-      {total > limit && (
-        <div className="mt-6 flex justify-center">
-          <Pagination value={page} onChange={setPage} total={Math.ceil(total / limit)} />
-        </div>
-      )}
-
-      {/* Edit Customer Modal */}
-      <Modal
-        opened={editModalOpen}
-        onClose={() => {
-          setEditModalOpen(false);
-          setEditingCustomer(null);
-          setSelectedCountry('GB');
-          countryRef.current = 'GB';
-          editForm.reset();
-        }}
-        title="Edit Customer"
-        size="md"
-        className="modal-mobile-fullscreen"
-        classNames={{
-          body: 'p-0',
-        }}
-      >
-        <form onSubmit={editForm.onSubmit(handleSaveEdit)}>
-          <Stack gap="md">
-            <TextInput
-              label="Name"
-              placeholder="Customer Name"
-              required
-              {...editForm.getInputProps('name')}
-            />
-
-            <div>
-              <label className="block text-sm font-medium text-gray-200 mb-1">
-                {(() => {
-                  // Use "Mobile Number" for UK/Ireland, "Cell Number" for others
-                  const phoneType =
-                    selectedCountry === 'GB' || selectedCountry === 'IE'
-                      ? 'Mobile Number'
-                      : 'Cell Number';
-                  return (
-                    <>
-                      {phoneType} <span className="text-red-400">*</span>
-                    </>
-                  );
-                })()}
-              </label>
-              <PhoneNumber
-                value={editForm.values.phoneNumber}
-                onChange={(value) => {
-                  editForm.setFieldValue('phoneNumber', value || '');
-                  // NO auto-detection - country is only changed by user via dropdown
-                  // Validate immediately when typing - use current country from ref
-                  const validation = validatePhoneNumber(
-                    value,
-                    countryRef.current as CountryCode | undefined
-                  );
-                  if (!validation.isValid) {
-                    setPhoneError(validation.error || 'Invalid phone number');
-                    editForm.setFieldError(
-                      'phoneNumber',
-                      validation.error || 'Invalid phone number'
+              <div>
+                <label className="block text-sm font-medium text-gray-200 mb-1">
+                  {(() => {
+                    // Use "Mobile Number" for UK/Ireland, "Cell Number" for others
+                    const phoneType =
+                      selectedCountry === 'GB' || selectedCountry === 'IE'
+                        ? 'Mobile Number'
+                        : 'Cell Number';
+                    return (
+                      <>
+                        {phoneType} <span className="text-red-400">*</span>
+                      </>
                     );
-                  } else {
-                    setPhoneError(null);
-                    editForm.setFieldError('phoneNumber', null);
-                  }
-                  editForm.validateField('phoneNumber');
-                }}
-                onCountryChange={(country) => {
-                  // Update country in both state and ref FIRST
-                  setSelectedCountry(country);
-                  countryRef.current = country;
-
-                  // Always validate when country changes if there's a phone number
-                  if (country && editForm.values.phoneNumber) {
-                    // Re-validate the existing number with the new country immediately
+                  })()}
+                </label>
+                <PhoneNumber
+                  value={editForm.values.phoneNumber}
+                  onChange={(value) => {
+                    editForm.setFieldValue('phoneNumber', value || '');
+                    // NO auto-detection - country is only changed by user via dropdown
+                    // Validate immediately when typing - use current country from ref
                     const validation = validatePhoneNumber(
-                      editForm.values.phoneNumber,
-                      country as CountryCode | undefined
+                      value,
+                      countryRef.current as CountryCode | undefined
                     );
                     if (!validation.isValid) {
                       setPhoneError(validation.error || 'Invalid phone number');
-                      // Also set form error
                       editForm.setFieldError(
                         'phoneNumber',
                         validation.error || 'Invalid phone number'
                       );
                     } else {
-                      // Clear error if number is valid for the new country
                       setPhoneError(null);
                       editForm.setFieldError('phoneNumber', null);
                     }
-                    // Force re-validation to ensure form state is updated with new country
-                    setTimeout(() => {
-                      editForm.validateField('phoneNumber');
-                    }, 0);
-                  } else if (country) {
-                    // New country selected but no phone number - clear any errors
-                    setPhoneError(null);
-                    editForm.setFieldError('phoneNumber', null);
-                  } else {
-                    // No country selected - clear errors
-                    setPhoneError(null);
-                    editForm.setFieldError('phoneNumber', null);
-                  }
-                }}
-                error={phoneError}
-                defaultCountry={selectedCountry || 'GB'}
-                key={`phone-edit-${editingCustomer?.id}-${selectedCountry}`}
-              />
-            </div>
+                    editForm.validateField('phoneNumber');
+                  }}
+                  onCountryChange={(country) => {
+                    // Update country in both state and ref FIRST
+                    setSelectedCountry(country);
+                    countryRef.current = country;
 
-            <Textarea
-              label="Job Description (Optional)"
-              placeholder="Brief description of the work done"
-              rows={3}
-              maxLength={250}
-              {...editForm.getInputProps('jobDescription')}
-              description={`${editForm.values.jobDescription.length}/250 characters`}
-            />
-
-            {canSchedule && editingCustomer?.sms_status !== 'sent' && (
-              <div>
-                <DateTimePicker
-                  label="Schedule SMS Request (Optional)"
-                  placeholder="Select date and time"
-                  value={
-                    editingCustomer?.scheduled_send_at
-                      ? new Date(editingCustomer.scheduled_send_at)
-                      : null
-                  }
-                  onChange={(date) => {
-                    if (editingCustomer) {
-                      setEditingCustomer({
-                        ...editingCustomer,
-                        scheduled_send_at: date ? date.toISOString() : undefined,
-                      });
+                    // Always validate when country changes if there's a phone number
+                    if (country && editForm.values.phoneNumber) {
+                      // Re-validate the existing number with the new country immediately
+                      const validation = validatePhoneNumber(
+                        editForm.values.phoneNumber,
+                        country as CountryCode | undefined
+                      );
+                      if (!validation.isValid) {
+                        setPhoneError(validation.error || 'Invalid phone number');
+                        // Also set form error
+                        editForm.setFieldError(
+                          'phoneNumber',
+                          validation.error || 'Invalid phone number'
+                        );
+                      } else {
+                        // Clear error if number is valid for the new country
+                        setPhoneError(null);
+                        editForm.setFieldError('phoneNumber', null);
+                      }
+                      // Force re-validation to ensure form state is updated with new country
+                      setTimeout(() => {
+                        editForm.validateField('phoneNumber');
+                      }, 0);
+                    } else if (country) {
+                      // New country selected but no phone number - clear any errors
+                      setPhoneError(null);
+                      editForm.setFieldError('phoneNumber', null);
+                    } else {
+                      // No country selected - clear errors
+                      setPhoneError(null);
+                      editForm.setFieldError('phoneNumber', null);
                     }
                   }}
-                  minDate={new Date()}
-                  clearable
-                  className="w-full"
-                  valueFormat="Do MMM YYYY, HH:mm"
-                  description="Leave empty to save for manual send later"
+                  error={phoneError}
+                  defaultCountry={selectedCountry || 'GB'}
+                  key={`phone-edit-${editingCustomer?.id}-${selectedCountry}`}
                 />
-                {editingCustomer?.scheduled_send_at && (
-                  <Text size="xs" className="text-blue-400 mt-1">
-                    SMS will be sent automatically at the scheduled time
-                  </Text>
-                )}
               </div>
-            )}
 
-            <div className="flex flex-col gap-3 pt-4 border-t border-[#2a2a2a]">
-              <div className="flex gap-3">
+              <Textarea
+                label="Job Description (Optional)"
+                placeholder="Brief description of the work done"
+                rows={3}
+                maxLength={250}
+                {...editForm.getInputProps('jobDescription')}
+                description={`${editForm.values.jobDescription.length}/250 characters`}
+              />
+
+              {canSchedule && editingCustomer?.sms_status !== 'sent' && (
+                <div>
+                  <DateTimePicker
+                    label="Schedule SMS Request (Optional)"
+                    placeholder="Select date and time"
+                    value={
+                      editingCustomer?.scheduled_send_at
+                        ? new Date(editingCustomer.scheduled_send_at)
+                        : null
+                    }
+                    onChange={(date) => {
+                      if (editingCustomer) {
+                        setEditingCustomer({
+                          ...editingCustomer,
+                          scheduled_send_at: date ? date.toISOString() : undefined,
+                        });
+                      }
+                    }}
+                    minDate={new Date()}
+                    clearable
+                    className="w-full"
+                    valueFormat="Do MMM YYYY, HH:mm"
+                    description="Leave empty to save for manual send later"
+                  />
+                  {editingCustomer?.scheduled_send_at && (
+                    <Text size="xs" className="text-blue-400 mt-1">
+                      SMS will be sent automatically at the scheduled time
+                    </Text>
+                  )}
+                </div>
+              )}
+
+              <div className="flex flex-col gap-3 pt-4 border-t border-[#2a2a2a]">
+                <div className="flex gap-3">
+                  <Button
+                    type="button"
+                    variant="subtle"
+                    onClick={() => {
+                      setEditModalOpen(false);
+                      setEditingCustomer(null);
+                      editForm.reset();
+                    }}
+                    className="flex-1"
+                    disabled={saving || deleting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    loading={saving}
+                    className="flex-1 font-semibold"
+                    disabled={deleting}
+                  >
+                    Save
+                  </Button>
+                </div>
                 <Button
                   type="button"
-                  variant="subtle"
+                  variant="light"
+                  color="red"
                   onClick={() => {
                     setEditModalOpen(false);
-                    setEditingCustomer(null);
-                    editForm.reset();
+                    setDeleteConfirmOpen(true);
                   }}
-                  className="flex-1"
+                  className="w-full"
                   disabled={saving || deleting}
+                  leftSection={<IconTrash size={16} />}
                 >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  loading={saving}
-                  className="flex-1 font-semibold"
-                  disabled={deleting}
-                >
-                  Save
+                  Delete Customer
                 </Button>
               </div>
+            </Stack>
+          </form>
+        </Modal>
+
+        {/* Delete Confirmation Modal */}
+        <Modal
+          opened={deleteConfirmOpen}
+          onClose={() => !deleting && setDeleteConfirmOpen(false)}
+          title="Delete Customer"
+          size="md"
+          centered
+          classNames={{
+            body: 'p-0',
+          }}
+        >
+          <Stack gap="md">
+            <Text size="sm" className="text-gray-300">
+              Are you sure you want to delete <strong>{editingCustomer?.name}</strong>? This action
+              cannot be undone.
+            </Text>
+            <div className="flex gap-3 pt-4">
               <Button
-                type="button"
-                variant="light"
-                color="red"
-                onClick={() => {
-                  setEditModalOpen(false);
-                  setDeleteConfirmOpen(true);
-                }}
-                className="w-full"
-                disabled={saving || deleting}
-                leftSection={<IconTrash size={16} />}
+                variant="subtle"
+                onClick={() => setDeleteConfirmOpen(false)}
+                className="flex-1"
+                disabled={deleting}
               >
-                Delete Customer
+                Cancel
+              </Button>
+              <Button
+                color="red"
+                onClick={handleDelete}
+                loading={deleting}
+                className="flex-1 font-semibold"
+              >
+                Delete
               </Button>
             </div>
           </Stack>
-        </form>
-      </Modal>
+        </Modal>
 
-      {/* Delete Confirmation Modal */}
-      <Modal
-        opened={deleteConfirmOpen}
-        onClose={() => !deleting && setDeleteConfirmOpen(false)}
-        title="Delete Customer"
-        size="md"
-        centered
-        classNames={{
-          body: 'p-0',
-        }}
-      >
-        <Stack gap="md">
-          <Text size="sm" className="text-gray-300">
-            Are you sure you want to delete <strong>{editingCustomer?.name}</strong>? This action
-            cannot be undone.
-          </Text>
-          <div className="flex gap-3 pt-4">
-            <Button
-              variant="subtle"
-              onClick={() => setDeleteConfirmOpen(false)}
-              className="flex-1"
-              disabled={deleting}
-            >
-              Cancel
-            </Button>
-            <Button
-              color="red"
-              onClick={handleDelete}
-              loading={deleting}
-              className="flex-1 font-semibold"
-            >
-              Delete
-            </Button>
-          </div>
-        </Stack>
-      </Modal>
-
-      {/* Schedule SMS Modal */}
-      <Modal
-        opened={scheduleModalOpen}
-        onClose={() => !updatingSchedule && setScheduleModalOpen(false)}
-        title="Schedule SMS Request"
-        size="md"
-        centered
-        classNames={{
-          body: 'p-0',
-        }}
-      >
-        <Stack gap="md">
-          <Text size="sm" className="text-gray-300">
-            {schedulingCustomer && (
-              <>
-                Schedule a review request for <strong>{schedulingCustomer.name}</strong>
-              </>
-            )}
-          </Text>
-
-          <DateTimePicker
-            label="Send At"
-            placeholder="Select date and time"
-            value={scheduledDateTime}
-            onChange={setScheduledDateTime}
-            minDate={new Date()}
-            clearable
-            className="w-full"
-            valueFormat="Do MMM YYYY, HH:mm"
-          />
-
-          <Alert color="blue" icon={<IconClock size={16} />}>
-            <Text size="xs">
-              {scheduledDateTime
-                ? `SMS will be sent automatically at ${scheduledDateTime.toLocaleString()}`
-                : 'Clear the date to remove the schedule'}
+        {/* Schedule SMS Modal */}
+        <Modal
+          opened={scheduleModalOpen}
+          onClose={() => !updatingSchedule && setScheduleModalOpen(false)}
+          title="Schedule SMS Request"
+          size="md"
+          centered
+          classNames={{
+            body: 'p-0',
+          }}
+        >
+          <Stack gap="md">
+            <Text size="sm" className="text-gray-300">
+              {schedulingCustomer && (
+                <>
+                  Schedule a review request for <strong>{schedulingCustomer.name}</strong>
+                </>
+              )}
             </Text>
-          </Alert>
 
-          <div className="flex gap-3 pt-4">
-            <Button
-              variant="subtle"
-              onClick={() => setScheduleModalOpen(false)}
-              className="flex-1"
-              disabled={updatingSchedule}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleUpdateSchedule}
-              loading={updatingSchedule}
-              className="flex-1 font-semibold"
-            >
-              {scheduledDateTime ? 'Update Schedule' : 'Clear Schedule'}
-            </Button>
-          </div>
-        </Stack>
-      </Modal>
+            <DateTimePicker
+              label="Send At"
+              placeholder="Select date and time"
+              value={scheduledDateTime}
+              onChange={setScheduledDateTime}
+              minDate={new Date()}
+              clearable
+              className="w-full"
+              valueFormat="Do MMM YYYY, HH:mm"
+            />
+
+            <Alert color="blue" icon={<IconClock size={16} />}>
+              <Text size="xs">
+                {scheduledDateTime
+                  ? `SMS will be sent automatically at ${scheduledDateTime.toLocaleString()}`
+                  : 'Clear the date to remove the schedule'}
+              </Text>
+            </Alert>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                variant="subtle"
+                onClick={() => setScheduleModalOpen(false)}
+                className="flex-1"
+                disabled={updatingSchedule}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleUpdateSchedule}
+                loading={updatingSchedule}
+                className="flex-1 font-semibold"
+              >
+                {scheduledDateTime ? 'Update Schedule' : 'Clear Schedule'}
+              </Button>
+            </div>
+          </Stack>
+        </Modal>
       </Paper>
     </Container>
   );

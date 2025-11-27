@@ -46,6 +46,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return handleSubscription(req, res);
     case 'create-checkout-session':
       return handleCreateCheckoutSession(req, res);
+    case 'sync-subscription':
+      return handleSyncSubscription(req, res);
     case 'cancel-subscription':
       return handleCancelSubscription(req, res);
     case 'delete-account':
@@ -189,6 +191,7 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
       cardBrand,
       accountStatus: accountLifecycleStatus,
       subscriptionTier: user.subscription_tier as
+        | 'free'
         | 'starter'
         | 'pro'
         | 'business'
@@ -198,6 +201,130 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
 
     return res.json(responseData);
   } catch (error: any) {
+    if (error.message === 'Unauthorized') {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    return res.status(500).json({ error: error.message });
+  }
+}
+
+// POST /api/billing/sync-subscription
+// Manually syncs subscription from Stripe (for local testing when webhooks don't work)
+async function handleSyncSubscription(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'POST') {
+    setCorsHeaders(res);
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  setCorsHeaders(res);
+
+  try {
+    const auth = await authenticate(req as any);
+
+    if (!stripe) {
+      return res.status(500).json({ error: 'Stripe not configured' });
+    }
+
+    // Get user data
+    const { data: user } = await supabase
+      .from('users')
+      .select('stripe_customer_id, stripe_subscription_id')
+      .eq('id', auth.userId)
+      .single<{
+        stripe_customer_id: string | null;
+        stripe_subscription_id: string | null;
+      }>();
+
+    if (!user || !user.stripe_customer_id) {
+      return res.status(404).json({ error: 'No Stripe customer found' });
+    }
+
+    // Get the latest subscription from Stripe
+    const subscriptions = await stripe.subscriptions.list({
+      customer: user.stripe_customer_id,
+      limit: 1,
+      status: 'all',
+    });
+
+    if (subscriptions.data.length === 0) {
+      return res.json({ message: 'No subscriptions found' });
+    }
+
+    const subscription = subscriptions.data[0];
+    const priceId = subscription.items.data[0]?.price?.id || null;
+
+    // Determine tier from price ID
+    const getTierFromPriceId = (priceId: string | null): string | null => {
+      if (!priceId) return null;
+      const tiers = ['free', 'starter', 'pro', 'business'];
+      const currencies = ['GBP', 'EUR', 'USD'];
+      
+      console.log('🔍 Looking for price ID:', priceId);
+      
+      for (const tier of tiers) {
+        for (const currency of currencies) {
+          const envVar = `STRIPE_PRICE_ID_${tier.toUpperCase()}_${currency}`;
+          const envValue = process.env[envVar];
+          console.log(`  Checking ${envVar}:`, envValue);
+          if (envValue === priceId) {
+            console.log(`✅ Found match! Tier: ${tier}`);
+            return tier;
+          }
+        }
+      }
+      console.log('❌ No tier found for price ID');
+      return null;
+    };
+
+    let tier = getTierFromPriceId(priceId);
+    console.log('🎯 Final tier:', tier);
+
+    // Fallback: If no tier found but we have the free price IDs, set to free
+    if (!tier && priceId && (
+      priceId === 'price_1SY6QVEAEfoPoTo8Y3t3vngs' || // FREE GBP
+      priceId === 'price_1SY6QGEAEfoPoTo8i1IKmbGU' || // FREE EUR
+      priceId === 'price_1SY6PyEAEfoPoTo8Fw5IbkRV'    // FREE USD
+    )) {
+      console.log('🔧 Fallback: Setting tier to free for known free price ID');
+      tier = 'free';
+    }
+
+    // Update database
+    const updateData: any = {
+      stripe_subscription_id: subscription.id,
+      stripe_price_id: priceId,
+      subscription_tier: tier,
+      payment_status:
+        subscription.status === 'active'
+          ? 'active'
+          : subscription.status === 'past_due'
+          ? 'past_due'
+          : subscription.status === 'canceled'
+          ? 'canceled'
+          : 'inactive',
+      payment_method: 'card',
+      subscription_start_date: subscription.created
+        ? new Date(subscription.created * 1000).toISOString()
+        : null,
+      current_period_end: subscription.current_period_end
+        ? new Date(subscription.current_period_end * 1000).toISOString()
+        : null,
+    };
+
+    // Reactivate account if subscription is active
+    if (subscription.status === 'active') {
+      updateData.account_lifecycle_status = 'active';
+    }
+
+    await supabase
+      .from('users')
+      // @ts-ignore
+      .update(updateData)
+      .eq('id', auth.userId);
+
+    return res.json({ message: 'Subscription synced successfully', tier, status: subscription.status });
+  } catch (error: any) {
+    setCorsHeaders(res);
     if (error.message === 'Unauthorized') {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -223,7 +350,7 @@ async function handleCreateCheckoutSession(req: VercelRequest, res: VercelRespon
 
     // Get currency and tier from request body, default to GBP and 'pro'
     const currency = (req.body?.currency as string) || 'GBP';
-    const tier = (req.body?.tier as string) || 'pro'; // starter, pro, business
+    const tier = (req.body?.tier as string) || 'pro'; // free, starter, pro, business
 
     // Get the appropriate price ID based on tier and currency
     // Format: STRIPE_PRICE_ID_{TIER}_{CURRENCY} (e.g., STRIPE_PRICE_ID_STARTER_GBP)
@@ -283,8 +410,25 @@ async function handleCreateCheckoutSession(req: VercelRequest, res: VercelRespon
         .eq('id', auth.userId);
     }
 
-    // Normalize FRONTEND_URL to ensure no double slashes
-    const frontendUrl = (process.env.FRONTEND_URL || '').replace(/\/$/, ''); // Remove trailing slash
+    // Get frontend URL from request origin (for ngrok/tunnel support)
+    let frontendUrl = '';
+    const origin = req.headers.origin as string | undefined;
+    const referer = req.headers.referer as string | undefined;
+    
+    if (origin) {
+      // Use the origin from the request (works for ngrok, localhost, production)
+      frontendUrl = origin.replace(/\/$/, '');
+      console.log('🔧 Using request origin for checkout redirect:', frontendUrl);
+    } else if (referer) {
+      // Extract base URL from referer
+      const refererUrl = new URL(referer);
+      frontendUrl = `${refererUrl.protocol}//${refererUrl.host}`;
+      console.log('🔧 Using referer for checkout redirect:', frontendUrl);
+    } else {
+      // Fallback to env var
+      frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
+      console.log('🔧 Using FRONTEND_URL for checkout redirect:', frontendUrl);
+    }
 
     // Create checkout session
     const session = await stripe.checkout.sessions.create({
@@ -299,6 +443,11 @@ async function handleCreateCheckoutSession(req: VercelRequest, res: VercelRespon
       ],
       success_url: `${frontendUrl}/billing?success=true`,
       cancel_url: `${frontendUrl}/billing/cancel`,
+      metadata: {
+        userId: auth.userId,
+        tier: tier,
+        priceId: priceId,
+      },
     });
 
     return res.json({ url: session.url });
@@ -568,7 +717,9 @@ async function handlePrices(req: VercelRequest, res: VercelResponse) {
     }
 
     // Get price IDs for all tiers and currencies
-    const tiers = ['free', 'starter', 'pro', 'business'];
+    // Only include 'free' tier in development (not production)
+    const isDev = process.env.NODE_ENV !== 'production';
+    const tiers = isDev ? ['free', 'starter', 'pro', 'business'] : ['starter', 'pro', 'business'];
     const currencies = ['GBP', 'EUR', 'USD'];
     const prices: Record<
       string,

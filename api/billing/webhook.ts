@@ -20,11 +20,11 @@ try {
  */
 function getTierFromPriceId(
   priceId: string | null | undefined
-): 'starter' | 'pro' | 'business' | 'enterprise' | null {
+): 'free' | 'starter' | 'pro' | 'business' | 'enterprise' | null {
   if (!priceId) return null;
 
-  // Check all tier/currency combinations
-  const tiers: Array<'starter' | 'pro' | 'business'> = ['starter', 'pro', 'business'];
+  // Check all tier/currency combinations (including free for dev/testing)
+  const tiers: Array<'free' | 'starter' | 'pro' | 'business'> = ['free', 'starter', 'pro', 'business'];
   const currencies = ['GBP', 'EUR', 'USD'];
 
   for (const tier of tiers) {

@@ -3,15 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { Paper, Title, Text, Button, Stack, Alert } from '@mantine/core';
 import { IconCheck } from '@tabler/icons-react';
 import { useAccount } from '@/contexts/AccountContext';
+import { useSetup } from '@/contexts/SetupContext';
 
 export const BillingSuccess = () => {
   const navigate = useNavigate();
   const { refetch } = useAccount();
+  const { refresh: refreshSetup } = useSetup();
 
   useEffect(() => {
-    // Refetch account data to get updated subscription status
-    refetch();
-  }, [refetch]);
+    // Refetch account data and setup progress to get updated subscription status
+    const refreshData = async () => {
+      await refetch();
+      await refreshSetup();
+    };
+    refreshData();
+  }, [refetch, refreshSetup]);
 
   return (
     <div className="min-h-screen bg-[#141414] p-4">

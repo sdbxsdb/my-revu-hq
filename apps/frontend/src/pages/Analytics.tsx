@@ -392,7 +392,7 @@ export const Analytics = () => {
                       </Text>
                     </div>
                   </Stack>
-                  {currentTier !== 'pro' && currentTier !== 'business' && (
+                  {currentTier !== 'free' && currentTier !== 'pro' && currentTier !== 'business' && (
                     <Button
                       color="teal"
                       className="mt-4 w-full"
@@ -409,7 +409,7 @@ export const Analytics = () => {
                     <Title order={3} size="h4" className="text-white">
                       Business Plan Analytics
                     </Title>
-                    {currentTier === 'business' && <Badge color="teal">Current</Badge>}
+                    {(currentTier === 'business' || currentTier === 'free') && <Badge color="teal">Current</Badge>}
                   </div>
                   <Stack gap="sm">
                     <div className="flex items-start gap-2">
@@ -443,7 +443,7 @@ export const Analytics = () => {
                       </Text>
                     </div>
                   </Stack>
-                  {currentTier !== 'business' && (
+                  {currentTier !== 'free' && currentTier !== 'business' && (
                     <Button
                       color="teal"
                       variant={currentTier === 'pro' ? 'filled' : 'light'}
@@ -462,7 +462,7 @@ export const Analytics = () => {
     );
   }
 
-  const isBusiness = analytics.tier === 'business';
+  const isBusiness = analytics.tier === 'free' || analytics.tier === 'business';
 
   return (
     <Container size="lg" py="xl">

@@ -34,8 +34,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const tier = user.subscription_tier;
 
-    // Only Pro and Business tiers have access to analytics
-    if (tier !== 'pro' && tier !== 'business') {
+    // Only Pro and Business tiers have access to analytics (free tier for dev testing)
+    if (tier !== 'free' && tier !== 'pro' && tier !== 'business') {
       return res.status(403).json({
         error: 'Analytics are only available for Pro and Business plans',
       });
