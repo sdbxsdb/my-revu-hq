@@ -94,7 +94,11 @@ export const AccountSetup = () => {
       includeJobInSms: true,
     },
     validate: {
-      businessName: (value) => (value.trim().length === 0 ? 'Business name is required' : null),
+      businessName: (value) => {
+        if (value.trim().length === 0) return 'Business name is required';
+        if (value.trim().length <= 2) return 'Business name must be more than 2 characters';
+        return null;
+      },
       reviewLinks: {
         name: (value, values, path) => {
           const index = parseInt(path.split('.')[1]);
@@ -116,6 +120,12 @@ export const AccountSetup = () => {
           }
           return null;
         },
+      },
+      smsTemplate: (value) => {
+        if (!value || value.trim().length === 0) return 'SMS template is required';
+        if (value.length < 50) return 'SMS template must be at least 50 characters';
+        if (value.length > 400) return 'SMS template must not exceed 400 characters';
+        return null;
       },
     },
   });
@@ -208,6 +218,21 @@ export const AccountSetup = () => {
     const filledLinks = values.reviewLinks.filter(
       (link) => link.name.trim() !== '' || link.url.trim() !== ''
     );
+
+    // Check that at least one review link is FULLY completed (both name and URL)
+    const fullyCompletedLinks = values.reviewLinks.filter(
+      (link) => link.name.trim() !== '' && link.url.trim() !== ''
+    );
+
+    if (fullyCompletedLinks.length === 0) {
+      notifications.show({
+        title: 'Validation Error',
+        message: 'At least one review link must be fully completed (both name and URL)',
+        color: 'red',
+      });
+      setLoading(false);
+      return;
+    }
 
     // Check if any filled links have invalid URLs
     for (const link of filledLinks) {
@@ -595,11 +620,11 @@ export const AccountSetup = () => {
 
               <Textarea
                 label="SMS Template"
-                placeholder="SMS message template"
+                placeholder="SMS message template (minimum 50 characters)"
                 rows={4}
-                maxLength={500}
+                maxLength={400}
                 {...form.getInputProps('smsTemplate')}
-                description={`${form.values.smsTemplate.length}/500 characters`}
+                description={`${form.values.smsTemplate.length}/400 characters (minimum 50)`}
               />
 
               {/* SMS Personalization Options */}

@@ -32,11 +32,19 @@ export const SetupProvider = ({ children }: { children: ReactNode }) => {
         apiClient.getCustomers({ page: 1, limit: 100 }),
       ]);
 
-      const hasAccountSetup = !!(
-        userData.business_name &&
-        userData.review_links &&
-        userData.review_links.length > 0
+      // Validate SMS setup requirements:
+      // - Business name > 2 characters
+      // - At least 1 fully filled review link (name + url)
+      // - SMS template 50-400 characters
+      const hasValidBusinessName = userData.business_name && userData.business_name.length > 2;
+      const hasValidReviewLink = userData.review_links && userData.review_links.some(
+        (link: any) => link.name && link.name.trim() && link.url && link.url.trim()
       );
+      const hasValidSmsTemplate = userData.sms_template && 
+        userData.sms_template.length >= 50 && 
+        userData.sms_template.length <= 400;
+      
+      const hasAccountSetup = hasValidBusinessName && hasValidReviewLink && hasValidSmsTemplate;
       const hasCustomer = (customers.total || 0) > 0;
       const hasSubscription = !!subscriptionTier && subscriptionTier !== 'starter';
 

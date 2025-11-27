@@ -5,7 +5,7 @@ import { authenticate } from './_utils/auth';
 import { setCorsHeaders } from './_utils/response';
 
 const accountSchema = z.object({
-  business_name: z.string().min(1, 'Business name is required').optional(),
+  business_name: z.string().min(3, 'Business name must be more than 2 characters').optional(),
   review_links: z
     .array(
       z.object({
@@ -27,7 +27,11 @@ const accountSchema = z.object({
       })
     )
     .optional(),
-  sms_template: z.string().max(500, 'SMS template must be 500 characters or less').optional(),
+  sms_template: z
+    .string()
+    .min(50, 'SMS template must be at least 50 characters')
+    .max(400, 'SMS template must not exceed 400 characters')
+    .optional(),
   include_name_in_sms: z.boolean().optional(),
   include_job_in_sms: z.boolean().optional(),
   onboarding_completed: z.boolean().optional(),
