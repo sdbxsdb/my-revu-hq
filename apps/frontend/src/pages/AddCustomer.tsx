@@ -140,6 +140,7 @@ export const AddCustomer = () => {
       }
 
       form.reset();
+      navigate('/customers');
     } catch (error: any) {
       notifications.show({
         title: 'Error',
@@ -204,6 +205,7 @@ export const AddCustomer = () => {
       }
 
       form.reset();
+      navigate('/customers');
     } catch (error: any) {
       notifications.show({
         title: 'Error',
@@ -305,6 +307,7 @@ export const AddCustomer = () => {
 
       form.reset();
       setScheduledDateTime(null);
+      navigate('/customers');
     } catch (error: any) {
       notifications.show({
         title: 'Error',
@@ -578,7 +581,7 @@ export const AddCustomer = () => {
             description="Select a future date and time for sending the SMS"
           />
 
-          <div className="flex gap-3 mt-4">
+          <div className="flex flex-col sm:flex-row gap-3 mt-4">
             <Button
               variant="light"
               onClick={() => {
@@ -586,6 +589,7 @@ export const AddCustomer = () => {
                 setScheduledDateTime(null);
               }}
               fullWidth
+              size="lg"
             >
               Cancel
             </Button>
@@ -594,6 +598,7 @@ export const AddCustomer = () => {
               disabled={!scheduledDateTime}
               loading={loadingSendLater}
               fullWidth
+              size="lg"
             >
               Schedule SMS
             </Button>

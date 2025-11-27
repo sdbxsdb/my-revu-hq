@@ -1506,7 +1506,7 @@ export const CustomerList = () => {
                       >
                         Edit
                       </Button>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col gap-2">
                         {(() => {
                           const requestCount = customer.sms_request_count || 0;
                           const isOptedOut = customer.opt_out || false;
@@ -1856,19 +1856,22 @@ export const CustomerList = () => {
               </Text>
             </Alert>
 
-            <div className="flex gap-3 pt-4">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4">
               <Button
                 variant="subtle"
                 onClick={() => setScheduleModalOpen(false)}
-                className="flex-1"
+                fullWidth
                 disabled={updatingSchedule}
+                size="lg"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleUpdateSchedule}
                 loading={updatingSchedule}
-                className="flex-1 font-semibold"
+                fullWidth
+                className="font-semibold"
+                size="lg"
               >
                 {scheduledDateTime ? 'Update Schedule' : 'Clear Schedule'}
               </Button>
