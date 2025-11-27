@@ -235,7 +235,7 @@ export const Analytics = () => {
 
   if (loading) {
     return (
-      <Container size="lg" py="md" px="xs">
+      <Container size="lg" py="md" className="px-xs sm:px-md">
         <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
           <Stack gap="lg">
             <Skeleton height={40} width="60%" />
@@ -251,7 +251,7 @@ export const Analytics = () => {
     const currentTier = subscriptionTier || 'starter';
 
     return (
-      <Container size="lg" py="md" px="xs">
+      <Container size="lg" py="md" className="px-xs sm:px-md">
         <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
           <Stack gap="lg">
             <div>
@@ -465,7 +465,7 @@ export const Analytics = () => {
   const isBusiness = analytics.tier === 'free' || analytics.tier === 'business';
 
   return (
-    <Container size="lg" py="xl">
+    <Container size="lg" py="xl" className="px-xs sm:px-md">
       <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
         <Stack gap="lg">
           {/* Account Error Alert */}

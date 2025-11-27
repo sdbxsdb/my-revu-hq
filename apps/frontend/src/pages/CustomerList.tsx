@@ -722,7 +722,7 @@ export const CustomerList = () => {
   };
 
   return (
-    <Container size="md" py="md" px="xs">
+    <Container size="lg" py="md" className="px-xs sm:px-md">
       <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
         {/* Account Error Alert */}
         <AccountErrorAlert />
@@ -745,12 +745,13 @@ export const CustomerList = () => {
                   )}
                 </div>
             </div>
+            {/* Mobile only - payment warning next to title */}
             {!paymentLoading && !hasPaid && (
               <Alert
                 icon={<IconAlertCircle size={16} />}
                 title="Payment Required"
                 color="yellow"
-                className="w-full sm:w-auto relative"
+                className="w-full sm:hidden relative"
               >
                 <div className="flex flex-col gap-3 pb-10">
                   <Text size="sm" className="text-gray-300">
@@ -772,6 +773,34 @@ export const CustomerList = () => {
               </Alert>
             )}
           </div>
+
+          {/* Desktop only - payment warning below title */}
+          {!paymentLoading && !hasPaid && (
+            <Alert
+              icon={<IconAlertCircle size={16} />}
+              title="Payment Required"
+              color="yellow"
+              className="hidden sm:block relative"
+            >
+              <div className="flex flex-col gap-3 pb-10">
+                <Text size="sm" className="text-gray-300">
+                  You can add and manage customers, but you need to set up payment to send SMS
+                  messages.
+                </Text>
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-4">
+                <Button
+                  component={Link}
+                  to="/billing"
+                  size="sm"
+                  color="teal"
+                  className="font-semibold !px-3 !py-1 !h-auto !text-xs"
+                >
+                  Set up payment
+                </Button>
+              </div>
+            </Alert>
+          )}
 
           {/* SMS Usage Display */}
             {(smsSent !== null || loadingUsage) && subscriptionTier && (

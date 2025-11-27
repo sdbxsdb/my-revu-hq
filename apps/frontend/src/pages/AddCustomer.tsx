@@ -321,9 +321,9 @@ export const AddCustomer = () => {
   };
 
   return (
-    <Container size="lg" py="md" px="xs">
-      <Paper shadow="md" className="bg-[#1a1a1a] px-4 pt-6 pb-8 sm:px-6">
-        <div className="max-w-full sm:max-w-2xl sm:mx-auto">
+    <Container size="lg" py="md" className="px-xs sm:px-md">
+      <Paper shadow="md" className="bg-[#1a1a1a] px-4 pt-6 pb-8 sm:p-8">
+        <div className="max-w-full">
           <div className="mb-8">
             <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
               Add Customer

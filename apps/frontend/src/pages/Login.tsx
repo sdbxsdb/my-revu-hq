@@ -438,7 +438,7 @@ export const Login = () => {
   };
 
   return (
-    <Container size="md" py="md" px="xs">
+    <Container size="lg" py="md" className="px-xs sm:px-md">
       <Paper shadow="xl" p="md" className="w-full max-w-md mx-auto">
         <Tabs
           value={mode === 'signup' ? 'signup' : mode === 'magic-link' ? 'signin' : 'signin'}

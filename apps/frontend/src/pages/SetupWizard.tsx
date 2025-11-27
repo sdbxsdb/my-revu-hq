@@ -84,7 +84,7 @@ export const SetupWizard = () => {
 
   if (loading) {
     return (
-      <Container size="md" py="md" px="xs">
+      <Container size="lg" py="md" className="px-xs sm:px-md">
         <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
           <Text className="text-center text-gray-400">Loading...</Text>
         </Paper>
@@ -138,7 +138,7 @@ export const SetupWizard = () => {
   const allComplete = completedCount === steps.length;
 
   return (
-    <Container size="md" py="md" px="xs">
+    <Container size="lg" py="md" className="px-xs sm:px-md">
       <Stack gap="md">
         <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
           <Stack gap="md">

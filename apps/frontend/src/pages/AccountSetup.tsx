@@ -359,7 +359,7 @@ export const AccountSetup = () => {
   };
 
   return (
-    <Container size="md" py="md" px="xs">
+    <Container size="lg" py="md" className="px-xs sm:px-md">
       <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
         <div className="mb-8">
           <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
