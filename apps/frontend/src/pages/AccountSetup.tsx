@@ -818,6 +818,7 @@ export const AccountSetup = () => {
                           leftSection={<IconHome size={16} />}
                           onClick={() => navigate('/dashboard')}
                           size="md"
+                          className="w-full sm:w-auto"
                         >
                           Back to Dashboard
                         </Button>

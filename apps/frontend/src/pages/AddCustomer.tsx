@@ -476,7 +476,7 @@ export const AddCustomer = () => {
                         }}
                         loading={loadingAddOnly}
                         variant="light"
-                        color="gray"
+                        color="teal"
                         size="md"
                         className="w-full font-semibold"
                         disabled={loadingSendNow || loadingSendLater}
@@ -506,7 +506,8 @@ export const AddCustomer = () => {
                           handleRequestLaterClick();
                         }}
                         loading={loadingSendLater}
-                        variant="light"
+                        variant="filled"
+                        color="blue"
                         size="md"
                         className="w-full font-semibold"
                         disabled={paymentLoading || !hasPaid || loadingSendNow || loadingAddOnly}
@@ -535,6 +536,8 @@ export const AddCustomer = () => {
                           form.onSubmit(handleSendNow)();
                         }}
                         loading={loadingSendNow}
+                        variant="filled"
+                        color="teal"
                         size="md"
                         className="w-full font-semibold"
                         disabled={paymentLoading || !hasPaid || loadingSendLater || loadingAddOnly}

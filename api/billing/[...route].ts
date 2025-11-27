@@ -717,9 +717,8 @@ async function handlePrices(req: VercelRequest, res: VercelResponse) {
     }
 
     // Get price IDs for all tiers and currencies
-    // Only include 'free' tier in development (not production)
-    const isDev = process.env.NODE_ENV !== 'production';
-    const tiers = isDev ? ['free', 'starter', 'pro', 'business'] : ['starter', 'pro', 'business'];
+    // TEMPORARY: Include 'free' tier in all environments for testing (remove before final launch)
+    const tiers = ['free', 'starter', 'pro', 'business'];
     const currencies = ['GBP', 'EUR', 'USD'];
     const prices: Record<
       string,

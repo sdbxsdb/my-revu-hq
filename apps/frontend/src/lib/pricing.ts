@@ -17,10 +17,10 @@ export interface PricingPlan {
 const ALL_PRICING_PLANS: PricingPlan[] = [
   {
     id: 'free',
-    name: 'Free (Dev)',
+    name: 'Free Trial',
     price: 0,
     smsLimit: 60, // Same as Business for testing
-    description: 'Development testing only - Full Business features',
+    description: 'Full Business features for testing - Limited time',
     features: [
       '60 SMS messages per month',
       'Unlimited customers',
@@ -28,7 +28,7 @@ const ALL_PRICING_PLANS: PricingPlan[] = [
       'Custom SMS templates',
       'Priority support',
       'Export customer data',
-      'Development only',
+      'Testing only - Limited availability',
     ],
   },
   {
@@ -95,10 +95,9 @@ const ALL_PRICING_PLANS: PricingPlan[] = [
   },
 ];
 
-// Export pricing plans - exclude 'free' tier in production
-export const PRICING_PLANS: PricingPlan[] = import.meta.env.DEV
-  ? ALL_PRICING_PLANS
-  : ALL_PRICING_PLANS.filter((plan) => plan.id !== 'free');
+// Export pricing plans
+// TEMPORARY: Include 'free' tier in all environments for testing (remove before final launch)
+export const PRICING_PLANS: PricingPlan[] = ALL_PRICING_PLANS;
 
 export function getPlanById(id: PricingTier): PricingPlan | undefined {
   return ALL_PRICING_PLANS.find((plan) => plan.id === id);

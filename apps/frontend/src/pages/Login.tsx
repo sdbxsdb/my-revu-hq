@@ -475,51 +475,51 @@ export const Login = () => {
           {/* OAuth and Magic Link - Both work for sign up and sign in */}
           {mode !== 'magic-link' && (
             <>
-              <Button
-                type="button"
-                leftSection={
-                  <img
-                    src="/assets/logos/googlelogo.png"
-                    alt="Google"
-                    className="h-5 w-5 object-contain"
-                  />
-                }
-                variant="default"
-                fullWidth
-                onClick={handleGoogleOAuth}
-                loading={oauthLoading}
-                disabled={loading}
-                color="teal"
-                className="!font-medium !h-11"
-              >
+          <Button
+            type="button"
+            leftSection={
+              <img
+                src="/assets/logos/googlelogo.png"
+                alt="Google"
+                className="h-5 w-5 object-contain"
+              />
+            }
+            variant="default"
+            fullWidth
+            onClick={handleGoogleOAuth}
+            loading={oauthLoading}
+            disabled={loading}
+            color="teal"
+            className="!font-medium !h-11"
+          >
                 {mode === 'signup' ? 'Create account with Google' : 'Sign in with Google'}
-              </Button>
+          </Button>
 
-              <Button
-                type="button"
-                variant="light"
-                fullWidth
-                onClick={(e) => {
-                  e.preventDefault();
-                  setMode('magic-link');
-                }}
-                leftSection={<IconMail size={18} />}
+          <Button
+            type="button"
+            variant="light"
+            fullWidth
+            onClick={(e) => {
+              e.preventDefault();
+              setMode('magic-link');
+            }}
+            leftSection={<IconMail size={18} />}
                 className="border border-teal-600/30 hover:bg-teal-600/10 !h-11 transition-all"
-              >
+          >
                 {mode === 'signup' ? 'Create account with Magic Link' : 'Sign in with Magic Link'}
-              </Button>
+          </Button>
 
-              <Alert color="blue" className="bg-blue-900/20 border-blue-700/30">
-                <Text size="xs" className="text-gray-300">
-                  <strong>What's a magic link?</strong> We'll send you an email with a special link.
+          <Alert color="blue" className="bg-blue-900/20 border-blue-700/30">
+            <Text size="xs" className="text-gray-300">
+              <strong>What's a magic link?</strong> We'll send you an email with a special link.
                   Click it to {mode === 'signup' ? 'create your account' : 'sign in'} instantly—no
                   password needed!
                   {mode === 'signup' &&
                     ' Once you create your account with a magic link, you can sign in with a magic link every time.'}
-                </Text>
-              </Alert>
+            </Text>
+          </Alert>
 
-              <Divider label="OR" labelPosition="center" className="my-2" />
+          <Divider label="OR" labelPosition="center" className="my-2" />
             </>
           )}
 
@@ -772,25 +772,25 @@ export const Login = () => {
             <div>
               <Text size="sm" className="text-gray-300">
                 By continuing, you agree to our{' '}
-                <a
-                  href="/terms"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-teal-400 hover:text-teal-300 underline"
-                >
-                  Terms and Conditions
+              <a
+                href="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-teal-400 hover:text-teal-300 underline"
+              >
+                Terms and Conditions
                 </a>{' '}
                 and{' '}
-                <a
-                  href="/privacy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-teal-400 hover:text-teal-300 underline"
-                >
-                  Privacy Policy
-                </a>
+              <a
+                href="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-teal-400 hover:text-teal-300 underline"
+              >
+                Privacy Policy
+              </a>
                 .
-              </Text>
+            </Text>
             </div>
           </Stack>
           <div className="flex-shrink-0 pt-4 border-t border-[#2a2a2a]">
@@ -967,7 +967,7 @@ export const Login = () => {
                 Open your email
               </a>
             )}
-          </div>
+    </div>
 
           <Button
             onClick={() => {
