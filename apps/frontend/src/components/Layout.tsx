@@ -16,7 +16,7 @@ export const Layout = ({ children }: LayoutProps) => {
 
   const handleLogoClick = () => {
     if (user) {
-      navigate('/customers');
+      navigate('/dashboard');
     } else {
       navigate('/');
     }

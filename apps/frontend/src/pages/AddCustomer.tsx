@@ -22,20 +22,31 @@ import { PhoneNumber } from '@/components/PhoneNumber';
 import { validatePhoneNumber, formatPhoneNumberForApi } from '@/lib/phone-validation';
 import { usePayment } from '@/contexts/PaymentContext';
 import { useAccount } from '@/contexts/AccountContext';
+import { useSetup } from '@/contexts/SetupContext';
 import { AccountErrorAlert } from '@/components/AccountErrorAlert';
-import { IconAlertCircle, IconClock, IconSparkles } from '@tabler/icons-react';
+import { SetupProgressModal } from '@/components/SetupProgressModal';
+import {
+  IconAlertCircle,
+  IconClock,
+  IconSparkles,
+  IconHome,
+  IconUserPlus,
+} from '@tabler/icons-react';
 
 export const AddCustomer = () => {
   const { hasPaid, loading: paymentLoading } = usePayment();
   const { subscriptionTier } = useAccount();
+  const { progress, refresh: refreshSetup } = useSetup();
   const [loadingSendNow, setLoadingSendNow] = useState(false);
   const [loadingSendLater, setLoadingSendLater] = useState(false);
+  const [loadingAddOnly, setLoadingAddOnly] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<CountryCode | undefined>('GB'); // Default to GB, can be updated from account
   const countryRef = useRef<CountryCode | undefined>('GB');
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [scheduledDateTime, setScheduledDateTime] = useState<Date | null>(null);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [showProgressModal, setShowProgressModal] = useState(false);
   const navigate = useNavigate();
 
   // Check if user has Pro or Business tier
@@ -115,15 +126,20 @@ export const AddCustomer = () => {
       });
 
       await apiClient.sendSMS(customer.id);
+      await refreshSetup();
 
-      notifications.show({
-        title: 'Success',
-        message: 'Customer added and SMS sent',
-        color: 'green',
-      });
+      // Show progress modal if setup not complete
+      if (progress && !progress.isComplete) {
+        setShowProgressModal(true);
+      } else {
+        notifications.show({
+          title: 'Success',
+          message: 'Customer added and SMS sent',
+          color: 'green',
+        });
+      }
 
       form.reset();
-      navigate('/customers');
     } catch (error: any) {
       notifications.show({
         title: 'Error',
@@ -132,6 +148,70 @@ export const AddCustomer = () => {
       });
     } finally {
       setLoadingSendNow(false);
+    }
+  };
+
+  const handleAddOnly = async (values: typeof form.values) => {
+    setLoadingAddOnly(true);
+    setPhoneError(null);
+
+    try {
+      // Validate phone number with country context
+      const validation = validatePhoneNumber(
+        values.phoneNumber,
+        selectedCountry as CountryCode | undefined
+      );
+      if (!validation.isValid) {
+        setPhoneError(validation.error || 'Invalid phone number');
+        setLoadingAddOnly(false);
+        return;
+      }
+
+      // Format phone for API - store in LOCAL format (as user entered it)
+      const phoneForApi = formatPhoneNumberForApi(
+        values.phoneNumber,
+        selectedCountry as CountryCode | undefined
+      );
+      if (!phoneForApi) {
+        setPhoneError('Invalid phone number format');
+        setLoadingAddOnly(false);
+        return;
+      }
+
+      // The number in values.phoneNumber is already in local format (as user entered)
+      const localNumber = values.phoneNumber || '';
+
+      await apiClient.createCustomer({
+        name: values.name,
+        phone: {
+          countryCode: phoneForApi.countryCode,
+          number: localNumber, // LOCAL format: "07780586444" (as user entered)
+        },
+        jobDescription: values.jobDescription || undefined,
+      });
+
+      await refreshSetup();
+
+      // Show progress modal if setup not complete
+      if (progress && !progress.isComplete) {
+        setShowProgressModal(true);
+      } else {
+        notifications.show({
+          title: 'Success',
+          message: 'Customer added successfully',
+          color: 'green',
+        });
+      }
+
+      form.reset();
+    } catch (error: any) {
+      notifications.show({
+        title: 'Error',
+        message: error.message || 'Failed to add customer',
+        color: 'red',
+      });
+    } finally {
+      setLoadingAddOnly(false);
     }
   };
 
@@ -201,24 +281,30 @@ export const AddCustomer = () => {
         scheduledSendAt: scheduledTime ? scheduledTime.toISOString() : undefined,
       });
 
-      notifications.show({
-        title: 'Success',
-        message: scheduledTime
-          ? `Customer added. SMS scheduled for ${scheduledTime.toLocaleDateString('en-GB', {
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric',
-            })} at ${scheduledTime.toLocaleTimeString('en-GB', {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}`
-          : 'Customer added (pending SMS)',
-        color: 'green',
-      });
+      await refreshSetup();
+
+      // Show progress modal if setup not complete
+      if (progress && !progress.isComplete) {
+        setShowProgressModal(true);
+      } else {
+        notifications.show({
+          title: 'Success',
+          message: scheduledTime
+            ? `Customer added. SMS scheduled for ${scheduledTime.toLocaleDateString('en-GB', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+              })} at ${scheduledTime.toLocaleTimeString('en-GB', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}`
+            : 'Customer added (pending SMS)',
+          color: 'green',
+        });
+      }
 
       form.reset();
       setScheduledDateTime(null);
-      navigate('/customers');
     } catch (error: any) {
       notifications.show({
         title: 'Error',
@@ -233,193 +319,235 @@ export const AddCustomer = () => {
   return (
     <Container size="lg" py="md" px="xs">
       <Paper shadow="md" className="bg-[#1a1a1a] px-4 pt-6 pb-8 sm:px-6">
-      <div className="max-w-full sm:max-w-2xl sm:mx-auto">
-        <div className="mb-8">
-          <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
-            Add Customer
-          </Title>
-          <p className="text-sm text-gray-400">Add a new customer to send them a review request</p>
-        </div>
-
-        {/* Account Error Alert */}
-        <AccountErrorAlert />
-
-        {!paymentLoading && !hasPaid && (
-          <Alert
-            icon={<IconAlertCircle size={16} />}
-            title="Payment Required to Send Messages"
-            color="yellow"
-            className="mb-6 relative"
-          >
-            <div className="flex flex-col gap-3 pb-10">
-              <Text size="sm" className="text-gray-300">
-                You can add customers, but you need to set up payment to send SMS messages.
-              </Text>
-            </div>
-            <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-4">
-              <Button
-                component={Link}
-                to="/billing"
-                size="sm"
-                color="teal"
-                className="font-semibold !px-3 !py-1 !h-auto !text-xs"
-              >
-                Set up payment
-              </Button>
-            </div>
-          </Alert>
-        )}
-
-      <form onSubmit={form.onSubmit(() => {})}>
-        <Stack gap="lg">
-          <TextInput
-            label="Name"
-            placeholder="Customer Name"
-            required
-            {...form.getInputProps('name')}
-          />
-
-          <label className="block text-sm font-medium text-gray-200 mb-1">
-            {(() => {
-              // Use "Mobile Number" for UK/Ireland, "Cell Number" for others
-              const phoneType =
-                selectedCountry === 'GB' || selectedCountry === 'IE'
-                  ? 'Mobile Number'
-                  : 'Cell Number';
-              return (
-                <>
-                  {phoneType} <span className="text-red-400">*</span>
-                </>
-              );
-            })()}
-          </label>
-          <PhoneNumber
-            value={form.values.phoneNumber}
-            country={selectedCountry}
-            onChange={(value) => {
-              form.setFieldValue('phoneNumber', value);
-              // Validate immediately when typing - use current country from ref
-              const validation = validatePhoneNumber(
-                value,
-                countryRef.current as CountryCode | undefined
-              );
-              if (!validation.isValid) {
-                setPhoneError(validation.error || 'Invalid phone number');
-                form.setFieldError('phoneNumber', validation.error || 'Invalid phone number');
-              } else {
-                setPhoneError(null);
-                form.setFieldError('phoneNumber', null);
-              }
-              form.validateField('phoneNumber');
-            }}
-            onCountryChange={(country) => {
-              // Update country in both state and ref FIRST
-              setSelectedCountry(country);
-              countryRef.current = country;
-
-              // Always validate when country changes if there's a phone number
-              if (country && form.values.phoneNumber) {
-                // Re-validate the existing number with the new country immediately
-                const validation = validatePhoneNumber(
-                  form.values.phoneNumber,
-                  country as CountryCode | undefined
-                );
-                if (!validation.isValid) {
-                  setPhoneError(validation.error || 'Invalid phone number');
-                  // Also set form error
-                  form.setFieldError('phoneNumber', validation.error || 'Invalid phone number');
-                } else {
-                  // Clear error if number is valid for the new country
-                  setPhoneError(null);
-                  form.setFieldError('phoneNumber', null);
-                }
-                // Force re-validation to ensure form state is updated with new country
-                setTimeout(() => {
-                  form.validateField('phoneNumber');
-                }, 0);
-              } else if (country) {
-                // New country selected but no phone number - clear any errors
-                setPhoneError(null);
-                form.setFieldError('phoneNumber', null);
-              } else {
-                // No country selected - clear errors
-                setPhoneError(null);
-                form.setFieldError('phoneNumber', null);
-              }
-            }}
-            error={phoneError}
-            defaultCountry="GB"
-          />
-
-          <Textarea
-            label="Job Description (Optional)"
-            placeholder="Brief description of the work done"
-            rows={3}
-            maxLength={250}
-            {...form.getInputProps('jobDescription')}
-            description={`${form.values.jobDescription.length}/250 characters`}
-          />
-
-          <div className="flex flex-col sm:flex-row-reverse gap-3 mt-8 pt-6 border-t border-[#2a2a2a]">
-            <div className="w-full sm:flex-1">
-              <Tooltip
-                label={
-                  paymentLoading
-                    ? 'Loading payment status...'
-                    : 'Payment required to send SMS messages'
-                }
-                disabled={paymentLoading || hasPaid}
-                position="top"
-                withArrow
-              >
-                <Button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    form.onSubmit(handleSendNow)();
-                  }}
-                  loading={loadingSendNow}
-                  size="md"
-                  className="w-full font-semibold !py-4 !h-auto min-h-[3.5rem]"
-                  disabled={paymentLoading || !hasPaid || loadingSendLater}
-                >
-                  <div className="flex flex-col items-center gap-0.5">
-                    <span>Add Customer</span>
-                    <span>Request Review</span>
-                  </div>
-                </Button>
-              </Tooltip>
-            </div>
-            <div className="w-full sm:flex-1">
-              <Tooltip
-                label="Schedule when to send the review request"
-                position="top"
-                withArrow
-              >
-                <Button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleRequestLaterClick();
-                  }}
-                  loading={loadingSendLater}
-                  variant="light"
-                  size="md"
-                  className="w-full font-semibold !py-4 !h-auto min-h-[3.5rem]"
-                  disabled={loadingSendNow}
-                  leftSection={<IconClock size={18} />}
-                >
-                  <div className="flex flex-col items-center gap-0.5">
-                    <span>Add Customer</span>
-                    <span>Schedule Request</span>
-                  </div>
-                </Button>
-              </Tooltip>
-            </div>
+        <div className="max-w-full sm:max-w-2xl sm:mx-auto">
+          <div className="mb-8">
+            <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
+              Add Customer
+            </Title>
+            <p className="text-sm text-gray-400">
+              Add a new customer to send them a review request
+            </p>
           </div>
-        </Stack>
-      </form>
-      </div>
+
+          {/* Account Error Alert */}
+          <AccountErrorAlert />
+
+          {!paymentLoading && !hasPaid && (
+            <Alert
+              icon={<IconAlertCircle size={16} />}
+              title="Payment Required to Send Messages"
+              color="yellow"
+              className="mb-6 relative"
+            >
+              <div className="flex flex-col gap-3 pb-10">
+                <Text size="sm" className="text-gray-300">
+                  You can add customers, but you need to set up payment to send SMS messages.
+                </Text>
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-4">
+                <Button
+                  component={Link}
+                  to="/billing"
+                  size="sm"
+                  color="teal"
+                  className="font-semibold !px-3 !py-1 !h-auto !text-xs"
+                >
+                  Set up payment
+                </Button>
+              </div>
+            </Alert>
+          )}
+
+          <form onSubmit={form.onSubmit(() => {})}>
+            <Stack gap="lg">
+              <TextInput
+                label="Name"
+                placeholder="Customer Name"
+                required
+                {...form.getInputProps('name')}
+              />
+
+              <label className="block text-sm font-medium text-gray-200 mb-1">
+                {(() => {
+                  // Use "Mobile Number" for UK/Ireland, "Cell Number" for others
+                  const phoneType =
+                    selectedCountry === 'GB' || selectedCountry === 'IE'
+                      ? 'Mobile Number'
+                      : 'Cell Number';
+                  return (
+                    <>
+                      {phoneType} <span className="text-red-400">*</span>
+                    </>
+                  );
+                })()}
+              </label>
+              <PhoneNumber
+                value={form.values.phoneNumber}
+                country={selectedCountry}
+                onChange={(value) => {
+                  form.setFieldValue('phoneNumber', value);
+                  // Validate immediately when typing - use current country from ref
+                  const validation = validatePhoneNumber(
+                    value,
+                    countryRef.current as CountryCode | undefined
+                  );
+                  if (!validation.isValid) {
+                    setPhoneError(validation.error || 'Invalid phone number');
+                    form.setFieldError('phoneNumber', validation.error || 'Invalid phone number');
+                  } else {
+                    setPhoneError(null);
+                    form.setFieldError('phoneNumber', null);
+                  }
+                  form.validateField('phoneNumber');
+                }}
+                onCountryChange={(country) => {
+                  // Update country in both state and ref FIRST
+                  setSelectedCountry(country);
+                  countryRef.current = country;
+
+                  // Always validate when country changes if there's a phone number
+                  if (country && form.values.phoneNumber) {
+                    // Re-validate the existing number with the new country immediately
+                    const validation = validatePhoneNumber(
+                      form.values.phoneNumber,
+                      country as CountryCode | undefined
+                    );
+                    if (!validation.isValid) {
+                      setPhoneError(validation.error || 'Invalid phone number');
+                      // Also set form error
+                      form.setFieldError('phoneNumber', validation.error || 'Invalid phone number');
+                    } else {
+                      // Clear error if number is valid for the new country
+                      setPhoneError(null);
+                      form.setFieldError('phoneNumber', null);
+                    }
+                    // Force re-validation to ensure form state is updated with new country
+                    setTimeout(() => {
+                      form.validateField('phoneNumber');
+                    }, 0);
+                  } else if (country) {
+                    // New country selected but no phone number - clear any errors
+                    setPhoneError(null);
+                    form.setFieldError('phoneNumber', null);
+                  } else {
+                    // No country selected - clear errors
+                    setPhoneError(null);
+                    form.setFieldError('phoneNumber', null);
+                  }
+                }}
+                error={phoneError}
+                defaultCountry="GB"
+              />
+
+              <Textarea
+                label="Job Description (Optional)"
+                placeholder="Brief description of the work done"
+                rows={3}
+                maxLength={250}
+                {...form.getInputProps('jobDescription')}
+                description={`${form.values.jobDescription.length}/250 characters`}
+              />
+
+              <div className="flex flex-col gap-3 mt-8 pt-6 border-t border-[#2a2a2a]">
+                {progress && !progress.isComplete && (
+                  <Button
+                    variant="subtle"
+                    color="gray"
+                    leftSection={<IconHome size={16} />}
+                    onClick={() => navigate('/dashboard')}
+                    size="md"
+                  >
+                    Back to Dashboard
+                  </Button>
+                )}
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="w-full sm:flex-1">
+                    <Tooltip
+                      label="Just add the customer without sending SMS"
+                      position="top"
+                      withArrow
+                    >
+                      <Button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          form.onSubmit(handleAddOnly)();
+                        }}
+                        loading={loadingAddOnly}
+                        variant="light"
+                        color="gray"
+                        size="md"
+                        className="w-full font-semibold"
+                        disabled={loadingSendNow || loadingSendLater}
+                        leftSection={<IconUserPlus size={18} />}
+                      >
+                        Add Customer Only
+                      </Button>
+                    </Tooltip>
+                  </div>
+
+                  <div className="w-full sm:flex-1">
+                    <Tooltip
+                      label={
+                        paymentLoading
+                          ? 'Loading payment status...'
+                          : !hasPaid
+                            ? 'Payment required to schedule SMS'
+                            : 'Schedule when to send the review request'
+                      }
+                      position="top"
+                      withArrow
+                    >
+                      <Button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleRequestLaterClick();
+                        }}
+                        loading={loadingSendLater}
+                        variant="light"
+                        size="md"
+                        className="w-full font-semibold"
+                        disabled={paymentLoading || !hasPaid || loadingSendNow || loadingAddOnly}
+                        leftSection={<IconClock size={18} />}
+                      >
+                        Add & Schedule
+                      </Button>
+                    </Tooltip>
+                  </div>
+
+                  <div className="w-full sm:flex-1">
+                    <Tooltip
+                      label={
+                        paymentLoading
+                          ? 'Loading payment status...'
+                          : 'Payment required to send SMS messages'
+                      }
+                      disabled={paymentLoading || hasPaid}
+                      position="top"
+                      withArrow
+                    >
+                      <Button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          form.onSubmit(handleSendNow)();
+                        }}
+                        loading={loadingSendNow}
+                        size="md"
+                        className="w-full font-semibold"
+                        disabled={paymentLoading || !hasPaid || loadingSendLater || loadingAddOnly}
+                      >
+                        Add & Send Now
+                      </Button>
+                    </Tooltip>
+                  </div>
+                </div>
+              </div>
+            </Stack>
+          </form>
+        </div>
       </Paper>
 
       {/* Schedule SMS Modal */}
@@ -492,14 +620,15 @@ export const AddCustomer = () => {
           <div className="bg-gradient-to-br from-teal-500/20 to-blue-500/20 p-6 rounded-full">
             <IconSparkles size={64} className="text-teal-400" />
           </div>
-          
+
           <div>
             <Title order={3} className="text-white mb-2">
               Schedule SMS for Perfect Timing
             </Title>
             <Text size="sm" className="text-gray-300 max-w-md">
-              Pro and Business customers can schedule review requests for a specific date and time. 
-              Perfect for sending requests when you know the completion date or at the optimal time for your industry.
+              Pro and Business customers can schedule review requests for a specific date and time.
+              Perfect for sending requests when you know the completion date or at the optimal time
+              for your industry.
             </Text>
           </div>
 
@@ -519,18 +648,10 @@ export const AddCustomer = () => {
           </Stack>
 
           <div className="flex gap-3 w-full pt-4">
-            <Button
-              variant="subtle"
-              onClick={() => setUpgradeModalOpen(false)}
-              className="flex-1"
-            >
+            <Button variant="subtle" onClick={() => setUpgradeModalOpen(false)} className="flex-1">
               Maybe Later
             </Button>
-            <Button
-              component={Link}
-              to="/billing"
-              className="flex-1 font-semibold !h-auto !py-2"
-            >
+            <Button component={Link} to="/billing" className="flex-1 font-semibold !h-auto !py-2">
               <div className="flex flex-col items-center gap-0">
                 <span>Upgrade to Pro</span>
                 <span>or Business</span>
@@ -539,6 +660,18 @@ export const AddCustomer = () => {
           </div>
         </Stack>
       </Modal>
+
+      {/* Setup Progress Modal */}
+      {progress && (
+        <SetupProgressModal
+          opened={showProgressModal}
+          onClose={() => setShowProgressModal(false)}
+          completedSteps={progress.completedCount}
+          totalSteps={progress.totalCount}
+          nextStepLabel="Choose Your Plan"
+          nextStepPath="/billing"
+        />
+      )}
     </Container>
   );
 };

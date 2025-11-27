@@ -5,7 +5,7 @@ import { authenticate } from './_utils/auth';
 import { setCorsHeaders } from './_utils/response';
 
 const accountSchema = z.object({
-  business_name: z.string().min(1, 'Business name is required'),
+  business_name: z.string().min(1, 'Business name is required').optional(),
   review_links: z
     .array(
       z.object({
@@ -30,6 +30,7 @@ const accountSchema = z.object({
   sms_template: z.string().max(500, 'SMS template must be 500 characters or less').optional(),
   include_name_in_sms: z.boolean().optional(),
   include_job_in_sms: z.boolean().optional(),
+  onboarding_completed: z.boolean().optional(),
 });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

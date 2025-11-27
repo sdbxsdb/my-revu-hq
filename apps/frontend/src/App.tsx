@@ -2,10 +2,12 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { AccountProvider } from '@/contexts/AccountContext';
+import { SetupProvider } from '@/contexts/SetupContext';
 import { PaymentProvider } from '@/contexts/PaymentContext';
 import { Layout } from '@/components/Layout';
 import { ScrollToTop } from '@/components/ScrollToTop';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { EmailConfirmationHandler } from '@/components/EmailConfirmationHandler';
 import { Login } from '@/pages/Login';
 import { AccountSetup } from '@/pages/AccountSetup';
 import { Billing } from '@/pages/Billing';
@@ -20,6 +22,7 @@ import { Home } from '@/pages/Home';
 import { Help } from '@/pages/Help';
 import { ResetPassword } from '@/pages/ResetPassword';
 import { Analytics } from '@/pages/Analytics';
+import { Dashboard } from '@/pages/Dashboard';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -75,38 +78,43 @@ function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <ScrollToTop />
+        <EmailConfirmationHandler />
         <AccountProvider>
-          <PaymentProvider>
-            <Routes>
-              <Route element={<Layout />}>
-                {/* Public pages with navigation */}
-                <Route path="/" element={<Home />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/help" element={<Help />} />
-                <Route path="/terms" element={<Terms />} />
-                <Route path="/privacy" element={<Privacy />} />
-              </Route>
-              {/* Protected routes with navigation */}
-            <Route
-              element={
-                <ProtectedRoute>
-                  <Layout />
-                </ProtectedRoute>
-              }
-            >
-              <Route path="/home" element={<Navigate to="/about" replace />} />
-              <Route path="/account" element={<AccountSetup />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/billing" element={<Billing />} />
-              <Route path="/billing/success" element={<BillingSuccess />} />
-              <Route path="/billing/cancel" element={<BillingCancel />} />
-              <Route path="/customers/add" element={<AddCustomer />} />
-              <Route path="/customers" element={<CustomerList />} />
-            </Route>
-            </Routes>
-          </PaymentProvider>
+          <SetupProvider>
+            <PaymentProvider>
+              <Routes>
+                <Route element={<Layout />}>
+                  {/* Public pages with navigation */}
+                  <Route path="/" element={<Home />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/help" element={<Help />} />
+                  <Route path="/terms" element={<Terms />} />
+                  <Route path="/privacy" element={<Privacy />} />
+                </Route>
+                {/* Protected routes with navigation */}
+                <Route
+                  element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route path="/home" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/setup" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/account" element={<AccountSetup />} />
+                  <Route path="/analytics" element={<Analytics />} />
+                  <Route path="/billing" element={<Billing />} />
+                  <Route path="/billing/success" element={<BillingSuccess />} />
+                  <Route path="/billing/cancel" element={<BillingCancel />} />
+                  <Route path="/customers/add" element={<AddCustomer />} />
+                  <Route path="/customers" element={<CustomerList />} />
+                </Route>
+              </Routes>
+            </PaymentProvider>
+          </SetupProvider>
         </AccountProvider>
       </BrowserRouter>
     </ErrorBoundary>

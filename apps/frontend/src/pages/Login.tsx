@@ -45,6 +45,7 @@ export const Login = () => {
   const [pendingAction, setPendingAction] = useState<'signup' | 'oauth' | 'magic-link' | null>(
     null
   );
+  const [emailSentModalOpen, setEmailSentModalOpen] = useState(false);
   const { signInWithEmail, signInWithPassword, signUp } = useAuth();
   const navigate = useNavigate();
 
@@ -160,7 +161,7 @@ export const Login = () => {
       const session = await signInWithPassword(email, password);
       if (session) {
         // Success - navigate immediately
-        navigate('/customers');
+        navigate('/dashboard');
       } else {
         // No session returned - this shouldn't happen, but handle it
         notifications.show({
@@ -269,13 +270,10 @@ export const Login = () => {
       // Proceed with signup
       await signUp(email, password);
 
-      notifications.show({
-        title: 'Success',
-        message: 'Account created! Please check your email to verify your account.',
-        color: 'green',
-      });
-      // Switch to password login after signup
-      setMode('password');
+      // Show email sent modal
+      setEmailSentModalOpen(true);
+
+      // Reset form
       setTermsAgreed(false);
       setPendingAction(null);
       setPassword('');
@@ -439,7 +437,6 @@ export const Login = () => {
     }
   };
 
-
   return (
     <Container size="md" py="md" px="xs">
       <Paper shadow="xl" p="md" className="w-full max-w-md mx-auto">
@@ -478,49 +475,51 @@ export const Login = () => {
           {/* OAuth and Magic Link - Both work for sign up and sign in */}
           {mode !== 'magic-link' && (
             <>
-          <Button
-            type="button"
-            leftSection={
-              <img
-                src="/assets/logos/googlelogo.png"
-                alt="Google"
-                className="h-5 w-5 object-contain"
-              />
-            }
-            variant="default"
-            fullWidth
-            onClick={handleGoogleOAuth}
-            loading={oauthLoading}
-            disabled={loading}
-            color="teal"
-            className="!font-medium !h-11"
-          >
-            {mode === 'signup' ? 'Create account with Google' : 'Sign in with Google'}
-          </Button>
+              <Button
+                type="button"
+                leftSection={
+                  <img
+                    src="/assets/logos/googlelogo.png"
+                    alt="Google"
+                    className="h-5 w-5 object-contain"
+                  />
+                }
+                variant="default"
+                fullWidth
+                onClick={handleGoogleOAuth}
+                loading={oauthLoading}
+                disabled={loading}
+                color="teal"
+                className="!font-medium !h-11"
+              >
+                {mode === 'signup' ? 'Create account with Google' : 'Sign in with Google'}
+              </Button>
 
-          <Button
-            type="button"
-            variant="light"
-            fullWidth
-            onClick={(e) => {
-              e.preventDefault();
-              setMode('magic-link');
-            }}
-            leftSection={<IconMail size={18} />}
+              <Button
+                type="button"
+                variant="light"
+                fullWidth
+                onClick={(e) => {
+                  e.preventDefault();
+                  setMode('magic-link');
+                }}
+                leftSection={<IconMail size={18} />}
                 className="border border-teal-600/30 hover:bg-teal-600/10 !h-11 transition-all"
-          >
-            {mode === 'signup' ? 'Create account with Magic Link' : 'Sign in with Magic Link'}
-          </Button>
+              >
+                {mode === 'signup' ? 'Create account with Magic Link' : 'Sign in with Magic Link'}
+              </Button>
 
-          <Alert color="blue" className="bg-blue-900/20 border-blue-700/30">
-            <Text size="xs" className="text-gray-300">
-                    <strong>What's a magic link?</strong> We'll send you an email with a special
-                    link. Click it to {mode === 'signup' ? 'create your account' : 'sign in'} instantly—no password needed!
-                    {mode === 'signup' && ' Once you create your account with a magic link, you can sign in with a magic link every time.'}
-            </Text>
-          </Alert>
+              <Alert color="blue" className="bg-blue-900/20 border-blue-700/30">
+                <Text size="xs" className="text-gray-300">
+                  <strong>What's a magic link?</strong> We'll send you an email with a special link.
+                  Click it to {mode === 'signup' ? 'create your account' : 'sign in'} instantly—no
+                  password needed!
+                  {mode === 'signup' &&
+                    ' Once you create your account with a magic link, you can sign in with a magic link every time.'}
+                </Text>
+              </Alert>
 
-          <Divider label="OR" labelPosition="center" className="my-2" />
+              <Divider label="OR" labelPosition="center" className="my-2" />
             </>
           )}
 
@@ -781,7 +780,7 @@ export const Login = () => {
                   Privacy Policy
                 </a>
                 .
-            </Text>
+              </Text>
             </div>
           </Stack>
           <div className="flex-shrink-0 pt-4 border-t border-[#2a2a2a]">
@@ -901,6 +900,75 @@ export const Login = () => {
               </Button>
             </>
           )}
+        </Stack>
+      </Modal>
+
+      {/* Email Sent Modal */}
+      <Modal
+        opened={emailSentModalOpen}
+        onClose={() => {
+          setEmailSentModalOpen(false);
+          setMode('password'); // Switch to sign in mode after closing
+        }}
+        title={<Text className="text-white font-semibold text-lg">Check Your Email! 📧</Text>}
+        centered
+        styles={{
+          content: {
+            backgroundColor: '#1a1a1a',
+            border: '1px solid #2a2a2a',
+          },
+          header: {
+            backgroundColor: '#1a1a1a',
+            borderBottom: '1px solid #2a2a2a',
+          },
+          body: {
+            backgroundColor: '#1a1a1a',
+          },
+        }}
+      >
+        <Stack gap="lg">
+          <Alert color="teal" icon={<IconMail size={16} />}>
+            <Stack gap="xs">
+              <Text size="sm" className="text-gray-300">
+                We've sent a verification email to <strong>{email}</strong>
+              </Text>
+              <Text size="sm" className="text-gray-300">
+                Click the link in the email to verify your account and get started!
+              </Text>
+            </Stack>
+          </Alert>
+
+          <div className="text-center">
+            <Text size="xs" className="text-gray-500 mb-3">
+              Didn't receive the email? Check your spam folder or try signing up again.
+            </Text>
+            {getEmailProviderUrl(email) && (
+              <a
+                href={getEmailProviderUrl(email)!}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: '#14b8a6',
+                  textDecoration: 'underline',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                }}
+              >
+                Open your email
+              </a>
+            )}
+          </div>
+
+          <Button
+            onClick={() => {
+              setEmailSentModalOpen(false);
+              setMode('password');
+            }}
+            fullWidth
+            color="teal"
+          >
+            Got it!
+          </Button>
         </Stack>
       </Modal>
     </Container>
