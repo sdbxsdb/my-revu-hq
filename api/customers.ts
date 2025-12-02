@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { supabase } from './_utils/supabase';
 import { authenticate } from './_utils/auth';
 import { setCorsHeaders } from './_utils/response';
+import { normalizeToE164 } from './_utils/phone';
 
 const customerSchema = z.object({
   name: z.string().min(2),
@@ -83,6 +84,46 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (req.method === 'POST') {
       const validated = customerSchema.parse(req.body);
+
+      // Check for duplicate phone number (only in production)
+      const isProduction =
+        process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production';
+
+      if (isProduction) {
+        // Normalize the incoming phone number to E.164 for comparison
+        const incomingE164 = normalizeToE164(validated.phone.number, validated.phone.countryCode);
+
+        if (!incomingE164) {
+          return res.status(400).json({
+            error: 'Invalid phone number format',
+          });
+        }
+
+        // Get all existing customers for this user
+        const { data: existingCustomers, error: fetchError } = await supabase
+          .from('customers')
+          .select('id, phone')
+          .eq('user_id', auth.userId);
+
+        if (fetchError) throw fetchError;
+
+        // Check if any existing customer has the same phone number (normalized to E.164)
+        if (existingCustomers) {
+          for (const existing of existingCustomers) {
+            if (existing.phone && typeof existing.phone === 'object') {
+              const existingPhone = existing.phone as { countryCode: string; number: string };
+              const existingE164 = normalizeToE164(existingPhone.number, existingPhone.countryCode);
+
+              if (existingE164 && existingE164 === incomingE164) {
+                return res.status(409).json({
+                  error:
+                    'A customer with this phone number already exists. Please use the existing customer record or edit it instead.',
+                });
+              }
+            }
+          }
+        }
+      }
 
       const { data, error } = await supabase
         .from('customers')

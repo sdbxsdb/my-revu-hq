@@ -426,11 +426,21 @@ export const CustomerList = () => {
       setEditingCustomer(null);
       loadCustomers();
     } catch (error: any) {
-      notifications.show({
-        title: 'Error',
-        message: error.message || 'Failed to update customer',
-        color: 'red',
-      });
+      // Handle duplicate phone number error
+      if (error.response?.status === 409) {
+        notifications.show({
+          title: 'Duplicate Phone Number',
+          message: error.response?.data?.error || 'A customer with this phone number already exists. Please use the existing customer record instead.',
+          color: 'yellow',
+          autoClose: 8000,
+        });
+      } else {
+        notifications.show({
+          title: 'Error',
+          message: error.message || 'Failed to update customer',
+          color: 'red',
+        });
+      }
     } finally {
       setSaving(false);
     }
