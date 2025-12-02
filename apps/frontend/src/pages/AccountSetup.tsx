@@ -686,7 +686,11 @@ export const AccountSetup = () => {
                         let message = form.values.smsTemplate || '';
 
                         // Split message into parts for rendering
-                        const parts: (string | { type: 'link'; label: string; url: string })[] = [];
+                        const parts: (
+                          | string
+                          | { type: 'link'; label: string; url: string }
+                          | { type: 'regulatory'; text: string }
+                        )[] = [];
 
                         // Add customer name if enabled
                         if (form.values.includeNameInSms) {
@@ -744,12 +748,13 @@ export const AccountSetup = () => {
                           parts.push(`- ${form.values.businessName.trim()}`);
                         }
 
-                        // Add regulatory compliance text for US/CA (same as in api/send-sms.ts)
+                        // Add regulatory compliance text for US/CA only (required by Twilio A2P 10DLC)
                         if (userCountry === 'US' || userCountry === 'CA') {
                           parts.push('\n\n');
-                          parts.push(
-                            'Msg&data rates may apply. Reply STOP to opt out, HELP for help.'
-                          );
+                          parts.push({
+                            type: 'regulatory',
+                            text: 'Msg&data rates may apply. Reply STOP to opt out, HELP for help.',
+                          });
                         }
 
                         if (parts.length === 0) {
@@ -761,7 +766,7 @@ export const AccountSetup = () => {
                         }
 
                         return (
-                          <div className="whitespace-pre-wrap break-words">
+                          <div className="whitespace-pre-wrap break-words leading-tight">
                             {parts.map((part, index) => {
                               if (typeof part === 'string') {
                                 return (
@@ -769,7 +774,7 @@ export const AccountSetup = () => {
                                     {part}
                                   </span>
                                 );
-                              } else {
+                              } else if (part.type === 'link') {
                                 return (
                                   <span key={index} className="break-words">
                                     <a
@@ -782,7 +787,15 @@ export const AccountSetup = () => {
                                     </a>
                                   </span>
                                 );
+                              } else if (part.type === 'regulatory') {
+                                // Regulatory text - same size and color as regular message
+                                return (
+                                  <span key={index} className="break-words">
+                                    {part.text}
+                                  </span>
+                                );
                               }
+                              return null;
                             })}
                           </div>
                         );

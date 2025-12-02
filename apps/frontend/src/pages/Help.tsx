@@ -209,6 +209,27 @@ export const Help = () => {
         </>
       ),
     },
+    {
+      question: 'Can I remove the regulatory text from my SMS messages?',
+      answer: (
+        <>
+          <p>
+            The regulatory text "Msg&data rates may apply. Reply STOP to opt out, HELP for help." is
+            automatically added to SMS messages sent to customers in the United States and Canada
+            only.
+          </p>
+          <p className="mt-2">
+            This text cannot be removed as it is required by law (A2P 10DLC regulations) for all SMS
+            messages sent to US and Canadian phone numbers. It ensures compliance with carrier
+            requirements and telecommunications regulations.
+          </p>
+          <p className="mt-2">
+            Messages sent to customers in other countries (UK, Ireland, etc.) do not include this
+            regulatory text.
+          </p>
+        </>
+      ),
+    },
   ];
 
   return (
