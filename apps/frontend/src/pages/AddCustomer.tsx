@@ -13,7 +13,6 @@ import {
   Tooltip,
   Container,
   Modal,
-  Checkbox,
 } from '@mantine/core';
 import { DateTimePicker } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
