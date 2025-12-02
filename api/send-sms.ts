@@ -205,6 +205,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const parsed = parsePhoneNumberFromString(phoneNumber);
     const isoCountryCode = parsed?.country || countryCode;
 
+    // Add regulatory compliance text for US/CA messages (required by Twilio A2P 10DLC)
+    if (isoCountryCode === 'US' || isoCountryCode === 'CA') {
+      messageBody += '\n\nMsg&data rates may apply. Reply STOP to opt out, HELP for help.';
+    }
+
     // Pass ISO country code to determine appropriate sender ID
     const result = await sendSMS(phoneNumber, messageBody, isoCountryCode);
 

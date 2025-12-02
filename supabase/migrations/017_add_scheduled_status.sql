@@ -9,3 +9,4 @@ CHECK (sms_status IN ('sent', 'pending', 'scheduled'));
 -- Add comment for documentation
 COMMENT ON COLUMN customers.sms_status IS 'Status of SMS: pending (not yet sent), scheduled (waiting for scheduled_send_at time), sent (successfully sent)';
 
+

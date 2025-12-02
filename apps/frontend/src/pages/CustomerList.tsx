@@ -1185,8 +1185,9 @@ export const CustomerList = () => {
                               );
                             }
 
+                            // Only show warning if no request has been sent AND it's been 5+ days
                             const showContactWarning =
-                              daysSinceContact !== null && daysSinceContact >= 5;
+                              !customer.sent_at && daysSinceContact !== null && daysSinceContact >= 5;
 
                           if (isOptedOut) {
                             return (
@@ -1469,8 +1470,9 @@ export const CustomerList = () => {
                           );
                         }
 
+                        // Only show warning if no request has been sent AND it's been 5+ days
                         const showContactWarning =
-                          daysSinceContact !== null && daysSinceContact >= 5;
+                          !customer.sent_at && daysSinceContact !== null && daysSinceContact >= 5;
 
                         return showContactWarning ? (
                           <div
