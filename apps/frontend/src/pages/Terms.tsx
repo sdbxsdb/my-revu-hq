@@ -100,6 +100,7 @@ export const Terms = () => {
               sending SMS messages through our Service. This includes, but is not limited to:
             </Text>
             <ul className="list-disc list-inside text-gray-300 text-sm mb-4 space-y-2 ml-4">
+              <li>Obtaining explicit permission from customers to store their phone number and send them SMS messages</li>
               <li>Obtaining proper consent from recipients before sending SMS messages</li>
               <li>
                 Complying with the Telephone Consumer Protection Act (TCPA) in the United States
@@ -109,12 +110,19 @@ export const Terms = () => {
               <li>Complying with local SMS and telecommunications regulations</li>
             </ul>
             <Text size="sm" className="text-gray-300 mb-4">
-              <strong className="text-white">6.2 No Guarantee of Delivery:</strong> While we strive
+              <strong className="text-white">6.2 Customer Consent Requirement:</strong> Before adding
+              any customer to MyRevuHQ or sending SMS messages, you MUST obtain explicit permission
+              from the customer to store their phone number and send them SMS messages. You must inform
+              customers that you will store their phone number and may send them SMS review request
+              messages. Consent must be obtained either verbally or in writing at the time of service.
+            </Text>
+            <Text size="sm" className="text-gray-300 mb-4">
+              <strong className="text-white">6.3 No Guarantee of Delivery:</strong> While we strive
               to ensure reliable SMS delivery, we do not guarantee that messages will be delivered.
               SMS delivery is subject to carrier availability and network conditions.
             </Text>
             <Text size="sm" className="text-gray-300 mb-4">
-              <strong className="text-white">6.3 Prohibited Use:</strong> You agree not to use the
+              <strong className="text-white">6.4 Prohibited Use:</strong> You agree not to use the
               Service to send spam, unsolicited messages, or messages that violate any laws or
               regulations. We reserve the right to suspend or terminate accounts that violate this
               provision.

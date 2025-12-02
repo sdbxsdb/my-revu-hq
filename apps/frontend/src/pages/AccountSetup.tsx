@@ -744,6 +744,14 @@ export const AccountSetup = () => {
                           parts.push(`- ${form.values.businessName.trim()}`);
                         }
 
+                        // Add regulatory compliance text for US/CA (same as in api/send-sms.ts)
+                        if (userCountry === 'US' || userCountry === 'CA') {
+                          parts.push('\n\n');
+                          parts.push(
+                            'Msg&data rates may apply. Reply STOP to opt out, HELP for help.'
+                          );
+                        }
+
                         if (parts.length === 0) {
                           return (
                             <span className="opacity-70">
