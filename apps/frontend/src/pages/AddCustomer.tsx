@@ -13,6 +13,7 @@ import {
   Tooltip,
   Container,
   Modal,
+  Checkbox,
 } from '@mantine/core';
 import { DateTimePicker } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
@@ -47,6 +48,8 @@ export const AddCustomer = () => {
   const [scheduledDateTime, setScheduledDateTime] = useState<Date | null>(null);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [showProgressModal, setShowProgressModal] = useState(false);
+  const [consentModalOpen, setConsentModalOpen] = useState(false);
+  const [consentConfirmed, setConsentConfirmed] = useState(false);
   const navigate = useNavigate();
 
   // Check if user has Pro or Business tier (or free tier for dev testing)
@@ -145,7 +148,7 @@ export const AddCustomer = () => {
         jobDescription: values.jobDescription || undefined,
       });
 
-      await apiClient.sendSMS(customer.id);
+      await apiClient.sendSMS(customer.id, consentConfirmed);
       await refreshSetup();
 
       form.reset();
@@ -592,7 +595,15 @@ export const AddCustomer = () => {
                         type="button"
                         onClick={(e) => {
                           e.preventDefault();
-                          form.onSubmit(handleSendNow)();
+                          if (!hasPaid) {
+                            notifications.show({
+                              title: 'Payment Required',
+                              message: 'Please set up your payment method to send SMS messages.',
+                              color: 'yellow',
+                            });
+                            return;
+                          }
+                          setConsentModalOpen(true);
                         }}
                         loading={loadingSendNow}
                         variant="filled"
@@ -736,6 +747,83 @@ export const AddCustomer = () => {
           nextStepPath="/billing"
         />
       )}
+
+      {/* Consent Confirmation Modal */}
+      <Modal
+        opened={consentModalOpen}
+        onClose={() => {
+          if (!loadingSendNow) {
+            setConsentModalOpen(false);
+            setConsentConfirmed(false);
+          }
+        }}
+        title={<Text className="text-white font-semibold text-lg">Confirm Permission</Text>}
+        centered
+        styles={{
+          content: {
+            backgroundColor: '#1a1a1a',
+            border: '1px solid #2a2a2a',
+          },
+          header: {
+            backgroundColor: '#1a1a1a',
+            borderBottom: '1px solid #2a2a2a',
+          },
+          close: {
+            color: '#fff',
+            '&:hover': {
+              backgroundColor: '#2a2a2a',
+            },
+          },
+        }}
+      >
+        <Stack gap="md">
+          <Text size="sm" className="text-gray-300">
+            Before sending an SMS review request, please confirm you have obtained permission from
+            the customer to send them SMS messages, as required by the Terms and Conditions.
+          </Text>
+          <Checkbox
+            label={
+              <Text size="sm" className="text-gray-300">
+                I confirm I have permission to send SMS to this person as stated in the Terms and
+                Conditions
+              </Text>
+            }
+            checked={consentConfirmed}
+            onChange={(e) => setConsentConfirmed(e.currentTarget.checked)}
+            styles={{
+              label: {
+                cursor: 'pointer',
+              },
+            }}
+          />
+          <div className="flex gap-3 mt-4">
+            <Button
+              variant="light"
+              color="gray"
+              onClick={() => {
+                setConsentModalOpen(false);
+                setConsentConfirmed(false);
+              }}
+              disabled={loadingSendNow}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="filled"
+              color="teal"
+              onClick={() => {
+                form.onSubmit(handleSendNow)();
+              }}
+              disabled={!consentConfirmed || loadingSendNow}
+              loading={loadingSendNow}
+              className="flex-1"
+            >
+              Confirm & Send
+            </Button>
+          </div>
+        </Stack>
+      </Modal>
     </Container>
   );
 };

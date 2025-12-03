@@ -127,7 +127,8 @@ export const apiClient = {
 
   // SMS
   sendSMS: async (
-    customerId: string
+    customerId: string,
+    userConfirmedCustomerConsent: boolean
   ): Promise<{
     success: boolean;
     messageSid: string;
@@ -142,7 +143,10 @@ export const apiClient = {
       sms_limit: number;
     };
   }> => {
-    const response = await api.post('/api/send-sms', { customerId });
+    const response = await api.post('/api/send-sms', {
+      customerId,
+      user_confirmed_customer_consent: userConfirmedCustomerConsent,
+    });
     return response.data;
   },
 

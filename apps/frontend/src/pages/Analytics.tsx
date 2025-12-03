@@ -12,6 +12,8 @@ import {
   Button,
   Accordion,
   Tooltip as MantineTooltip,
+  Checkbox,
+  Modal,
 } from '@mantine/core';
 import {
   IconChartBar,
@@ -112,6 +114,9 @@ export const Analytics = () => {
   const [expandedItems, setExpandedItems] = useState<Record<string, string[]>>({});
   const [expandedMonths, setExpandedMonths] = useState<string[]>([]);
   const [sendingCustomerId, setSendingCustomerId] = useState<string | null>(null);
+  const [consentModalOpen, setConsentModalOpen] = useState(false);
+  const [pendingCustomerId, setPendingCustomerId] = useState<string | null>(null);
+  const [consentConfirmed, setConsentConfirmed] = useState(false);
 
   useEffect(() => {
     loadAnalytics();
@@ -255,10 +260,25 @@ export const Analytics = () => {
     return { flag, number: displayNumber };
   };
 
+  const handleRequestReview = (customerId: string) => {
+    setPendingCustomerId(customerId);
+    setConsentConfirmed(false);
+    setConsentModalOpen(true);
+  };
+
   const handleSendSMS = async (customerId: string) => {
+    if (!consentConfirmed) {
+      notifications.show({
+        title: 'Consent Required',
+        message: 'Please confirm you have permission to send SMS to this customer',
+        color: 'yellow',
+      });
+      return;
+    }
+
     setSendingCustomerId(customerId);
     try {
-      const result = await apiClient.sendSMS(customerId);
+      const result = await apiClient.sendSMS(customerId, consentConfirmed);
 
       // Update SMS usage in state
       setSmsSent(result.usage.sms_sent_this_month);
@@ -268,6 +288,11 @@ export const Analytics = () => {
         message: 'SMS sent successfully',
         color: 'green',
       });
+
+      // Close modal and reset state
+      setConsentModalOpen(false);
+      setConsentConfirmed(false);
+      setPendingCustomerId(null);
 
       // Reload analytics to update the insights lists (customer moved from not contacted to contacted)
       await loadAnalytics();
@@ -807,7 +832,7 @@ export const Analytics = () => {
                                   size="xs"
                                   variant="filled"
                                   color="teal"
-                                  onClick={() => handleSendSMS(customer.id)}
+                                  onClick={() => handleRequestReview(customer.id)}
                                   loading={isSending}
                                   disabled={isSending}
                                   radius="md"
@@ -922,7 +947,7 @@ export const Analytics = () => {
                                   size="xs"
                                   variant="filled"
                                   color="teal"
-                                  onClick={() => handleSendSMS(customer.id)}
+                                  onClick={() => handleRequestReview(customer.id)}
                                   loading={isSending}
                                   disabled={isSending}
                                   radius="md"
@@ -1037,7 +1062,7 @@ export const Analytics = () => {
                                   size="xs"
                                   variant="filled"
                                   color="teal"
-                                  onClick={() => handleSendSMS(customer.id)}
+                                  onClick={() => handleRequestReview(customer.id)}
                                   loading={isSending}
                                   disabled={isSending}
                                   radius="md"
@@ -1498,6 +1523,87 @@ export const Analytics = () => {
           </div>
         </Stack>
       </Paper>
+
+      {/* Consent Confirmation Modal */}
+      <Modal
+        opened={consentModalOpen}
+        onClose={() => {
+          if (!sendingCustomerId) {
+            setConsentModalOpen(false);
+            setConsentConfirmed(false);
+            setPendingCustomerId(null);
+          }
+        }}
+        title={<Text className="text-white font-semibold text-lg">Confirm Permission</Text>}
+        centered
+        styles={{
+          content: {
+            backgroundColor: '#1a1a1a',
+            border: '1px solid #2a2a2a',
+          },
+          header: {
+            backgroundColor: '#1a1a1a',
+            borderBottom: '1px solid #2a2a2a',
+          },
+          close: {
+            color: '#fff',
+            '&:hover': {
+              backgroundColor: '#2a2a2a',
+            },
+          },
+        }}
+      >
+        <Stack gap="md">
+          <Text size="sm" className="text-gray-300">
+            Before sending an SMS review request, please confirm you have obtained permission from
+            the customer to send them SMS messages, as required by the Terms and Conditions.
+          </Text>
+          <Checkbox
+            label={
+              <Text size="sm" className="text-gray-300">
+                I confirm I have permission to send SMS to this person as stated in the Terms and
+                Conditions
+              </Text>
+            }
+            checked={consentConfirmed}
+            onChange={(e) => setConsentConfirmed(e.currentTarget.checked)}
+            styles={{
+              label: {
+                cursor: 'pointer',
+              },
+            }}
+          />
+          <div className="flex gap-3 mt-4">
+            <Button
+              variant="light"
+              color="gray"
+              onClick={() => {
+                setConsentModalOpen(false);
+                setConsentConfirmed(false);
+                setPendingCustomerId(null);
+              }}
+              disabled={!!sendingCustomerId}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="filled"
+              color="teal"
+              onClick={() => {
+                if (pendingCustomerId) {
+                  handleSendSMS(pendingCustomerId);
+                }
+              }}
+              disabled={!consentConfirmed || !!sendingCustomerId}
+              loading={!!sendingCustomerId}
+              className="flex-1"
+            >
+              Send SMS
+            </Button>
+          </div>
+        </Stack>
+      </Modal>
     </Container>
   );
 };

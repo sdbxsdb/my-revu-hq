@@ -9,6 +9,9 @@ import { normalizeToE164 } from './_utils/phone';
 
 const sendSMSSchema = z.object({
   customerId: z.string().uuid(),
+  user_confirmed_customer_consent: z.boolean().refine((val) => val === true, {
+    message: 'You must confirm you have permission to send SMS to this customer',
+  }),
 });
 
 /**
@@ -58,7 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       userId = auth.userId;
     }
 
-    const { customerId } = sendSMSSchema.parse(req.body);
+    const { customerId, user_confirmed_customer_consent } = sendSMSSchema.parse(req.body);
 
     // Get user to check limit and account status
     const { data, error: userError } = await supabase
@@ -268,6 +271,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         was_scheduled: wasScheduled, // Track if this message was scheduled
         twilio_message_sid: result.sid, // Store Twilio SID for status callbacks
         delivery_status: 'queued', // Initial status
+        user_confirmed_customer_consent_at: new Date().toISOString(), // Store consent confirmation timestamp
       });
 
     // Update user's monthly count and total count
