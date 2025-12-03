@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useForm } from '@mantine/form';
 import { useNavigate, Link } from 'react-router-dom';
 import {
@@ -18,7 +18,7 @@ import { DateTimePicker } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { CountryCode } from 'libphonenumber-js';
 import { apiClient } from '@/lib/api';
-import { PhoneNumber } from '@/components/PhoneNumber';
+import { PhoneNumber, SUPPORTED_COUNTRY_CODES } from '@/components/PhoneNumber';
 import { validatePhoneNumber, formatPhoneNumberForApi } from '@/lib/phone-validation';
 import { usePayment } from '@/contexts/PaymentContext';
 import { useAccount } from '@/contexts/AccountContext';
@@ -53,8 +53,27 @@ export const AddCustomer = () => {
   const canSchedule =
     subscriptionTier === 'free' || subscriptionTier === 'pro' || subscriptionTier === 'business';
 
-  // TODO: When account has a region/country field, use it here
-  // For now, default to GB (no need to fetch account just for this)
+  // Detect user's country to preselect phone number country code
+  useEffect(() => {
+    const detectCountry = async () => {
+      try {
+        const response = await apiClient.detectCountry();
+        const detectedCountry = response.country.toUpperCase() as CountryCode;
+
+        // Only update if it's a valid country code that we support in PhoneNumber component
+        if (SUPPORTED_COUNTRY_CODES.includes(detectedCountry)) {
+          setSelectedCountry(detectedCountry);
+          countryRef.current = detectedCountry;
+        }
+        // If country not supported, keep default GB
+      } catch (error) {
+        // If detection fails, keep default GB
+        console.error('Failed to detect country:', error);
+      }
+    };
+
+    detectCountry();
+  }, []);
 
   const form = useForm({
     initialValues: {
@@ -147,7 +166,9 @@ export const AddCustomer = () => {
       if (error.response?.status === 409) {
         notifications.show({
           title: 'Duplicate Phone Number',
-          message: error.response?.data?.error || 'A customer with this phone number already exists. Please use the existing customer record instead.',
+          message:
+            error.response?.data?.error ||
+            'A customer with this phone number already exists. Please use the existing customer record instead.',
           color: 'yellow',
           autoClose: 8000,
         });
@@ -222,7 +243,9 @@ export const AddCustomer = () => {
       if (error.response?.status === 409) {
         notifications.show({
           title: 'Duplicate Phone Number',
-          message: error.response?.data?.error || 'A customer with this phone number already exists. Please use the existing customer record instead.',
+          message:
+            error.response?.data?.error ||
+            'A customer with this phone number already exists. Please use the existing customer record instead.',
           color: 'yellow',
           autoClose: 8000,
         });
@@ -334,7 +357,9 @@ export const AddCustomer = () => {
       if (error.response?.status === 409) {
         notifications.show({
           title: 'Duplicate Phone Number',
-          message: error.response?.data?.error || 'A customer with this phone number already exists. Please use the existing customer record instead.',
+          message:
+            error.response?.data?.error ||
+            'A customer with this phone number already exists. Please use the existing customer record instead.',
           color: 'yellow',
           autoClose: 8000,
         });

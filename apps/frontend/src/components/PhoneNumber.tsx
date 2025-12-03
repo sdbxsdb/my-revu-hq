@@ -4,7 +4,8 @@ import { CountryCode, getCountryCallingCode } from 'libphonenumber-js';
 import { validatePhoneNumber } from '@/lib/phone-validation';
 
 // Country list with flags and names
-const COUNTRIES: Array<{ value: CountryCode; label: string; flag: string }> = [
+// Exported so it can be reused elsewhere (e.g., for country detection validation)
+export const COUNTRIES: Array<{ value: CountryCode; label: string; flag: string }> = [
   { value: 'GB', label: 'United Kingdom', flag: '🇬🇧' },
   { value: 'IE', label: 'Ireland', flag: '🇮🇪' },
   { value: 'US', label: 'United States', flag: '🇺🇸' },
@@ -26,6 +27,9 @@ const COUNTRIES: Array<{ value: CountryCode; label: string; flag: string }> = [
   { value: 'PL', label: 'Poland', flag: '🇵🇱' },
   { value: 'PT', label: 'Portugal', flag: '🇵🇹' },
 ];
+
+// Helper to get array of supported country codes
+export const SUPPORTED_COUNTRY_CODES: CountryCode[] = COUNTRIES.map((c) => c.value);
 
 interface PhoneNumberProps extends Omit<TextInputProps, 'onChange' | 'value'> {
   value?: string;
