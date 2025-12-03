@@ -29,8 +29,6 @@ export const EmbeddedCheckoutModal = ({
   clientSecret,
   onSuccess,
 }: EmbeddedCheckoutModalProps) => {
-  const [error, setError] = useState<string | null>(null);
-
   if (!stripePromise || !publishableKey) {
     return (
       <Modal
@@ -98,17 +96,7 @@ export const EmbeddedCheckoutModal = ({
       }}
     >
       <div className="w-full" style={{ height: '100%', minHeight: '500px' }}>
-        <EmbeddedCheckoutProvider
-          stripe={stripePromise}
-          options={{ clientSecret }}
-          onComplete={() => {
-            // Payment completed
-            if (onSuccess) {
-              onSuccess();
-            }
-            onClose();
-          }}
-        >
+        <EmbeddedCheckoutProvider stripe={stripePromise} options={{ clientSecret }}>
           <EmbeddedCheckout />
         </EmbeddedCheckoutProvider>
       </div>

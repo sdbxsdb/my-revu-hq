@@ -51,19 +51,14 @@ export const Checkout = () => {
     createCheckoutSession();
   }, [currency, tier]);
 
-  const handleComplete = () => {
-    // Redirect to success page
-    navigate('/billing/success');
-  };
-
   // Check if we're returning from Stripe with a session_id
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
-    if (sessionId && clientSecret) {
+    if (sessionId) {
       // Payment completed - redirect to success
       navigate('/billing/success');
     }
-  }, [searchParams, clientSecret, navigate]);
+  }, [searchParams, navigate]);
 
   if (!stripePromise || !publishableKey) {
     return (
@@ -122,11 +117,7 @@ export const Checkout = () => {
           </Button>
         </Group>
         <div className="min-h-[600px] w-full">
-          <EmbeddedCheckoutProvider
-            stripe={stripePromise}
-            options={{ clientSecret }}
-            onComplete={handleComplete}
-          >
+          <EmbeddedCheckoutProvider stripe={stripePromise} options={{ clientSecret }}>
             <EmbeddedCheckout />
           </EmbeddedCheckoutProvider>
         </div>
