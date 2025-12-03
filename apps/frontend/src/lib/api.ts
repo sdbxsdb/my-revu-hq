@@ -92,6 +92,7 @@ export const apiClient = {
     limit?: number;
     status?: 'sent' | 'pending';
     firstLetter?: string;
+    search?: string;
   }): Promise<{ customers: Customer[]; total: number; totalCount?: number }> => {
     const { data } = await api.get('/api/customers', { params });
     return data;

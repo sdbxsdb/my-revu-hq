@@ -30,6 +30,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const limit = parseInt((req.query.limit as string) || '10');
       const status = req.query.status as string | undefined;
       const firstLetter = req.query.firstLetter as string | undefined;
+      const search = req.query.search as string | undefined;
       const offset = (page - 1) * limit;
 
       let query = supabase
@@ -43,8 +44,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         query = query.eq('sms_status', status);
       }
 
-      if (firstLetter && firstLetter.length === 1) {
-        // Filter by first letter of name (case-insensitive)
+      // Search takes priority over letter filter
+      if (search && search.trim()) {
+        const searchTerm = search.trim();
+        // Search in name and job_description (case-insensitive)
+        query = query.or(`name.ilike.%${searchTerm}%,job_description.ilike.%${searchTerm}%`);
+      } else if (firstLetter && firstLetter.length === 1) {
+        // Filter by first letter of name (case-insensitive) - only if not searching
         const letter = firstLetter.toUpperCase();
         query = query.ilike('name', `${letter}%`);
       }

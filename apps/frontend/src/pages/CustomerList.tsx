@@ -45,7 +45,8 @@ export const CustomerList = () => {
   const [loadingUsage, setLoadingUsage] = useState(true);
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchInput, setSearchInput] = useState<string>(''); // Immediate input value
+  const [searchQuery, setSearchQuery] = useState<string>(''); // Debounced value that triggers API
   const [selectedLetter, setSelectedLetter] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [totalCount, setTotalCount] = useState<number | null>(null);
@@ -91,6 +92,19 @@ export const CustomerList = () => {
     },
   });
 
+  // Debounce search input (500ms delay)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setSearchQuery(searchInput);
+      setPage(1); // Reset to page 1 when search changes
+    }, 500);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [searchInput]);
+
+  // Load customers when filters change (with abort on cleanup)
   useEffect(() => {
     const abortController = new AbortController();
     loadCustomers(abortController.signal);
@@ -264,6 +278,7 @@ export const CustomerList = () => {
         page,
         limit,
         status: statusFilter as 'sent' | 'pending' | undefined,
+        search: searchQuery.trim() || undefined,
         firstLetter: selectedLetter && !searchQuery.trim() ? selectedLetter : undefined,
       });
 
@@ -272,23 +287,8 @@ export const CustomerList = () => {
         return;
       }
 
-      // Apply search filter on client side (only if not using firstLetter filter)
-      let filtered = data.customers;
-      if (searchQuery.trim()) {
-        const query = searchQuery.trim().toLowerCase();
-        filtered = data.customers.filter((c) => {
-          const nameMatch = c.name.toLowerCase().includes(query);
-          const jobMatch = c.job_description && c.job_description.toLowerCase().includes(query);
-          // Search in phone number (handle both local format and E.164 format)
-          const phoneNumber = c.phone?.number || '';
-          const phoneMatch =
-            phoneNumber.toLowerCase().includes(query) ||
-            phoneNumber.replace(/\s+/g, '').includes(query.replace(/\s+/g, ''));
-          return nameMatch || jobMatch || phoneMatch;
-        });
-      }
-
-      setCustomers(filtered);
+      // No client-side filtering needed - API handles search now
+      setCustomers(data.customers);
       setTotal(data.total);
       setTotalCount(data.totalCount ?? null);
     } catch (error: any) {
@@ -899,11 +899,10 @@ export const CustomerList = () => {
             </Text>
         <TextInput
               placeholder="Name, phone number, or job description"
-          value={searchQuery}
+          value={searchInput}
           onChange={(e) => {
-            setSearchQuery(e.target.value);
+            setSearchInput(e.target.value);
                 setSelectedLetter(null); // Clear letter filter when searching
-            setPage(1);
           }}
           className="w-full sm:w-96"
           size="md"
@@ -964,7 +963,8 @@ export const CustomerList = () => {
                   variant={selectedLetter === letter ? 'filled' : 'outline'}
                   onClick={() => {
                     setSelectedLetter(selectedLetter === letter ? null : letter);
-                    setSearchQuery(''); // Clear search when selecting letter
+                    setSearchInput(''); // Clear search input when selecting letter
+                    setSearchQuery(''); // Clear search query when selecting letter
                     setPage(1);
                   }}
                   className={`min-w-[2rem] flex-shrink-0 sm:flex-shrink ${
