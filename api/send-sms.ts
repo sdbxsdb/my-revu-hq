@@ -81,18 +81,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       include_job_in_sms: boolean | null;
     } | null;
 
-    const user = data as {
-      sms_sent_this_month: number | null;
-      business_name: string | null;
-      review_links: any;
-      sms_template: string | null;
-      account_lifecycle_status: string | null;
-      payment_status: string | null;
-      subscription_tier: string | null;
-      include_name_in_sms: boolean | null;
-      include_job_in_sms: boolean | null;
-    } | null;
-
     if (userError) throw userError;
     if (!user) throw new Error('User not found');
 
