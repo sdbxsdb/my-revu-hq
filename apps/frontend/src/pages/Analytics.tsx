@@ -1174,15 +1174,21 @@ export const Analytics = () => {
                   return (
                     <Accordion.Item key={index} value={`month-${stat.month}-${stat.year}`}>
                       <Accordion.Control>
-                        <div className="flex items-center justify-between w-full pr-4">
-                          <div>
-                            <Text className="font-semibold text-white">{stat.month}</Text>
+                        <div className="flex flex-row items-center justify-between max-[400px]:flex-col max-[400px]:items-start max-[400px]:gap-2 gap-0 w-full pr-4">
+                          <div className="min-w-0 flex-1">
+                            <Text className="font-semibold text-white break-words">
+                              {stat.month}
+                            </Text>
                             <Text size="sm" className="text-gray-400">
                               {stat.count} {stat.count === 1 ? 'message' : 'messages'} sent
                             </Text>
                           </div>
                           {isCurrentMonth && (
-                            <Badge color="teal" leftSection={<IconTrendingUp size={14} />}>
+                            <Badge
+                              color="teal"
+                              leftSection={<IconTrendingUp size={14} />}
+                              className="flex-shrink-0"
+                            >
                               Current
                             </Badge>
                           )}
