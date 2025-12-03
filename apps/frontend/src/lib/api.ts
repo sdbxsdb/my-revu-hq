@@ -186,7 +186,10 @@ export const apiClient = {
     await api.post('/api/billing/delete-account');
   },
 
-  createCheckoutSession: async (currency?: string, tier?: string): Promise<{ url: string }> => {
+  createCheckoutSession: async (
+    currency?: string,
+    tier?: string
+  ): Promise<{ clientSecret: string; sessionId: string }> => {
     const { data } = await api.post('/api/billing/create-checkout-session', { currency, tier });
     return data;
   },

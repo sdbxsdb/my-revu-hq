@@ -116,10 +116,52 @@ export const Billing = () => {
     loadPrices();
   }, []);
 
-  // Handle success query parameter from Stripe redirect
+  // Handle success query parameter from Stripe redirect (legacy) or session_id (embedded)
   useEffect(() => {
     const success = searchParams.get('success');
+    const sessionId = searchParams.get('session_id');
 
+    // Handle embedded checkout return
+    if (sessionId) {
+      setProcessingPayment(true);
+
+      // Give session time to sync after checkout completion
+      const timer = setTimeout(async () => {
+        try {
+          // Sync subscription from Stripe
+          try {
+            console.log('🔄 Syncing subscription from Stripe...');
+            const syncResult = await apiClient.syncSubscription();
+            console.log('✅ Sync result:', syncResult);
+          } catch (syncError) {
+            console.error('❌ Sync subscription error (non-fatal):', syncError);
+            // Continue even if sync fails - the data might already be updated by webhook
+          }
+
+          // Refetch account data to get updated subscription status
+          await refetch();
+          // Small additional delay to ensure state updates
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          // Show success notification
+          notifications.show({
+            title: 'Payment Successful! 🎉',
+            message: 'Your subscription is now active',
+            color: 'green',
+            autoClose: 5000,
+          });
+          // Remove session_id from URL
+          navigate('/billing', { replace: true });
+        } catch (error) {
+          console.error('Error processing payment success:', error);
+        } finally {
+          setProcessingPayment(false);
+        }
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+
+    // Handle legacy redirect success (keep for backwards compatibility)
     if (success === 'true') {
       setProcessingPayment(true);
 
@@ -221,20 +263,8 @@ export const Billing = () => {
       return;
     }
 
-    setLoading(true);
-    try {
-      const response = await apiClient.createCheckoutSession(selectedCurrency, tier);
-      window.location.href = response.url;
-    } catch (error: any) {
-      // Failed to create checkout session
-      notifications.show({
-        title: 'Error',
-        message: error.message || 'Failed to create checkout session',
-        color: 'red',
-      });
-    } finally {
-      setLoading(false);
-    }
+    // Navigate to checkout page with currency and tier as query params
+    navigate(`/billing/checkout?currency=${selectedCurrency}&tier=${tier}`);
   };
 
   const handleRequestEnterprise = async () => {

@@ -13,6 +13,7 @@ import { AccountSetup } from '@/pages/AccountSetup';
 import { Billing } from '@/pages/Billing';
 import { BillingSuccess } from '@/pages/BillingSuccess';
 import { BillingCancel } from '@/pages/BillingCancel';
+import { Checkout } from '@/pages/Checkout';
 import { AddCustomer } from '@/pages/AddCustomer';
 import { CustomerList } from '@/pages/CustomerList';
 import { Terms } from '@/pages/Terms';
@@ -115,6 +116,7 @@ function App() {
                   <Route path="/account" element={<AccountSetup />} />
                   <Route path="/analytics" element={<Analytics />} />
                   <Route path="/billing" element={<Billing />} />
+                  <Route path="/billing/checkout" element={<Checkout />} />
                   <Route path="/billing/success" element={<BillingSuccess />} />
                   <Route path="/billing/cancel" element={<BillingCancel />} />
                   <Route path="/customers/add" element={<AddCustomer />} />

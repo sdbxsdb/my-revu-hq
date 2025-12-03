@@ -450,16 +450,30 @@ async function handleCreateCheckoutSession(req: VercelRequest, res: VercelRespon
           quantity: 1,
         },
       ],
-      success_url: `${frontendUrl}/billing?success=true`,
-      cancel_url: `${frontendUrl}/billing/cancel`,
+      // For embedded mode, use return_url instead of success_url
+      ui_mode: 'embedded',
+      return_url: `${frontendUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
       metadata: {
         userId: auth.userId,
         tier: tier,
         priceId: priceId,
       },
+      // Customize checkout appearance
+      custom_text: {
+        submit: {
+          message: 'Complete your subscription to start sending review requests',
+        },
+      },
+      // Note: For embedded checkout, styling is limited
+      // Background color and accent color can be set in Stripe Dashboard → Settings → Branding
+      // Set accent color to #14b8a6 (teal) to match MyRevuHQ brand
     });
 
-    return res.json({ url: session.url });
+    // Return session client_secret for embedded mode
+    return res.json({
+      clientSecret: session.client_secret,
+      sessionId: session.id,
+    });
   } catch (error: any) {
     setCorsHeaders(res);
     if (error.message === 'Unauthorized') {
