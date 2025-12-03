@@ -42,3 +42,14 @@ Add these environment variables in Vercel:
 1. Register an alphanumeric sender ID "myrevuhq" in your Twilio account
 2. Note: Alphanumeric sender IDs may have restrictions depending on your country
 3. For production, consider using a Twilio phone number instead if alphanumeric IDs aren't supported
+
+### US/CA A2P 10DLC Setup (Required for US/Canadian SMS)
+
+1. Complete A2P 10DLC brand and campaign registration (see `TWILIO_A2P_10DLC_FORM_GUIDE.md`)
+2. Associate your US phone number with the approved campaign
+3. Set environment variable: `TWILIO_US_PHONE_NUMBER=+14482886444`
+4. Configure SMS webhook for incoming messages (STOP/HELP handling):
+   - Go to Twilio Console → Phone Numbers → [Your US Number]
+   - Set "A MESSAGE COMES IN" to: `https://yourdomain.com/api/twilio/sms-webhook`
+   - Method: POST
+5. See `TWILIO_WEBHOOK_SETUP.md` for detailed instructions

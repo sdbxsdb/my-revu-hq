@@ -245,5 +245,6 @@ export const useAuth = () => {
     signInWithPassword,
     signUp,
     signOut,
+    supabase,
   };
 };

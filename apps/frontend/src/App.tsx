@@ -23,6 +23,7 @@ import { Help } from '@/pages/Help';
 import { ResetPassword } from '@/pages/ResetPassword';
 import { Analytics } from '@/pages/Analytics';
 import { Dashboard } from '@/pages/Dashboard';
+import { VerifyEmail } from '@/pages/VerifyEmail';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -69,6 +70,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/login" replace />;
   }
 
+  // Check if email is verified (skip for magic link and OAuth users - they're auto-verified)
+  // Only email/password signups need to verify
+  if (!user.email_confirmed_at && window.location.pathname !== '/verify-email') {
+    return <Navigate to="/verify-email" replace />;
+  }
+
   // Always allow access - payment warnings are shown on individual pages
   return <>{children}</>;
 };
@@ -101,6 +108,7 @@ function App() {
                     </ProtectedRoute>
                   }
                 >
+                  <Route path="/verify-email" element={<VerifyEmail />} />
                   <Route path="/home" element={<Navigate to="/dashboard" replace />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/setup" element={<Navigate to="/dashboard" replace />} />

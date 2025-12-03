@@ -920,7 +920,7 @@ export const Login = () => {
           setEmailSentModalOpen(false);
           setMode('password'); // Switch to sign in mode after closing
         }}
-        title={<Text className="text-white font-semibold text-lg">Check Your Email! 📧</Text>}
+        title={<Text className="text-white font-semibold text-lg">Check Your Email!</Text>}
         centered
         styles={{
           content: {

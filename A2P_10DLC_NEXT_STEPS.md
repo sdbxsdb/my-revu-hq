@@ -71,7 +71,28 @@ Make sure your Vercel environment variables are set correctly:
 
 ---
 
-## ✅ Step 4: Test SMS Sending
+## ✅ Step 4: Configure SMS Webhook (Required for Compliance!)
+
+**Set up Twilio to handle incoming SMS replies (STOP, HELP, START):**
+
+1. **Go to Twilio Console → Phone Numbers → Active numbers**
+2. **Click on your US phone number** `(448) 288-6444`
+3. **Scroll to "Messaging Configuration"**
+4. **Set "A MESSAGE COMES IN" webhook:**
+   - URL: `https://your-vercel-domain.com/api/twilio/sms-webhook`
+   - Method: POST
+5. **Click "Save"**
+
+**Why this is required:**
+- When customers reply with "STOP", it marks them as opted out in your database
+- Required for A2P 10DLC compliance
+- Handles opt-in (START) and help (HELP) keywords automatically
+
+See `TWILIO_WEBHOOK_SETUP.md` for detailed setup instructions.
+
+---
+
+## ✅ Step 5: Test SMS Sending
 
 **Test with a real US phone number:**
 
@@ -95,7 +116,7 @@ Make sure your Vercel environment variables are set correctly:
 
 ---
 
-## ✅ Step 5: Verify Regulatory Text is Working
+## ✅ Step 6: Verify Regulatory Text is Working
 
 **Check that regulatory text is only added for US/CA:**
 
@@ -107,7 +128,7 @@ The regulatory text should automatically appear at the end of messages sent to U
 
 ---
 
-## ✅ Step 6: Monitor Message Delivery
+## ✅ Step 7: Monitor Message Delivery
 
 **Set up monitoring:**
 
@@ -122,7 +143,7 @@ The regulatory text should automatically appear at the end of messages sent to U
 
 ---
 
-## ✅ Step 7: Verify Campaign Status
+## ✅ Step 8: Verify Campaign Status
 
 **Double-check campaign is fully approved:**
 
@@ -173,9 +194,11 @@ The regulatory text should automatically appear at the end of messages sent to U
 - [ ] Phone number is added to "Low Volume Mixed A2P Messaging Service"
 - [ ] Environment variable `TWILIO_US_PHONE_NUMBER` is set in Vercel
 - [ ] Application has been redeployed after setting environment variables
+- [ ] SMS webhook configured in Twilio for incoming messages
 - [ ] Test SMS sent successfully to US number
 - [ ] Regulatory text appears in US/CA messages
 - [ ] Regulatory text does NOT appear in UK/IE messages
+- [ ] Test opt-out by replying "STOP" (customer marked as opted out)
 - [ ] Campaign status shows as "Approved" in Twilio Console
 - [ ] No errors in Twilio message logs
 
