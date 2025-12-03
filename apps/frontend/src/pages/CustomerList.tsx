@@ -122,10 +122,56 @@ export const CustomerList = () => {
     };
   }, [page, statusFilter, searchQuery, selectedLetter]);
 
-  // Auto-refresh customer list every 10 seconds to update delivery status
+  // Silently refresh delivery statuses without triggering loading skeleton
+  // Only refreshes messages for currently displayed customers (respects search/filters)
+  const refreshDeliveryStatuses = async () => {
+    try {
+      // Only refresh if we have customers displayed
+      if (customers.length === 0) return;
+
+      // Fetch updated delivery statuses using the same filters/search as current view
+      // This ensures we refresh the correct customers when searching/filtering
+      const data = await apiClient.getCustomers({
+        page,
+        limit,
+        status: statusFilter as 'sent' | 'pending' | undefined,
+        search: searchQuery.trim() || undefined,
+        firstLetter: selectedLetter && !searchQuery.trim() ? selectedLetter : undefined,
+      });
+
+      // Create a map of customer IDs to their updated messages
+      const updatedMessagesMap = new Map<string, (typeof data.customers)[0]['messages']>();
+      data.customers.forEach((customer) => {
+        if (customer.messages && customer.messages.length > 0) {
+          updatedMessagesMap.set(customer.id, customer.messages);
+        }
+      });
+
+      // Update only the messages in existing customers array (preserve other state)
+      setCustomers((prevCustomers) =>
+        prevCustomers.map((customer) => {
+          const updatedMessages = updatedMessagesMap.get(customer.id);
+          if (updatedMessages) {
+            return {
+              ...customer,
+              messages: updatedMessages,
+            };
+          }
+          return customer;
+        })
+      );
+    } catch (error) {
+      // Silently fail - don't show errors for background updates
+      console.error('Failed to refresh delivery statuses:', error);
+    }
+  };
+
+  // Auto-refresh delivery statuses every 15 seconds
   // Only refresh if there are messages that are still pending (sent, queued, sending)
+  // Respects current search/filter state
   useEffect(() => {
     if (loading) return; // Don't poll while loading
+    if (customers.length === 0) return; // Don't poll if no customers displayed
 
     const hasPendingMessages = customers.some(
       (c) =>
@@ -143,15 +189,12 @@ export const CustomerList = () => {
     }
 
     const interval = setInterval(() => {
-      // Silently refresh customer list to get updated delivery statuses
-      // Use the same filters as current view
-      const abortController = new AbortController();
-      loadCustomers(abortController.signal);
-    }, 10000); // Poll every 10 seconds
+      refreshDeliveryStatuses();
+    }, 15000); // Poll every 15 seconds (reduced frequency to avoid excessive API calls)
 
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [customers, loading]);
+  }, [customers, loading, page, statusFilter, searchQuery, selectedLetter]);
 
   // Load SMS usage only on initial mount
   useEffect(() => {
