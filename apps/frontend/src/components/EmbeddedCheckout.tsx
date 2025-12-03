@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js';
 import { Modal, Text, Stack } from '@mantine/core';
@@ -20,14 +19,12 @@ interface EmbeddedCheckoutModalProps {
   opened: boolean;
   onClose: () => void;
   clientSecret: string;
-  onSuccess?: () => void;
 }
 
 export const EmbeddedCheckoutModal = ({
   opened,
   onClose,
   clientSecret,
-  onSuccess,
 }: EmbeddedCheckoutModalProps) => {
   if (!stripePromise || !publishableKey) {
     return (
