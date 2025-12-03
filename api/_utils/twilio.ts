@@ -25,15 +25,15 @@ export const sendSMS = async (
   countryCode?: string,
   statusCallback?: string
 ): Promise<{ sid: string; status: string }> => {
+  let from: string = '';
+  
   try {
     const client = getTwilioClient();
 
     // Determine sender ID based on country
     // UK and Ireland: Use alphanumeric sender ID "MyRevuHq" (not MEF protected, can use dynamically)
     // USA/Canada: Use phone number (requires A2P 10DLC registration)
-    // Other countries: Use alphanumeric if available, otherwise phone number
-
-    let from: string;
+    // Other countries: Try alphanumeric if available, otherwise phone number
 
     if (countryCode === 'GB' || countryCode === 'IE') {
       // UK and Ireland: Use alphanumeric sender ID
@@ -70,7 +70,7 @@ export const sendSMS = async (
 
     console.log('[Twilio] Sending message with options:', {
       to,
-      from,
+      from: from || 'unknown',
       hasStatusCallback: !!messageOptions.statusCallback,
       statusCallback: messageOptions.statusCallback,
     });
@@ -94,7 +94,7 @@ export const sendSMS = async (
       message: error.message,
       status: error.status,
       to,
-      from,
+      from: from || 'unknown',
       hasStatusCallback: !!statusCallback,
       statusCallback,
     });

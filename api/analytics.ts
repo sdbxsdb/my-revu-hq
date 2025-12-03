@@ -23,11 +23,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const auth = await authenticate(req as any);
 
     // Get user's subscription tier
-    const { data: user, error: userError } = await supabase
+    const { data: userData, error: userError } = await supabase
       .from('users')
       .select('subscription_tier')
       .eq('id', auth.userId)
-      .single<{ subscription_tier: string | null }>();
+      .single();
+
+    const user = userData as { subscription_tier: string | null } | null;
 
     if (userError) throw userError;
     if (!user) throw new Error('User not found');
@@ -121,9 +123,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (customer && monthlyStats[monthKey]?.customers) {
           monthlyStats[monthKey].customers!.push({
             id: message.customer_id,
-            name: customer.name,
-            phone: customer.phone,
-            job_description: customer.job_description,
+            name: (customer as any).name,
+            phone: (customer as any).phone,
+            job_description: (customer as any).job_description,
             sent_at: message.sent_at,
             was_scheduled: message.was_scheduled,
           });

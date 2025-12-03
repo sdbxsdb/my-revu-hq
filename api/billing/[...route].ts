@@ -668,14 +668,16 @@ async function handleCreatePortalSession(req: VercelRequest, res: VercelResponse
     }
 
     // Get user's Stripe customer ID
-    const { data: user } = await supabase
+    const { data: userData } = await supabase
       .from('users')
       .select('stripe_customer_id, email')
       .eq('id', auth.userId)
-      .single<{
-        stripe_customer_id: string | null;
-        email: string;
-      }>();
+      .single();
+
+    const user = userData as {
+      stripe_customer_id: string | null;
+      email: string;
+    } | null;
 
     if (!user?.stripe_customer_id) {
       return res.status(400).json({
@@ -794,15 +796,17 @@ async function handleChangeTier(req: VercelRequest, res: VercelResponse) {
     }
 
     // Get user's current subscription
-    const { data: user, error: userError } = await supabase
+    const { data: userData, error: userError } = await supabase
       .from('users')
       .select('stripe_customer_id, stripe_subscription_id, stripe_price_id')
       .eq('id', auth.userId)
-      .single<{
-        stripe_customer_id: string | null;
-        stripe_subscription_id: string | null;
-        stripe_price_id: string | null;
-      }>();
+      .single();
+
+    const user = userData as {
+      stripe_customer_id: string | null;
+      stripe_subscription_id: string | null;
+      stripe_price_id: string | null;
+    } | null;
 
     if (userError || !user) {
       return res.status(404).json({ error: 'User not found' });

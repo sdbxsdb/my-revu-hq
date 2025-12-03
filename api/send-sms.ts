@@ -61,23 +61,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { customerId } = sendSMSSchema.parse(req.body);
 
     // Get user to check limit and account status
-    const { data: user, error: userError } = await supabase
+    const { data, error: userError } = await supabase
       .from('users')
       .select(
         'sms_sent_this_month, business_name, review_links, sms_template, account_lifecycle_status, payment_status, subscription_tier, include_name_in_sms, include_job_in_sms'
       )
       .eq('id', userId)
-      .single<{
-        sms_sent_this_month: number | null;
-        business_name: string | null;
-        review_links: any;
-        sms_template: string | null;
-        account_lifecycle_status: string | null;
-        payment_status: string | null;
-        subscription_tier: string | null;
-        include_name_in_sms: boolean | null;
-        include_job_in_sms: boolean | null;
-      }>();
+      .single();
+
+    const user = data as {
+      sms_sent_this_month: number | null;
+      business_name: string | null;
+      review_links: any;
+      sms_template: string | null;
+      account_lifecycle_status: string | null;
+      payment_status: string | null;
+      subscription_tier: string | null;
+      include_name_in_sms: boolean | null;
+      include_job_in_sms: boolean | null;
+    } | null;
+
+    const user = data as {
+      sms_sent_this_month: number | null;
+      business_name: string | null;
+      review_links: any;
+      sms_template: string | null;
+      account_lifecycle_status: string | null;
+      payment_status: string | null;
+      subscription_tier: string | null;
+      include_name_in_sms: boolean | null;
+      include_job_in_sms: boolean | null;
+    } | null;
 
     if (userError) throw userError;
     if (!user) throw new Error('User not found');
@@ -113,23 +127,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Get customer
-    const { data: customer, error: customerError } = await supabase
+    const { data: customerData, error: customerError } = await supabase
       .from('customers')
       .select('*')
       .eq('id', customerId)
       .eq('user_id', userId)
-      .single<{
-        id: string;
-        user_id: string;
-        name: string;
-        phone: { countryCode: string; country?: string; number: string };
-        job_description: string | null;
-        sms_status: string;
-        sent_at: string | null;
-        sms_request_count: number | null;
-        opt_out: boolean | null;
-        scheduled_send_at: string | null;
-      }>();
+      .single();
+
+    const customer = customerData as {
+      id: string;
+      user_id: string;
+      name: string;
+      phone: { countryCode: string; country?: string; number: string };
+      job_description: string | null;
+      sms_status: string;
+      sent_at: string | null;
+      sms_request_count: number | null;
+      opt_out: boolean | null;
+      scheduled_send_at: string | null;
+    } | null;
 
     if (customerError) throw customerError;
     if (!customer) {
@@ -267,11 +283,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
 
     // Update user's monthly count and total count
-    const { data: currentUser } = await supabase
+    const { data: currentUserData } = await supabase
       .from('users')
       .select('sms_sent_total')
       .eq('id', userId)
-      .single<{ sms_sent_total: number | null }>();
+      .single();
+
+    const currentUser = currentUserData as { sms_sent_total: number | null } | null;
 
     const currentTotal = currentUser?.sms_sent_total || 0;
     const newSmsSentThisMonth = sentThisMonth + 1;
