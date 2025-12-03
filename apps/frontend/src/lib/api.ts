@@ -158,6 +158,7 @@ export const apiClient = {
     cardBrand?: string;
     accountStatus?: 'active' | 'cancelled' | 'deleted' | null;
     subscriptionTier?: 'free' | 'starter' | 'pro' | 'business' | 'enterprise' | null;
+    enterpriseRequestedAt?: string | null;
   }> => {
     const { data } = await api.get('/api/billing/subscription');
     return data;

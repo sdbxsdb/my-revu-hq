@@ -3,6 +3,7 @@ import Stripe from 'stripe';
 import { supabase } from '../_utils/supabase';
 import { authenticate } from '../_utils/auth';
 import { setCorsHeaders } from '../_utils/response';
+import { sendEnterpriseRequestEmail } from '../_utils/email';
 
 // Initialize Stripe
 let stripe: Stripe | null = null;
@@ -85,7 +86,7 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
     const { data: user, error: userError } = await supabase
       .from('users')
       .select(
-        'email, stripe_customer_id, stripe_subscription_id, payment_status, payment_method, current_period_end, subscription_start_date, subscription_tier'
+        'email, stripe_customer_id, stripe_subscription_id, payment_status, payment_method, current_period_end, subscription_start_date, subscription_tier, enterprise_requested_at'
       )
       .eq('id', auth.userId)
       .single<{
@@ -97,6 +98,7 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
         current_period_end: string | null;
         subscription_start_date: string | null;
         subscription_tier: string | null;
+        enterprise_requested_at: string | null;
       }>();
 
     // Try to get account_lifecycle_status separately if the column exists
@@ -197,6 +199,7 @@ async function handleSubscription(req: VercelRequest, res: VercelResponse) {
         | 'business'
         | 'enterprise'
         | null,
+      enterpriseRequestedAt: user.enterprise_requested_at || null,
     };
 
     return res.json(responseData);
@@ -258,9 +261,9 @@ async function handleSyncSubscription(req: VercelRequest, res: VercelResponse) {
       if (!priceId) return null;
       const tiers = ['free', 'starter', 'pro', 'business'];
       const currencies = ['GBP', 'EUR', 'USD'];
-      
+
       console.log('🔍 Looking for price ID:', priceId);
-      
+
       for (const tier of tiers) {
         for (const currency of currencies) {
           const envVar = `STRIPE_PRICE_ID_${tier.toUpperCase()}_${currency}`;
@@ -280,11 +283,13 @@ async function handleSyncSubscription(req: VercelRequest, res: VercelResponse) {
     console.log('🎯 Final tier:', tier);
 
     // Fallback: If no tier found but we have the free price IDs, set to free
-    if (!tier && priceId && (
-      priceId === 'price_1SY6QVEAEfoPoTo8Y3t3vngs' || // FREE GBP
-      priceId === 'price_1SY6QGEAEfoPoTo8i1IKmbGU' || // FREE EUR
-      priceId === 'price_1SY6PyEAEfoPoTo8Fw5IbkRV'    // FREE USD
-    )) {
+    if (
+      !tier &&
+      priceId &&
+      (priceId === 'price_1SY6QVEAEfoPoTo8Y3t3vngs' || // FREE GBP
+        priceId === 'price_1SY6QGEAEfoPoTo8i1IKmbGU' || // FREE EUR
+        priceId === 'price_1SY6PyEAEfoPoTo8Fw5IbkRV') // FREE USD
+    ) {
       console.log('🔧 Fallback: Setting tier to free for known free price ID');
       tier = 'free';
     }
@@ -298,10 +303,10 @@ async function handleSyncSubscription(req: VercelRequest, res: VercelResponse) {
         subscription.status === 'active'
           ? 'active'
           : subscription.status === 'past_due'
-          ? 'past_due'
-          : subscription.status === 'canceled'
-          ? 'canceled'
-          : 'inactive',
+            ? 'past_due'
+            : subscription.status === 'canceled'
+              ? 'canceled'
+              : 'inactive',
       payment_method: 'card',
       subscription_start_date: subscription.created
         ? new Date(subscription.created * 1000).toISOString()
@@ -322,7 +327,11 @@ async function handleSyncSubscription(req: VercelRequest, res: VercelResponse) {
       .update(updateData)
       .eq('id', auth.userId);
 
-    return res.json({ message: 'Subscription synced successfully', tier, status: subscription.status });
+    return res.json({
+      message: 'Subscription synced successfully',
+      tier,
+      status: subscription.status,
+    });
   } catch (error: any) {
     setCorsHeaders(res);
     if (error.message === 'Unauthorized') {
@@ -414,7 +423,7 @@ async function handleCreateCheckoutSession(req: VercelRequest, res: VercelRespon
     let frontendUrl = '';
     const origin = req.headers.origin as string | undefined;
     const referer = req.headers.referer as string | undefined;
-    
+
     if (origin) {
       // Use the origin from the request (works for ngrok, localhost, production)
       frontendUrl = origin.replace(/\/$/, '');
@@ -610,16 +619,29 @@ async function handleRequestInvoice(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'Stripe not configured' });
     }
 
-    // Get or create Stripe customer (needed for invoices)
+    // Get user details (including subscription tier and account creation date)
     let { data: user } = await supabase
       .from('users')
-      .select('stripe_customer_id, email, business_name')
+      .select(
+        'stripe_customer_id, email, business_name, subscription_tier, created_at, enterprise_requested_at'
+      )
       .eq('id', auth.userId)
       .single<{
         stripe_customer_id: string | null;
         email: string;
         business_name: string | null;
+        subscription_tier: string | null;
+        created_at: string;
+        enterprise_requested_at: string | null;
       }>();
+
+    // Check if already requested (prevent duplicate requests)
+    if (user?.enterprise_requested_at) {
+      return res.json({
+        message: 'Enterprise request already submitted',
+        alreadyRequested: true,
+      });
+    }
 
     let customerId = user?.stripe_customer_id;
 
@@ -638,9 +660,41 @@ async function handleRequestInvoice(req: VercelRequest, res: VercelResponse) {
         .eq('id', auth.userId);
     }
 
-    // TODO: Send email to admin/support team with customer details
-    // Or create a ticket in your support system
-    // Or store in a database table for manual processing
+    // Mark enterprise as requested in database
+    const now = new Date().toISOString();
+    await supabase
+      .from('users')
+      // @ts-ignore - Supabase types don't include billing fields yet
+      .update({ enterprise_requested_at: now })
+      .eq('id', auth.userId);
+
+    // Send SMS notification to admin (simpler than email, already configured)
+    const adminPhone = process.env.ADMIN_PHONE_NUMBER; // e.g., +447780587666
+    if (adminPhone) {
+      try {
+        const { sendSMS } = await import('../_utils/twilio');
+        const messageBody = `🚀 New Enterprise Request\n\nEmail: ${user?.email || auth.userEmail}\n${user?.business_name ? `Business: ${user.business_name}\n` : ''}User ID: ${auth.userId}\n${customerId ? `Stripe: ${customerId}` : ''}`;
+        await sendSMS(adminPhone, messageBody, 'GB'); // Default to GB for admin
+        console.log(`[Billing] Enterprise request SMS sent to ${adminPhone}`);
+      } catch (smsError) {
+        console.error('[Billing] Failed to send enterprise request SMS:', smsError);
+      }
+    }
+
+    // Also try email notification (fallback)
+    try {
+      await sendEnterpriseRequestEmail({
+        userEmail: user?.email || auth.userEmail!,
+        userId: auth.userId,
+        businessName: user?.business_name || null,
+        stripeCustomerId: customerId,
+        accountCreatedAt: user?.created_at,
+        currentTier: user?.subscription_tier || null,
+      });
+    } catch (emailError) {
+      // Log error but don't fail the request
+      console.error('[Billing] Failed to send enterprise request email:', emailError);
+    }
 
     return res.json({ message: 'Invoice setup requested' });
   } catch (error: any) {

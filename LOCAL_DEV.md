@@ -41,6 +41,9 @@ TWILIO_AUTH_TOKEN=your_twilio_token (optional)
 STRIPE_SECRET_KEY=your_stripe_key (optional)
 STRIPE_PRICE_ID=your_price_id (optional)
 STRIPE_WEBHOOK_SECRET=your_webhook_secret (optional)
+RESEND_API_KEY=re_your_api_key_here (optional - for enterprise email notifications)
+ADMIN_EMAIL=your-email@myrevuhq.com (optional - for enterprise email notifications)
+RESEND_FROM_EMAIL=MyRevuHQ <onboarding@resend.dev> (optional - for enterprise email notifications)
 ```
 
 ### For Frontend (`yarn dev`)

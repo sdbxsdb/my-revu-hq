@@ -69,6 +69,9 @@ export const Billing = () => {
   const [selectedNewTier, setSelectedNewTier] = useState<PricingTier | null>(null);
   const [cancelling, setCancelling] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [enterpriseRequestModalOpen, setEnterpriseRequestModalOpen] = useState(false);
+  const [enterpriseRequestSubmitted, setEnterpriseRequestSubmitted] = useState(false);
+  const [requestingEnterprise, setRequestingEnterprise] = useState(false);
   const isPaid = accessStatus === 'active';
   const displayPaymentMethod = paymentMethod;
 
@@ -184,6 +187,10 @@ export const Billing = () => {
       setCardBrand(subscription.cardBrand);
       setAccountStatus(subscription.accountStatus || 'active');
       setSubscriptionTier(subscription.subscriptionTier || null);
+      // Check if enterprise was already requested (persists across refreshes)
+      if (subscription.enterpriseRequestedAt) {
+        setEnterpriseRequestSubmitted(true);
+      }
     } catch (error: any) {
       // Failed to load subscription
       notifications.show({
@@ -230,6 +237,29 @@ export const Billing = () => {
     }
   };
 
+  const handleRequestEnterprise = async () => {
+    // Prevent duplicate requests
+    if (enterpriseRequestSubmitted || requestingEnterprise) {
+      return;
+    }
+
+    setRequestingEnterprise(true);
+    try {
+      await apiClient.requestInvoiceSetup();
+      setEnterpriseRequestSubmitted(true);
+      setEnterpriseRequestModalOpen(true);
+      await loadSubscription(); // Reload to update status
+    } catch (error: any) {
+      notifications.show({
+        title: 'Error',
+        message: error.message || 'Failed to submit enterprise request',
+        color: 'red',
+      });
+    } finally {
+      setRequestingEnterprise(false);
+    }
+  };
+
   const handleRequestInvoice = async () => {
     // Prevent setting up invoice if card payment is already active
     if (isPaid && displayPaymentMethod === 'card') {
@@ -242,25 +272,8 @@ export const Billing = () => {
       return;
     }
 
-    setLoading(true);
-    try {
-      await apiClient.requestInvoiceSetup();
-      notifications.show({
-        title: 'Request Submitted',
-        message: 'Invoice setup requested. Our team will contact you within 1-2 business days.',
-        color: 'teal',
-      });
-      await loadSubscription(); // Reload to update status
-    } catch (error: any) {
-      // Failed to request invoice setup
-      notifications.show({
-        title: 'Error',
-        message: error.message || 'Failed to request invoice setup',
-        color: 'red',
-      });
-    } finally {
-      setLoading(false);
-    }
+    // Use the same enterprise request handler
+    await handleRequestEnterprise();
   };
 
   const handleCancelSubscription = async () => {
@@ -686,16 +699,24 @@ export const Billing = () => {
                                 </Text>
                               </div>
                               {!isCurrentTier && (
-                                <Button
-                                  variant="light"
-                                  color="teal"
-                                  size="sm"
-                                  className="mt-auto"
-                                  component="a"
-                                  href="mailto:myrevuhq@gmail.com?subject=Enterprise Plan Inquiry"
-                                >
-                                  Contact Us
-                                </Button>
+                                <div className="mt-auto">
+                                  {enterpriseRequestSubmitted ? (
+                                    <Badge size="lg" color="teal" className="w-full justify-center">
+                                      Request Submitted
+                                    </Badge>
+                                  ) : (
+                                    <Button
+                                      variant="light"
+                                      color="teal"
+                                      size="sm"
+                                      className="w-full"
+                                      onClick={handleRequestEnterprise}
+                                      loading={requestingEnterprise}
+                                    >
+                                      Request Enterprise
+                                    </Button>
+                                  )}
+                                </div>
                               )}
                             </div>
                           </div>
@@ -933,12 +954,19 @@ export const Billing = () => {
                     <Button
                       variant={selectedTier === 'enterprise' ? 'filled' : 'outline'}
                       color={selectedTier === 'enterprise' ? 'teal' : 'gray'}
-                      onClick={() => setSelectedTier('enterprise')}
+                      onClick={() => {
+                        if (!enterpriseRequestSubmitted) {
+                          setSelectedTier('enterprise');
+                        }
+                      }}
+                      disabled={enterpriseRequestSubmitted}
                       className="font-semibold w-full"
                     >
                       <div className="flex flex-col items-center gap-0.5">
                         <span>Enterprise</span>
-                        <span className="text-xs">Custom</span>
+                        <span className="text-xs">
+                          {enterpriseRequestSubmitted ? 'Request Submitted' : 'Custom'}
+                        </span>
                       </div>
                     </Button>
                   </div>
@@ -1076,16 +1104,22 @@ export const Billing = () => {
                             )
                           )}
                         </ul>
-                        <Button
-                          variant="light"
-                          size="md"
-                          fullWidth
-                          component="a"
-                          href="mailto:myrevuhq@gmail.com?subject=Enterprise Plan Inquiry"
-                          className="font-semibold"
-                        >
-                          Contact Us to Discuss
-                        </Button>
+                        {enterpriseRequestSubmitted ? (
+                          <Badge size="lg" color="teal" className="w-full justify-center py-3">
+                            Request Submitted - We'll Be In Touch
+                          </Badge>
+                        ) : (
+                          <Button
+                            variant="light"
+                            size="md"
+                            fullWidth
+                            onClick={handleRequestEnterprise}
+                            loading={requestingEnterprise}
+                            className="font-semibold"
+                          >
+                            Request Enterprise Plan
+                          </Button>
+                        )}
                       </Stack>
                     </Paper>
                   )}
@@ -1236,21 +1270,34 @@ export const Billing = () => {
                         </ul>
                       </div>
 
-                      <Button
-                        size="lg"
-                        variant="light"
-                        onClick={handleRequestInvoice}
-                        loading={loading}
-                        disabled={
-                          displayPaymentMethod !== null && displayPaymentMethod !== 'direct_debit'
-                        }
-                        className="font-semibold max-w-xs lg:max-w-sm w-full lg:w-auto"
-                      >
-                        Request Invoice Setup
-                      </Button>
+                      {enterpriseRequestSubmitted ? (
+                        <Badge
+                          size="lg"
+                          color="teal"
+                          className="max-w-xs lg:max-w-sm w-full lg:w-auto justify-center py-3"
+                        >
+                          Request Submitted - We'll Be In Touch
+                        </Badge>
+                      ) : (
+                        <Button
+                          size="lg"
+                          variant="light"
+                          onClick={handleRequestInvoice}
+                          loading={requestingEnterprise}
+                          disabled={
+                            (displayPaymentMethod !== null &&
+                              displayPaymentMethod !== 'direct_debit') ||
+                            requestingEnterprise
+                          }
+                          className="font-semibold max-w-xs lg:max-w-sm w-full lg:w-auto"
+                        >
+                          Request Invoice Setup
+                        </Button>
+                      )}
                       <Text size="xs" className="text-gray-500 text-center mt-3">
-                        You'll receive an email confirmation and our team will reach out to complete
-                        the setup.
+                        {enterpriseRequestSubmitted
+                          ? "We've received your request and will contact you within 1-2 business days."
+                          : "You'll receive a confirmation and our team will reach out to complete the setup."}
                       </Text>
                     </div>
                   )}
@@ -1259,6 +1306,37 @@ export const Billing = () => {
             </Tabs>
           </>
         )}
+
+        {/* Enterprise Request Confirmation Modal */}
+        <Modal
+          opened={enterpriseRequestModalOpen}
+          onClose={() => setEnterpriseRequestModalOpen(false)}
+          title={<Text className="text-white font-semibold text-lg">Thank You!</Text>}
+          centered
+          styles={{
+            content: {
+              backgroundColor: '#1a1a1a',
+              border: '1px solid #2a2a2a',
+            },
+            header: {
+              backgroundColor: '#1a1a1a',
+              borderBottom: '1px solid #2a2a2a',
+            },
+          }}
+        >
+          <Stack gap="md">
+            <Text size="md" className="text-gray-300">
+              Thank you for your interest in our Enterprise plan!
+            </Text>
+            <Text size="sm" className="text-gray-400">
+              We've received your request and our team will be in touch within 1-2 business days to
+              discuss your needs and customize a solution for your organization.
+            </Text>
+            <Button fullWidth onClick={() => setEnterpriseRequestModalOpen(false)} className="mt-4">
+              Got It
+            </Button>
+          </Stack>
+        </Modal>
 
         {/* Cancel Subscription Modal */}
         <Modal
