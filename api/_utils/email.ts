@@ -26,12 +26,16 @@ export async function sendEnterpriseRequestEmail(details: EnterpriseRequestDetai
   // Don't fail if Resend is not configured
   if (!resend) {
     console.warn('[Email] Resend not configured - skipping email notification');
+    console.warn('[Email] Set RESEND_API_KEY in Vercel environment variables');
     console.log('[Email] Enterprise request details:', JSON.stringify(details, null, 2));
     return;
   }
 
   const adminEmail = process.env.ADMIN_EMAIL || 'myrevuhq@gmail.com';
   const fromEmail = process.env.RESEND_FROM_EMAIL || 'MyRevuHQ <onboarding@resend.dev>';
+
+  console.log(`[Email] Attempting to send enterprise request email`);
+  console.log(`[Email] From: ${fromEmail}, To: ${adminEmail}`);
 
   try {
     await resend.emails.send({
@@ -68,49 +72,69 @@ export async function sendEnterpriseRequestEmail(details: EnterpriseRequestDetai
                 <div class="value">${details.userEmail}</div>
               </div>
               
-              ${details.businessName ? `
+              ${
+                details.businessName
+                  ? `
               <div class="detail-row">
                 <div class="label">Business Name</div>
                 <div class="value">${details.businessName}</div>
               </div>
-              ` : ''}
+              `
+                  : ''
+              }
               
               <div class="detail-row">
                 <div class="label">User ID</div>
                 <div class="value">${details.userId}</div>
               </div>
               
-              ${details.stripeCustomerId ? `
+              ${
+                details.stripeCustomerId
+                  ? `
               <div class="detail-row">
                 <div class="label">Stripe Customer ID</div>
                 <div class="value">${details.stripeCustomerId}</div>
               </div>
-              ` : ''}
+              `
+                  : ''
+              }
               
-              ${details.currentTier ? `
+              ${
+                details.currentTier
+                  ? `
               <div class="detail-row">
                 <div class="label">Current Plan</div>
                 <div class="value">${details.currentTier}</div>
               </div>
-              ` : ''}
+              `
+                  : ''
+              }
               
-              ${details.accountCreatedAt ? `
+              ${
+                details.accountCreatedAt
+                  ? `
               <div class="detail-row">
                 <div class="label">Account Created</div>
                 <div class="value">${new Date(details.accountCreatedAt).toLocaleString()}</div>
               </div>
-              ` : ''}
+              `
+                  : ''
+              }
               
               <div class="detail-row">
                 <div class="label">Requested At</div>
                 <div class="value">${new Date().toLocaleString()}</div>
               </div>
               
-              ${details.stripeCustomerId ? `
+              ${
+                details.stripeCustomerId
+                  ? `
               <a href="https://dashboard.stripe.com/customers/${details.stripeCustomerId}" class="button" target="_blank">
                 View in Stripe Dashboard
               </a>
-              ` : ''}
+              `
+                  : ''
+              }
               
               <div class="footer">
                 <p>This is an automated notification from MyRevuHQ.</p>
@@ -122,13 +146,21 @@ export async function sendEnterpriseRequestEmail(details: EnterpriseRequestDetai
         </html>
       `,
     });
-    
+
     console.log(`[Email] Enterprise request notification sent to ${adminEmail}`);
+    console.log(`[Email] From: ${fromEmail}, To: ${adminEmail}`);
   } catch (error: any) {
     // Log error but don't fail the request
     console.error('[Email] Failed to send enterprise request notification:', error);
+    console.error('[Email] Error details:', {
+      message: error.message,
+      statusCode: error.statusCode,
+      response: error.response,
+    });
     // Log details so admin can still see the request
-    console.log('[Email] Enterprise request details (email failed):', JSON.stringify(details, null, 2));
+    console.log(
+      '[Email] Enterprise request details (email failed):',
+      JSON.stringify(details, null, 2)
+    );
   }
 }
-

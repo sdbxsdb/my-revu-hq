@@ -4,7 +4,6 @@ import { supabase } from '../_utils/supabase';
 import { authenticate } from '../_utils/auth';
 import { setCorsHeaders } from '../_utils/response';
 import { sendEnterpriseRequestEmail } from '../_utils/email';
-import { sendSMS } from '../_utils/twilio';
 
 // Initialize Stripe
 let stripe: Stripe | null = null;
@@ -669,19 +668,7 @@ async function handleRequestInvoice(req: VercelRequest, res: VercelResponse) {
       .update({ enterprise_requested_at: now })
       .eq('id', auth.userId);
 
-    // Send SMS notification to admin (simpler than email, already configured)
-    const adminPhone = process.env.ADMIN_PHONE_NUMBER; // e.g., +447780587666
-    if (adminPhone) {
-      try {
-        const messageBody = `🚀 New Enterprise Request\n\nEmail: ${user?.email || auth.userEmail}\n${user?.business_name ? `Business: ${user.business_name}\n` : ''}User ID: ${auth.userId}\n${customerId ? `Stripe: ${customerId}` : ''}`;
-        await sendSMS(adminPhone, messageBody, 'GB'); // Default to GB for admin
-        console.log(`[Billing] Enterprise request SMS sent to ${adminPhone}`);
-      } catch (smsError) {
-        console.error('[Billing] Failed to send enterprise request SMS:', smsError);
-      }
-    }
-
-    // Also try email notification (fallback)
+    // Send email notification to admin
     try {
       await sendEnterpriseRequestEmail({
         userEmail: user?.email || auth.userEmail!,

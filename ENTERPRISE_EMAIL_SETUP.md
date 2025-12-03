@@ -80,20 +80,62 @@ When someone requests Enterprise, you'll get an email with:
 
 ## Troubleshooting
 
-**No emails received:**
-- Check `RESEND_API_KEY` is set correctly in Vercel
-- Check `ADMIN_EMAIL` is set correctly
-- Check Resend Dashboard → **Logs** for delivery status
-- Check spam/junk folder
+### Email Not Arriving (Most Common Issues)
 
-**Email fails to send:**
-- Check Vercel function logs for errors
-- Verify Resend API key is valid
-- Check Resend Dashboard for any account issues
+**1. Check Resend Dashboard → Logs:**
+- Go to Resend Dashboard → **Logs** → **Emails**
+- Find the email sent to your address (`myrevuhq@gmail.com`)
+- Check the delivery status:
+  - ✅ **Delivered** = Check spam/junk folder (email provider may be filtering it)
+  - ❌ **Bounced** = Email address might be invalid or blocked
+  - ⏳ **Pending** = Still processing
+  - ❌ **Failed** = Check error message for details
 
-**Want to use a different email service?**
+**2. Using `onboarding@resend.dev` (Default):**
+- This is Resend's test domain
+- **Gmail and other providers often filter these emails to spam**
+- **Solution:** Verify your own domain (see Step 4 above) for better deliverability
+
+**3. Check Spam/Junk Folder:**
+- Even if Resend shows "Delivered", check spam folder
+- Gmail may filter `onboarding@resend.dev` emails automatically
+- Add `onboarding@resend.dev` to your contacts to help
+
+**4. Verify Environment Variables:**
+- Check Vercel Dashboard → Environment Variables
+- Verify `RESEND_API_KEY` is set correctly (starts with `re_...`)
+- Verify `ADMIN_EMAIL` matches your actual email (`myrevuhq@gmail.com`)
+- Verify `RESEND_FROM_EMAIL` is set (or defaults to `onboarding@resend.dev`)
+
+**5. Check Vercel Function Logs:**
+- Look for `[Email] Enterprise request notification sent to...`
+- If you see `[Email] Failed to send`, check the error message
+- Common errors:
+  - `Invalid API key` = Wrong or missing `RESEND_API_KEY`
+  - `Domain not verified` = Need to verify domain in Resend
+  - `Invalid from address` = `RESEND_FROM_EMAIL` format is wrong
+
+**6. Test Email Sending:**
+- Go to Resend Dashboard → **Emails** → **Send Test Email**
+- Send a test email to yourself
+- If test works but app emails don't, check the code/logs
+
+### Email Fails to Send
+
+**Check Vercel function logs for:**
+- `[Email] Failed to send enterprise request notification:`
+- Error details will show what went wrong
+
+**Common fixes:**
+- Verify Resend API key is correct
+- Check Resend account isn't suspended
+- Verify domain is verified (if using custom domain)
+- Check email format is correct
+
+### Want to Use a Different Email Service?
+
 - The code is in `api/_utils/email.ts`
-- You can replace Resend with SendGrid, Mailgun, or any other service
+- You can replace Resend with SendGrid, Mailgun, AWS SES, or any other service
 - Just update the `sendEnterpriseRequestEmail` function
 
 ## Cost
