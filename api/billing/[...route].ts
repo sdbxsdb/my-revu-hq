@@ -4,6 +4,7 @@ import { supabase } from '../_utils/supabase';
 import { authenticate } from '../_utils/auth';
 import { setCorsHeaders } from '../_utils/response';
 import { sendEnterpriseRequestEmail } from '../_utils/email';
+import { sendSMS } from '../_utils/twilio';
 
 // Initialize Stripe
 let stripe: Stripe | null = null;
@@ -672,7 +673,6 @@ async function handleRequestInvoice(req: VercelRequest, res: VercelResponse) {
     const adminPhone = process.env.ADMIN_PHONE_NUMBER; // e.g., +447780587666
     if (adminPhone) {
       try {
-        const { sendSMS } = await import('../_utils/twilio');
         const messageBody = `🚀 New Enterprise Request\n\nEmail: ${user?.email || auth.userEmail}\n${user?.business_name ? `Business: ${user.business_name}\n` : ''}User ID: ${auth.userId}\n${customerId ? `Stripe: ${customerId}` : ''}`;
         await sendSMS(adminPhone, messageBody, 'GB'); // Default to GB for admin
         console.log(`[Billing] Enterprise request SMS sent to ${adminPhone}`);
