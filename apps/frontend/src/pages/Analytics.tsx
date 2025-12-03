@@ -139,11 +139,60 @@ export const Analytics = () => {
     try {
       setLoading(true);
       const data = await apiClient.getAnalytics();
-      setAnalytics(data);
-      // Set current month (first month) as expanded by default
-      if (data.monthlyStats.length > 0) {
-        const firstMonth = data.monthlyStats[0];
-        setExpandedMonths([`month-${firstMonth.month}-${firstMonth.year}`]);
+
+      // Sort monthly stats so current month is first
+      const now = new Date();
+      const currentMonthName = now.toLocaleDateString('en-GB', {
+        month: 'long',
+        year: 'numeric',
+      });
+
+      // Helper to parse month string (e.g., "December 2024") to Date
+      const parseMonthString = (monthStr: string, year: number): Date => {
+        const monthNames = [
+          'January',
+          'February',
+          'March',
+          'April',
+          'May',
+          'June',
+          'July',
+          'August',
+          'September',
+          'October',
+          'November',
+          'December',
+        ];
+        const monthName = monthStr.split(' ')[0]; // Extract month name
+        const monthIndex = monthNames.indexOf(monthName);
+        return new Date(year, monthIndex, 1);
+      };
+
+      const sortedMonthlyStats = [...data.monthlyStats].sort((a, b) => {
+        // Current month should be first
+        if (a.month === currentMonthName) return -1;
+        if (b.month === currentMonthName) return 1;
+        // Otherwise sort by date descending (most recent first)
+        const dateA = parseMonthString(a.month, a.year);
+        const dateB = parseMonthString(b.month, b.year);
+        return dateB.getTime() - dateA.getTime();
+      });
+
+      setAnalytics({
+        ...data,
+        monthlyStats: sortedMonthlyStats,
+      });
+
+      // Set current month as expanded by default
+      if (sortedMonthlyStats.length > 0) {
+        const currentMonthStat = sortedMonthlyStats.find((stat) => stat.month === currentMonthName);
+        if (currentMonthStat) {
+          setExpandedMonths([`month-${currentMonthStat.month}-${currentMonthStat.year}`]);
+        } else {
+          // If no current month found, expand the first one
+          const firstMonth = sortedMonthlyStats[0];
+          setExpandedMonths([`month-${firstMonth.month}-${firstMonth.year}`]);
+        }
       }
     } catch (error: any) {
       if (error.response?.status === 403) {
@@ -392,15 +441,17 @@ export const Analytics = () => {
                       </Text>
                     </div>
                   </Stack>
-                  {currentTier !== 'free' && currentTier !== 'pro' && currentTier !== 'business' && (
-                    <Button
-                      color="teal"
-                      className="mt-4 w-full"
-                      onClick={() => navigate('/billing')}
-                    >
-                      Upgrade to Pro
-                    </Button>
-                  )}
+                  {currentTier !== 'free' &&
+                    currentTier !== 'pro' &&
+                    currentTier !== 'business' && (
+                      <Button
+                        color="teal"
+                        className="mt-4 w-full"
+                        onClick={() => navigate('/billing')}
+                      >
+                        Upgrade to Pro
+                      </Button>
+                    )}
                 </Paper>
 
                 {/* Business Plan Features */}
@@ -409,7 +460,9 @@ export const Analytics = () => {
                     <Title order={3} size="h4" className="text-white">
                       Business Plan Analytics
                     </Title>
-                    {(currentTier === 'business' || currentTier === 'free') && <Badge color="teal">Current</Badge>}
+                    {(currentTier === 'business' || currentTier === 'free') && (
+                      <Badge color="teal">Current</Badge>
+                    )}
                   </div>
                   <Stack gap="sm">
                     <div className="flex items-start gap-2">
@@ -1108,48 +1161,203 @@ export const Analytics = () => {
                   chevron: 'text-teal-400',
                 }}
               >
-                {analytics.monthlyStats.map((stat, index) => (
-                  <Accordion.Item key={index} value={`month-${stat.month}-${stat.year}`}>
-                    <Accordion.Control>
-                      <div className="flex items-center justify-between w-full pr-4">
-                        <div>
-                          <Text className="font-semibold text-white">{stat.month}</Text>
-                          <Text size="sm" className="text-gray-400">
-                            {stat.count} {stat.count === 1 ? 'message' : 'messages'} sent
-                          </Text>
+                {analytics.monthlyStats.map((stat, index) => {
+                  // Check if this month/year matches the current month/year
+                  // API formats month as "December 2024" (en-GB locale)
+                  const now = new Date();
+                  const currentMonthName = now.toLocaleDateString('en-GB', {
+                    month: 'long',
+                    year: 'numeric',
+                  });
+                  const isCurrentMonth = stat.month === currentMonthName;
+
+                  return (
+                    <Accordion.Item key={index} value={`month-${stat.month}-${stat.year}`}>
+                      <Accordion.Control>
+                        <div className="flex items-center justify-between w-full pr-4">
+                          <div>
+                            <Text className="font-semibold text-white">{stat.month}</Text>
+                            <Text size="sm" className="text-gray-400">
+                              {stat.count} {stat.count === 1 ? 'message' : 'messages'} sent
+                            </Text>
+                          </div>
+                          {isCurrentMonth && (
+                            <Badge color="teal" leftSection={<IconTrendingUp size={14} />}>
+                              Current
+                            </Badge>
+                          )}
                         </div>
-                        {index === 0 && stat.count > 0 && (
-                          <Badge color="teal" leftSection={<IconTrendingUp size={14} />}>
-                            Current
-                          </Badge>
+                      </Accordion.Control>
+                      <Accordion.Panel>
+                        {/* Customer details - blurred for Pro, visible for Business */}
+                        {analytics.tier === 'pro' && stat.count > 0 && (
+                          <div className="mt-4 pt-4 border-t border-[#3a3a3a] relative">
+                            <div className="blur-sm pointer-events-none select-none">
+                              <Text size="sm" className="text-gray-400 mb-2 font-medium">
+                                Customer Details ({stat.count})
+                              </Text>
+                              {/* Mobile: Compact Accordion */}
+                              <div className="block md:hidden">
+                                <Accordion
+                                  key={`pro-accordion-${stat.month}-${stat.year}`}
+                                  multiple
+                                  variant="separated"
+                                  radius="sm"
+                                  value={expandedItems[`pro-${stat.month}-${stat.year}`] || []}
+                                  onChange={(value) =>
+                                    setExpandedItems((prev) => ({
+                                      ...prev,
+                                      [`pro-${stat.month}-${stat.year}`]: value,
+                                    }))
+                                  }
+                                  classNames={{
+                                    item: 'bg-[#1a1a1a] border-[#3a3a3a]',
+                                    control: 'py-3 px-4 hover:bg-[#2a2a2a]',
+                                    label: 'text-white text-sm font-medium',
+                                    content: 'text-gray-300 text-sm p-4',
+                                    chevron: 'text-teal-400',
+                                  }}
+                                  styles={{
+                                    label: {
+                                      paddingTop: 0,
+                                      paddingBottom: 0,
+                                    },
+                                    control: {
+                                      paddingTop: '0.75rem',
+                                      paddingBottom: '0.75rem',
+                                    },
+                                    item: {
+                                      marginTop: '0.25rem',
+                                      marginBottom: 0,
+                                    },
+                                  }}
+                                >
+                                  {[...Array(Math.min(stat.count, 3))].map((_, idx) => (
+                                    <Accordion.Item
+                                      key={idx}
+                                      value={`${stat.month}-${stat.year}-${idx}`}
+                                    >
+                                      <Accordion.Control>
+                                        <div className="flex items-center justify-between w-full pr-2">
+                                          <Text size="sm" className="text-white font-medium">
+                                            John Smith
+                                          </Text>
+                                          <Text size="sm" className="text-gray-400">
+                                            {new Date().toLocaleDateString('en-GB', {
+                                              day: 'numeric',
+                                              month: 'short',
+                                            })}
+                                          </Text>
+                                        </div>
+                                      </Accordion.Control>
+                                      <Accordion.Panel>
+                                        <div className="space-y-2">
+                                          <div className="flex justify-between">
+                                            <Text size="sm" className="text-gray-400">
+                                              Phone:
+                                            </Text>
+                                            <Text size="sm" className="text-gray-200 font-medium">
+                                              07780586444
+                                            </Text>
+                                          </div>
+                                          <div className="flex justify-between">
+                                            <Text size="sm" className="text-gray-400">
+                                              Job:
+                                            </Text>
+                                            <Text size="sm" className="text-gray-200">
+                                              Kitchen renovation
+                                            </Text>
+                                          </div>
+                                        </div>
+                                      </Accordion.Panel>
+                                    </Accordion.Item>
+                                  ))}
+                                </Accordion>
+                              </div>
+                              {/* Desktop: Compact Table */}
+                              <div className="hidden md:block">
+                                <div className="overflow-x-auto">
+                                  <Table verticalSpacing="xs">
+                                    <Table.Thead>
+                                      <Table.Tr>
+                                        <Table.Th className="text-gray-400 text-xs">
+                                          Customer
+                                        </Table.Th>
+                                        <Table.Th className="text-gray-400 text-xs">Job</Table.Th>
+                                        <Table.Th className="text-gray-400 text-xs">Phone</Table.Th>
+                                        <Table.Th className="text-gray-400 text-xs">Sent</Table.Th>
+                                      </Table.Tr>
+                                    </Table.Thead>
+                                    <Table.Tbody>
+                                      {[...Array(Math.min(stat.count, 3))].map((_, idx) => (
+                                        <Table.Tr key={idx}>
+                                          <Table.Td className="text-white text-sm">
+                                            John Smith
+                                          </Table.Td>
+                                          <Table.Td className="text-gray-300 text-sm">
+                                            Kitchen renovation
+                                          </Table.Td>
+                                          <Table.Td className="text-gray-300 text-sm">
+                                            07780586444
+                                          </Table.Td>
+                                          <Table.Td className="text-gray-400 text-xs">
+                                            {new Date().toLocaleDateString('en-GB', {
+                                              day: 'numeric',
+                                              month: 'short',
+                                              year: 'numeric',
+                                            })}
+                                          </Table.Td>
+                                        </Table.Tr>
+                                      ))}
+                                    </Table.Tbody>
+                                  </Table>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <Paper
+                                p="md"
+                                className="bg-[#1a1a1a]/95 border-2 border-teal-500/50 rounded-lg"
+                              >
+                                <Stack gap="sm" align="center">
+                                  <IconChartBar size={32} className="text-teal-400" />
+                                  <Text size="sm" className="text-white font-semibold text-center">
+                                    Upgrade to Business to see customer details
+                                  </Text>
+                                  <Button
+                                    color="teal"
+                                    size="sm"
+                                    onClick={() => navigate('/billing')}
+                                  >
+                                    Upgrade to Business
+                                  </Button>
+                                </Stack>
+                              </Paper>
+                            </div>
+                          </div>
                         )}
-                      </div>
-                    </Accordion.Control>
-                    <Accordion.Panel>
-                      {/* Customer details - blurred for Pro, visible for Business */}
-                      {analytics.tier === 'pro' && stat.count > 0 && (
-                        <div className="mt-4 pt-4 border-t border-[#3a3a3a] relative">
-                          <div className="blur-sm pointer-events-none select-none">
+                        {isBusiness && stat.customers && stat.customers.length > 0 && (
+                          <div className="mt-4 pt-4 border-t border-[#3a3a3a]">
                             <Text size="sm" className="text-gray-400 mb-2 font-medium">
-                              Customer Details ({stat.count})
+                              Customer Details ({stat.customers.length})
                             </Text>
                             {/* Mobile: Compact Accordion */}
                             <div className="block md:hidden">
                               <Accordion
-                                key={`pro-accordion-${stat.month}-${stat.year}`}
+                                key={`business-accordion-${stat.month}-${stat.year}`}
                                 multiple
                                 variant="separated"
                                 radius="sm"
-                                value={expandedItems[`pro-${stat.month}-${stat.year}`] || []}
+                                value={expandedItems[`business-${stat.month}-${stat.year}`] || []}
                                 onChange={(value) =>
                                   setExpandedItems((prev) => ({
                                     ...prev,
-                                    [`pro-${stat.month}-${stat.year}`]: value,
+                                    [`business-${stat.month}-${stat.year}`]: value,
                                   }))
                                 }
                                 classNames={{
                                   item: 'bg-[#1a1a1a] border-[#3a3a3a]',
-                                  control: 'py-3 px-4 hover:bg-[#2a2a2a]',
+                                  control: 'py-0 px-1 hover:bg-[#2a2a2a]',
                                   label: 'text-white text-sm font-medium',
                                   content: 'text-gray-300 text-sm p-4',
                                   chevron: 'text-teal-400',
@@ -1160,8 +1368,8 @@ export const Analytics = () => {
                                     paddingBottom: 0,
                                   },
                                   control: {
-                                    paddingTop: '0.75rem',
-                                    paddingBottom: '0.75rem',
+                                    paddingTop: '0.125rem',
+                                    paddingBottom: '0.125rem',
                                   },
                                   item: {
                                     marginTop: '0.25rem',
@@ -1169,18 +1377,18 @@ export const Analytics = () => {
                                   },
                                 }}
                               >
-                                {[...Array(Math.min(stat.count, 3))].map((_, idx) => (
+                                {stat.customers.map((customer, idx) => (
                                   <Accordion.Item
-                                    key={idx}
-                                    value={`${stat.month}-${stat.year}-${idx}`}
+                                    key={`${customer.id}-${customer.sent_at}`}
+                                    value={`${stat.month}-${stat.year}-${customer.id}-${idx}`}
                                   >
                                     <Accordion.Control>
                                       <div className="flex items-center justify-between w-full pr-2">
                                         <Text size="sm" className="text-white font-medium">
-                                          John Smith
+                                          {customer.name}
                                         </Text>
                                         <Text size="sm" className="text-gray-400">
-                                          {new Date().toLocaleDateString('en-GB', {
+                                          {new Date(customer.sent_at).toLocaleDateString('en-GB', {
                                             day: 'numeric',
                                             month: 'short',
                                           })}
@@ -1194,16 +1402,36 @@ export const Analytics = () => {
                                             Phone:
                                           </Text>
                                           <Text size="sm" className="text-gray-200 font-medium">
-                                            07780586444
+                                            {customer.phone}
                                           </Text>
                                         </div>
+                                        {customer.job_description && (
+                                          <div className="flex justify-between">
+                                            <Text size="sm" className="text-gray-400">
+                                              Job:
+                                            </Text>
+                                            <Text
+                                              size="sm"
+                                              className="text-gray-200 text-right max-w-[60%]"
+                                            >
+                                              {customer.job_description}
+                                            </Text>
+                                          </div>
+                                        )}
                                         <div className="flex justify-between">
                                           <Text size="sm" className="text-gray-400">
-                                            Job:
+                                            Sent:
                                           </Text>
-                                          <Text size="sm" className="text-gray-200">
-                                            Kitchen renovation
-                                          </Text>
+                                          <div className="flex items-center gap-1.5">
+                                            <Text size="sm" className="text-gray-300">
+                                              {formatDate(customer.sent_at)}
+                                            </Text>
+                                            {customer.was_scheduled && (
+                                              <MantineTooltip label="Sent via scheduled automation">
+                                                <IconClock size={14} className="text-blue-400" />
+                                              </MantineTooltip>
+                                            )}
+                                          </div>
                                         </div>
                                       </div>
                                     </Accordion.Panel>
@@ -1226,23 +1454,26 @@ export const Analytics = () => {
                                     </Table.Tr>
                                   </Table.Thead>
                                   <Table.Tbody>
-                                    {[...Array(Math.min(stat.count, 3))].map((_, idx) => (
-                                      <Table.Tr key={idx}>
+                                    {stat.customers.map((customer) => (
+                                      <Table.Tr key={`${customer.id}-${customer.sent_at}`}>
                                         <Table.Td className="text-white text-sm">
-                                          John Smith
+                                          {customer.name}
                                         </Table.Td>
                                         <Table.Td className="text-gray-300 text-sm">
-                                          Kitchen renovation
+                                          {customer.job_description || '-'}
                                         </Table.Td>
                                         <Table.Td className="text-gray-300 text-sm">
-                                          07780586444
+                                          {customer.phone}
                                         </Table.Td>
                                         <Table.Td className="text-gray-400 text-xs">
-                                          {new Date().toLocaleDateString('en-GB', {
-                                            day: 'numeric',
-                                            month: 'short',
-                                            year: 'numeric',
-                                          })}
+                                          <div className="flex items-center gap-1.5">
+                                            {formatDate(customer.sent_at)}
+                                            {customer.was_scheduled && (
+                                              <MantineTooltip label="Sent via scheduled automation">
+                                                <IconClock size={14} className="text-blue-400" />
+                                              </MantineTooltip>
+                                            )}
+                                          </div>
                                         </Table.Td>
                                       </Table.Tr>
                                     ))}
@@ -1251,172 +1482,11 @@ export const Analytics = () => {
                               </div>
                             </div>
                           </div>
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <Paper
-                              p="md"
-                              className="bg-[#1a1a1a]/95 border-2 border-teal-500/50 rounded-lg"
-                            >
-                              <Stack gap="sm" align="center">
-                                <IconChartBar size={32} className="text-teal-400" />
-                                <Text size="sm" className="text-white font-semibold text-center">
-                                  Upgrade to Business to see customer details
-                                </Text>
-                                <Button color="teal" size="sm" onClick={() => navigate('/billing')}>
-                                  Upgrade to Business
-                                </Button>
-                              </Stack>
-                            </Paper>
-                          </div>
-                        </div>
-                      )}
-                      {isBusiness && stat.customers && stat.customers.length > 0 && (
-                        <div className="mt-4 pt-4 border-t border-[#3a3a3a]">
-                          <Text size="sm" className="text-gray-400 mb-2 font-medium">
-                            Customer Details ({stat.customers.length})
-                          </Text>
-                          {/* Mobile: Compact Accordion */}
-                          <div className="block md:hidden">
-                            <Accordion
-                              key={`business-accordion-${stat.month}-${stat.year}`}
-                              multiple
-                              variant="separated"
-                              radius="sm"
-                              value={expandedItems[`business-${stat.month}-${stat.year}`] || []}
-                              onChange={(value) =>
-                                setExpandedItems((prev) => ({
-                                  ...prev,
-                                  [`business-${stat.month}-${stat.year}`]: value,
-                                }))
-                              }
-                              classNames={{
-                                item: 'bg-[#1a1a1a] border-[#3a3a3a]',
-                                control: 'py-0 px-1 hover:bg-[#2a2a2a]',
-                                label: 'text-white text-sm font-medium',
-                                content: 'text-gray-300 text-sm p-4',
-                                chevron: 'text-teal-400',
-                              }}
-                              styles={{
-                                label: {
-                                  paddingTop: 0,
-                                  paddingBottom: 0,
-                                },
-                                control: {
-                                  paddingTop: '0.125rem',
-                                  paddingBottom: '0.125rem',
-                                },
-                                item: {
-                                  marginTop: '0.25rem',
-                                  marginBottom: 0,
-                                },
-                              }}
-                            >
-                              {stat.customers.map((customer, idx) => (
-                                <Accordion.Item
-                                  key={`${customer.id}-${customer.sent_at}`}
-                                  value={`${stat.month}-${stat.year}-${customer.id}-${idx}`}
-                                >
-                                  <Accordion.Control>
-                                    <div className="flex items-center justify-between w-full pr-2">
-                                      <Text size="sm" className="text-white font-medium">
-                                        {customer.name}
-                                      </Text>
-                                      <Text size="sm" className="text-gray-400">
-                                        {new Date(customer.sent_at).toLocaleDateString('en-GB', {
-                                          day: 'numeric',
-                                          month: 'short',
-                                        })}
-                                      </Text>
-                                    </div>
-                                  </Accordion.Control>
-                                  <Accordion.Panel>
-                                    <div className="space-y-2">
-                                      <div className="flex justify-between">
-                                        <Text size="sm" className="text-gray-400">
-                                          Phone:
-                                        </Text>
-                                        <Text size="sm" className="text-gray-200 font-medium">
-                                          {customer.phone}
-                                        </Text>
-                                      </div>
-                                      {customer.job_description && (
-                                        <div className="flex justify-between">
-                                          <Text size="sm" className="text-gray-400">
-                                            Job:
-                                          </Text>
-                                          <Text
-                                            size="sm"
-                                            className="text-gray-200 text-right max-w-[60%]"
-                                          >
-                                            {customer.job_description}
-                                          </Text>
-                                        </div>
-                                      )}
-                                      <div className="flex justify-between">
-                                        <Text size="sm" className="text-gray-400">
-                                          Sent:
-                                        </Text>
-                                        <div className="flex items-center gap-1.5">
-                                          <Text size="sm" className="text-gray-300">
-                                            {formatDate(customer.sent_at)}
-                                          </Text>
-                                          {customer.was_scheduled && (
-                                            <MantineTooltip label="Sent via scheduled automation">
-                                              <IconClock size={14} className="text-blue-400" />
-                                            </MantineTooltip>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </Accordion.Panel>
-                                </Accordion.Item>
-                              ))}
-                            </Accordion>
-                          </div>
-                          {/* Desktop: Compact Table */}
-                          <div className="hidden md:block">
-                            <div className="overflow-x-auto">
-                              <Table verticalSpacing="xs">
-                                <Table.Thead>
-                                  <Table.Tr>
-                                    <Table.Th className="text-gray-400 text-xs">Customer</Table.Th>
-                                    <Table.Th className="text-gray-400 text-xs">Job</Table.Th>
-                                    <Table.Th className="text-gray-400 text-xs">Phone</Table.Th>
-                                    <Table.Th className="text-gray-400 text-xs">Sent</Table.Th>
-                                  </Table.Tr>
-                                </Table.Thead>
-                                <Table.Tbody>
-                                  {stat.customers.map((customer) => (
-                                    <Table.Tr key={`${customer.id}-${customer.sent_at}`}>
-                                      <Table.Td className="text-white text-sm">
-                                        {customer.name}
-                                      </Table.Td>
-                                      <Table.Td className="text-gray-300 text-sm">
-                                        {customer.job_description || '-'}
-                                      </Table.Td>
-                                      <Table.Td className="text-gray-300 text-sm">
-                                        {customer.phone}
-                                      </Table.Td>
-                                      <Table.Td className="text-gray-400 text-xs">
-                                        <div className="flex items-center gap-1.5">
-                                          {formatDate(customer.sent_at)}
-                                          {customer.was_scheduled && (
-                                            <MantineTooltip label="Sent via scheduled automation">
-                                              <IconClock size={14} className="text-blue-400" />
-                                            </MantineTooltip>
-                                          )}
-                                        </div>
-                                      </Table.Td>
-                                    </Table.Tr>
-                                  ))}
-                                </Table.Tbody>
-                              </Table>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </Accordion.Panel>
-                  </Accordion.Item>
-                ))}
+                        )}
+                      </Accordion.Panel>
+                    </Accordion.Item>
+                  );
+                })}
               </Accordion>
             )}
           </div>

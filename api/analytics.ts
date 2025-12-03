@@ -134,9 +134,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Convert to array and sort by date (newest first)
+    // Sort by year-month key (e.g., "2025-12") instead of month name to ensure correct order
     const monthlyArray = Object.values(monthlyStats).sort((a, b) => {
-      if (a.year !== b.year) return b.year - a.year;
-      return b.month.localeCompare(a.month);
+      // Parse the month name to get the month number for proper sorting
+      const aDate = new Date(`${a.month} 1, ${a.year}`);
+      const bDate = new Date(`${b.month} 1, ${b.year}`);
+      return bDate.getTime() - aDate.getTime(); // Newest first
     });
 
     // For Business tier, get customer insights
