@@ -12,9 +12,7 @@ function getTwilioClient() {
   const authToken = process.env.TWILIO_AUTH_TOKEN;
 
   if (!accountSid || !authToken) {
-    throw new Error(
-      'SMS service is not configured. Please contact support for assistance.'
-    );
+    throw new Error('SMS service is not configured. Please contact support for assistance.');
   }
 
   twilioClient = twilio(accountSid, authToken);
@@ -24,7 +22,8 @@ function getTwilioClient() {
 export const sendSMS = async (
   to: string,
   body: string,
-  countryCode?: string
+  countryCode?: string,
+  statusCallback?: string
 ): Promise<{ sid: string; status: string }> => {
   try {
     const client = getTwilioClient();
@@ -53,10 +52,35 @@ export const sendSMS = async (
         process.env.TWILIO_ALPHANUMERIC_SENDER_ID || process.env.TWILIO_PHONE_NUMBER || 'MyRevuHq';
     }
 
-    const message = await client.messages.create({
+    const messageOptions: any = {
       body,
       to,
       from,
+    };
+
+    // Add status callback URL if provided (for delivery tracking)
+    // Only add if it's a valid URL format
+    if (statusCallback && statusCallback.startsWith('http')) {
+      messageOptions.statusCallback = statusCallback;
+      messageOptions.statusCallbackMethod = 'POST';
+      console.log('[Twilio] Adding status callback:', statusCallback);
+    } else if (statusCallback) {
+      console.warn('[Twilio] Invalid status callback URL format, skipping:', statusCallback);
+    }
+
+    console.log('[Twilio] Sending message with options:', {
+      to,
+      from,
+      hasStatusCallback: !!messageOptions.statusCallback,
+      statusCallback: messageOptions.statusCallback,
+    });
+
+    const message = await client.messages.create(messageOptions);
+
+    console.log('[Twilio] Message created:', {
+      sid: message.sid,
+      status: message.status,
+      dateCreated: message.dateCreated,
     });
 
     return {
@@ -64,6 +88,17 @@ export const sendSMS = async (
       status: message.status,
     };
   } catch (error: any) {
+    // Log the full error for debugging
+    console.error('[Twilio Send SMS Error]', {
+      code: error.code,
+      message: error.message,
+      status: error.status,
+      to,
+      from,
+      hasStatusCallback: !!statusCallback,
+      statusCallback,
+    });
+
     // Parse Twilio-specific errors into user-friendly messages
     const parsedError = parseTwilioError(error);
     throw new Error(parsedError.message);

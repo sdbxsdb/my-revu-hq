@@ -35,7 +35,13 @@ export interface Customer {
   sms_request_count?: number;
   opt_out?: boolean;
   created_at?: string;
-  messages?: Array<{ sent_at: string; was_scheduled?: boolean }>;
+  messages?: Array<{ 
+    sent_at: string; 
+    was_scheduled?: boolean;
+    delivery_status?: string;
+    delivery_error_code?: string;
+    delivery_error_message?: string;
+  }>;
   scheduled_send_at?: string;
 }
 

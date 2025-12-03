@@ -33,7 +33,7 @@ import {
 import { parsePhoneNumberFromString, isValidPhoneNumber } from 'libphonenumber-js';
 import { usePayment } from '@/contexts/PaymentContext';
 import { useAccount } from '@/contexts/AccountContext';
-import { IconAlertCircle, IconTrash, IconClock, IconCalendar, IconLock } from '@tabler/icons-react';
+import { IconAlertCircle, IconTrash, IconClock, IconCalendar, IconLock, IconCheck, IconX, IconHourglass, IconCircleDashed } from '@tabler/icons-react';
 import { getSmsLimitFromTier } from '@/lib/pricing';
 
 export const CustomerList = () => {
@@ -1438,12 +1438,62 @@ export const CustomerList = () => {
                             Review Requests ({customer.messages.length}/3):
                     </div>
                           <div className="space-y-0.5">
-                            {customer.messages.slice(0, 3).map((message, idx) => (
+                            {customer.messages.slice(0, 3).map((message, idx) => {
+                              // Only show delivery status for messages with Twilio tracking (new messages)
+                              // Old messages without twilio_message_sid won't show status icon
+                              const hasTracking = message.delivery_status !== null && message.delivery_status !== undefined;
+                              
+                              // Determine delivery status icon and color
+                              const getDeliveryIcon = () => {
+                                if (!hasTracking) {
+                                  // Old message - no status icon
+                                  return null;
+                                }
+                                
+                                const status = message.delivery_status?.toLowerCase() || 'queued';
+                                
+                                if (status === 'delivered') {
+                                  return (
+                                    <Tooltip label="Delivered successfully">
+                                      <IconCheck size={14} className="text-green-400" />
+                                    </Tooltip>
+                                  );
+                                } else if (status === 'failed' || status === 'undelivered') {
+                                  return (
+                                    <Tooltip label={`Failed: ${message.delivery_error_message || 'Unknown error'}`}>
+                                      <IconX size={14} className="text-red-400" />
+                                    </Tooltip>
+                                  );
+                                } else if (status === 'sent') {
+                                  return (
+                                    <Tooltip label="Sent, awaiting delivery">
+                                      <IconHourglass size={14} className="text-yellow-400" />
+                                    </Tooltip>
+                                  );
+                                } else if (status === 'sending') {
+                                  return (
+                                    <Tooltip label="Currently sending">
+                                      <IconCircleDashed size={14} className="text-blue-400" />
+                                    </Tooltip>
+                                  );
+                                } else {
+                                  // queued or unknown
+                                  return (
+                                    <Tooltip label="Queued for sending">
+                                      <IconClock size={14} className="text-gray-400" />
+                                    </Tooltip>
+                                  );
+                                }
+                              };
+
+                              const deliveryIcon = getDeliveryIcon();
+
+                              return (
                               <div
                                 key={idx}
                                 className="text-sm text-gray-500 flex items-center gap-1.5"
                               >
-                                <span className="text-teal-400">•</span>
+                                  {deliveryIcon}
                                 {new Date(message.sent_at).toLocaleDateString('en-GB', {
                                   day: 'numeric',
                                   month: 'short',
@@ -1459,7 +1509,8 @@ export const CustomerList = () => {
                                   </Tooltip>
                                 )}
                   </div>
-                            ))}
+                              );
+                            })}
                           </div>
                     </div>
                   )}

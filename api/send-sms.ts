@@ -211,7 +211,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Pass ISO country code to determine appropriate sender ID
-    const result = await sendSMS(phoneNumber, messageBody, isoCountryCode);
+    // Include status callback URL for delivery tracking
+    // Construct callback URL - use production domain or Vercel auto-detected URL
+    let statusCallbackUrl: string | undefined;
+    try {
+      // In production, use FRONTEND_URL (your custom domain)
+      // In Vercel preview/deploy, VERCEL_URL is auto-set (e.g., "my-revu-hq.vercel.app")
+      const apiUrl = process.env.FRONTEND_URL
+        ? process.env.FRONTEND_URL.replace(/\/$/, '') // Remove trailing slash
+        : process.env.VERCEL_URL
+          ? `https://${process.env.VERCEL_URL}`
+          : 'https://myrevuhq.com';
+
+      statusCallbackUrl = `${apiUrl}/api/twilio/status-callback`;
+      console.log('[Send SMS] Status callback URL:', statusCallbackUrl);
+    } catch (error) {
+      console.warn(
+        '[Send SMS] Could not construct status callback URL, continuing without it:',
+        error
+      );
+      // Continue without status callback - SMS will still send but no delivery tracking
+    }
+
+    const result = await sendSMS(phoneNumber, messageBody, isoCountryCode, statusCallbackUrl);
 
     // Update customer status and increment request count
     const newRequestCount = requestCount + 1;
@@ -230,7 +252,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
       .eq('id', customerId);
 
-    // Log message
+    // Log message with Twilio SID for delivery tracking
     await supabase
       .from('messages')
       // @ts-ignore - Supabase types don't include all fields
@@ -240,6 +262,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         body: messageBody,
         sent_at: sentAt,
         was_scheduled: wasScheduled, // Track if this message was scheduled
+        twilio_message_sid: result.sid, // Store Twilio SID for status callbacks
+        delivery_status: 'queued', // Initial status
       });
 
     // Update user's monthly count and total count

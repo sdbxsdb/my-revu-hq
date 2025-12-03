@@ -59,12 +59,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (error) throw error;
 
-      // Fetch messages for each customer
+      // Fetch messages for each customer with delivery status
       const customersWithMessages = await Promise.all(
         (data || []).map(async (customer) => {
           const { data: messages } = await supabase
             .from('messages')
-            .select('sent_at, was_scheduled')
+            .select('sent_at, was_scheduled, delivery_status, delivery_error_code, delivery_error_message')
             .eq('customer_id', customer.id)
             .order('sent_at', { ascending: false });
 
