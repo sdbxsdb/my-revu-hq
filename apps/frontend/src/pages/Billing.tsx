@@ -949,7 +949,7 @@ export const Billing = () => {
                     </button>
                   </div>
                   {detectedCurrency && selectedCurrency === detectedCurrency && (
-                    <Text size="xs" className="text-teal-400 text-center mb-3 -mt-4">
+                    <Text size="xs" className="text-teal-400 text-center lg:text-left mb-3 -mt-4">
                       Auto-detected for your location
                     </Text>
                   )}
@@ -1093,11 +1093,10 @@ export const Billing = () => {
                             </ul>
                             <Button
                               size="md"
-                              fullWidth
+                              className="font-semibold w-full lg:w-auto lg:max-w-xs"
                               onClick={() => handleSubscribe(plan.id)}
                               loading={loading}
                               disabled={isPaid && displayPaymentMethod !== 'card'}
-                              className="font-semibold"
                             >
                               {isPaid && displayPaymentMethod === 'card'
                                 ? 'Current Plan'
@@ -1135,14 +1134,18 @@ export const Billing = () => {
                           )}
                         </ul>
                         {enterpriseRequestSubmitted ? (
-                          <Badge size="lg" color="teal" className="w-full justify-center py-3">
-                            Request Submitted - We'll Be In Touch
+                          <Badge
+                            size="lg"
+                            color="teal"
+                            className="w-full lg:w-auto lg:max-w-xs py-3"
+                          >
+                            Request Submitted
                           </Badge>
                         ) : (
                           <Button
                             variant="light"
                             size="md"
-                            fullWidth
+                            className="w-full lg:w-auto lg:max-w-xs"
                             onClick={handleRequestEnterprise}
                             loading={requestingEnterprise}
                             className="font-semibold"
@@ -1301,16 +1304,12 @@ export const Billing = () => {
                       </div>
 
                       {enterpriseRequestSubmitted ? (
-                        <Badge
-                          size="lg"
-                          color="teal"
-                          className="max-w-xs lg:max-w-sm w-full lg:w-auto justify-center py-3"
-                        >
-                          Request Submitted - We'll Be In Touch
+                        <Badge size="lg" color="teal" className="w-full lg:w-auto lg:max-w-xs py-3">
+                          Request Submitted
                         </Badge>
                       ) : (
                         <Button
-                          size="lg"
+                          size="md"
                           variant="light"
                           onClick={handleRequestInvoice}
                           loading={requestingEnterprise}
@@ -1319,15 +1318,25 @@ export const Billing = () => {
                               displayPaymentMethod !== 'direct_debit') ||
                             requestingEnterprise
                           }
-                          className="font-semibold max-w-xs lg:max-w-sm w-full lg:w-auto"
+                          className="font-semibold w-full lg:w-auto lg:max-w-xs"
                         >
                           Request Invoice Setup
                         </Button>
                       )}
                       <Text size="xs" className="text-gray-500 text-center mt-3">
-                        {enterpriseRequestSubmitted
-                          ? "We've received your request and will contact you within 1-2 business days."
-                          : "You'll receive a confirmation and our team will reach out to complete the setup."}
+                        {enterpriseRequestSubmitted ? (
+                          <>
+                            We've received your request
+                            <br />
+                            and will contact you within 1-2 business days.
+                          </>
+                        ) : (
+                          <>
+                            You'll receive a confirmation
+                            <br />
+                            and our team will reach out to complete the setup.
+                          </>
+                        )}
                       </Text>
                     </div>
                   )}
