@@ -1145,10 +1145,9 @@ export const Billing = () => {
                           <Button
                             variant="light"
                             size="md"
-                            className="w-full lg:w-auto lg:max-w-xs"
+                            className="font-semibold w-full lg:w-auto lg:max-w-xs"
                             onClick={handleRequestEnterprise}
                             loading={requestingEnterprise}
-                            className="font-semibold"
                           >
                             Request Enterprise Plan
                           </Button>
