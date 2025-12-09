@@ -11,7 +11,6 @@ import {
   Alert,
   Text,
   Skeleton,
-  Loader,
   Checkbox,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';

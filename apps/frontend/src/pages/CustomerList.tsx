@@ -808,37 +808,6 @@ export const CustomerList = () => {
     }
   };
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    const day = date.getDate();
-    const monthNames = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    const month = monthNames[date.getMonth()];
-    const year = date.getFullYear();
-
-    // Add ordinal suffix (st, nd, rd, th)
-    const getOrdinalSuffix = (n: number) => {
-      const s = ['th', 'st', 'nd', 'rd'];
-      const v = n % 100;
-      return s[(v - 20) % 10] || s[v] || s[0];
-    };
-
-    return `${day}${getOrdinalSuffix(day)} ${month} ${year}`;
-  };
-
   const formatDateTime = (dateString?: string) => {
     if (!dateString) return '-';
     const date = new Date(dateString);

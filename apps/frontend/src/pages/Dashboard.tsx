@@ -8,7 +8,6 @@ import {
   Badge,
   Card,
   SimpleGrid,
-  Skeleton,
   Group,
   Progress,
 } from '@mantine/core';
