@@ -434,7 +434,7 @@ export const AccountSetup = () => {
                 {/* Total Usage */}
                 {account.sms_sent_total !== undefined && (
                   <div>
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between lg:justify-start lg:gap-2 mb-2">
                       <Text size="sm" className="text-gray-400">
                         All Time
                       </Text>

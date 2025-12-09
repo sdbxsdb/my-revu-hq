@@ -379,48 +379,47 @@ export const AddCustomer = () => {
 
   return (
     <PageContainer>
-      <div className="px-4 pt-6 pb-8 sm:p-8">
-        <div className="max-w-full">
-          <div className="mb-8">
-            <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
-              Add Customer
-            </Title>
-            <p className="text-sm text-gray-400">
-              Add a new customer to send them a review request
-            </p>
-          </div>
+      <Stack gap="lg" className="lg:flex-1">
+        <div className="pb-4 border-b border-[#2a2a2a]">
+          <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
+            Add Customer
+          </Title>
+          <Text size="sm" className="text-gray-400">
+            Add a new customer to send them a review request
+          </Text>
+        </div>
 
-          {/* Account Error Alert */}
-          <AccountErrorAlert />
+        {/* Account Error Alert */}
+        <AccountErrorAlert />
 
-          {!paymentLoading && !hasPaid && (
-            <Alert
-              icon={<IconAlertCircle size={16} />}
-              title="Payment Required to Send Messages"
-              color="yellow"
-              className="mb-6 relative"
-            >
-              <div className="flex flex-col gap-3 pb-10">
-                <Text size="sm" className="text-gray-300">
-                  You can add customers, but you need to set up payment to send SMS messages.
-                </Text>
-              </div>
-              <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-4">
-                <Button
-                  component={Link}
-                  to="/billing"
-                  size="sm"
-                  color="teal"
-                  className="font-semibold !px-3 !py-1 !h-auto !text-xs"
-                >
-                  Set up payment
-                </Button>
-              </div>
-            </Alert>
-          )}
+        {!paymentLoading && !hasPaid && (
+          <Alert
+            icon={<IconAlertCircle size={16} />}
+            title="Payment Required to Send Messages"
+            color="yellow"
+            className="mb-6 relative"
+          >
+            <div className="flex flex-col gap-3 pb-10">
+              <Text size="sm" className="text-gray-300">
+                You can add customers, but you need to set up payment to send SMS messages.
+              </Text>
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-4">
+              <Button
+                component={Link}
+                to="/billing"
+                size="sm"
+                color="teal"
+                className="font-semibold !px-3 !py-1 !h-auto !text-xs"
+              >
+                Set up payment
+              </Button>
+            </div>
+          </Alert>
+        )}
 
-          <form onSubmit={form.onSubmit(() => {})}>
-            <Stack gap="lg">
+        <form onSubmit={form.onSubmit(() => {})}>
+          <Stack gap="lg">
               <TextInput
                 label="Name"
                 placeholder="Customer Name"
@@ -428,21 +427,16 @@ export const AddCustomer = () => {
                 {...form.getInputProps('name')}
               />
 
-              <label className="block text-sm font-medium text-gray-200 mb-1">
-                {(() => {
+              <PhoneNumber
+                label={(() => {
                   // Use "Mobile Number" for UK/Ireland, "Cell Number" for others
                   const phoneType =
                     selectedCountry === 'GB' || selectedCountry === 'IE'
                       ? 'Mobile Number'
                       : 'Cell Number';
-                  return (
-                    <>
-                      {phoneType} <span className="text-red-400">*</span>
-                    </>
-                  );
+                  return phoneType;
                 })()}
-              </label>
-              <PhoneNumber
+                required
                 value={form.values.phoneNumber}
                 country={selectedCountry}
                 onChange={(value) => {
@@ -619,8 +613,7 @@ export const AddCustomer = () => {
               </div>
             </Stack>
           </form>
-        </div>
-      </div>
+        </Stack>
 
       {/* Schedule SMS Modal */}
       <Modal

@@ -29,17 +29,17 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
   // Customers section
   const customerNavItems = user
     ? [
-    { to: '/customers/add', label: 'Add Customer', icon: IconUserPlus },
-    { to: '/customers', label: 'Customer List', icon: IconList },
+        { to: '/customers/add', label: 'Add Customer', icon: IconUserPlus },
+        { to: '/customers', label: 'Customer List', icon: IconList },
       ]
     : [];
 
   // Account section
   const accountNavItems = user
     ? [
-    { to: '/account', label: 'SMS Setup', icon: IconDeviceMobile },
+        { to: '/account', label: 'SMS Setup', icon: IconDeviceMobile },
         { to: '/analytics', label: 'Analytics', icon: IconChartBar },
-    { to: '/billing', label: 'Billing', icon: IconCreditCard },
+        { to: '/billing', label: 'Billing', icon: IconCreditCard },
       ]
     : [];
 
@@ -64,29 +64,29 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
   };
 
   const renderNavItem = (item: { to: string; label: string; icon: any }) => {
-          const Icon = item.icon;
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
+    const Icon = item.icon;
+    return (
+      <NavLink
+        key={item.to}
+        to={item.to}
         end={item.to === '/dashboard' || item.to === '/customers' || item.to === '/'}
-              onClick={handleNavClick}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium ${
-                  isActive
-                    ? 'bg-[rgb(9,146,104)] text-white shadow-lg shadow-[rgba(9,146,104,0.3)]'
-                    : 'text-gray-400 hover:bg-[#2a2a2a] hover:text-white'
-                }`
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-                  <span>{item.label}</span>
-                </>
-              )}
-            </NavLink>
-          );
+        onClick={handleNavClick}
+        className={({ isActive }) =>
+          `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium ${
+            isActive
+              ? 'bg-[rgb(9,146,104)] text-white shadow-lg shadow-[rgba(9,146,104,0.3)]'
+              : 'text-gray-400 hover:bg-[#2a2a2a] hover:text-white'
+          }`
+        }
+      >
+        {({ isActive }) => (
+          <>
+            <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+            <span>{item.label}</span>
+          </>
+        )}
+      </NavLink>
+    );
   };
 
   return (
@@ -101,7 +101,7 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
           alt="MyRevuHQ"
           className="h-16 w-auto object-contain mb-2"
         />
-        <p className="text-[11px] text-gray-300 font-bold tracking-wider uppercase leading-tight text-center">
+        <p className="text-[11px] text-gray-300 font-bold tracking-wider uppercase leading-tight text-left">
           Business Review Management
         </p>
       </Link>
@@ -143,9 +143,41 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
         )}
       </nav>
 
+      {/* Divider */}
+      {user && user.email && <div className="my-4 border-t border-[#2a2a2a]" />}
+
+      {/* User section */}
+      {user && user.email && (
+        <div className="space-y-3">
+          <button
+            onClick={() => {
+              signOut();
+              handleNavClick();
+            }}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-[#2a2a2a] hover:text-red-400 transition-all duration-200 font-medium w-full"
+          >
+            <IconLogout size={20} />
+            <span>Logout</span>
+          </button>
+          <div
+            className="px-4 py-2 text-xs text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap lg:whitespace-normal lg:overflow-visible lg:text-clip"
+            title={user.email}
+          >
+            {user.email.includes('@') && user.email.length > 20 ? (
+              <>
+                <span className="block whitespace-nowrap">{user.email.split('@')[0]}</span>
+                <span className="block whitespace-nowrap">@{user.email.split('@')[1]}</span>
+              </>
+            ) : (
+              <span className="break-all">{user.email}</span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Legal links footer */}
-      <div className="mt-auto pt-4 border-t border-[#2a2a2a]">
-        <div className="flex flex-wrap gap-x-3 gap-y-1 justify-center text-xs text-gray-500 mb-4">
+      <div className="mt-4 mb-4 border-t border-[#2a2a2a] pt-4">
+        <div className="flex flex-wrap gap-x-2 gap-y-1 justify-center text-xs text-gray-500">
           <Link
             to="/terms"
             onClick={handleNavClick}
@@ -167,24 +199,6 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
           </a>
         </div>
       </div>
-
-      {user && (
-        <div className="space-y-2">
-          <div className="px-4 py-2 text-xs text-gray-500 truncate" title={user.email}>
-            {user.email}
-          </div>
-          <button
-            onClick={() => {
-              signOut();
-              handleNavClick();
-            }}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-[#2a2a2a] hover:text-red-400 transition-all duration-200 font-medium w-full"
-          >
-            <IconLogout size={20} />
-            <span>Logout</span>
-          </button>
-        </div>
-      )}
     </div>
   );
 };

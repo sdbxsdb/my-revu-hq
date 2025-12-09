@@ -15,12 +15,14 @@ export const PageContainer = ({ children, size = 'lg' }: PageContainerProps) => 
     <Container
       size={size}
       py="md"
-      className="px-xs sm:px-md lg:px-0 lg:py-0 lg:flex lg:flex-1 lg:flex-col lg:h-full lg:min-h-0 lg:w-full"
+      className="px-2 sm:px-md mx-0 lg:px-0 lg:py-0 lg:flex lg:flex-1 lg:flex-col lg:h-full lg:min-h-0 lg:w-full !max-w-full"
+      style={{ maxWidth: '100%', marginLeft: 0, marginRight: 0 }}
     >
       <Paper
         shadow="md"
         p="md"
-        className="bg-[#1a1a1a] lg:flex lg:flex-1 lg:flex-col lg:h-full lg:min-h-0 lg:overflow-auto lg:p-10 lg:w-full"
+        className="bg-[#1a1a1a] w-full !max-w-full lg:flex lg:flex-1 lg:flex-col lg:h-full lg:min-h-0 lg:overflow-auto lg:p-10"
+        style={{ maxWidth: '100%' }}
       >
         {children}
       </Paper>

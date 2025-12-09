@@ -111,7 +111,11 @@ export const Analytics = () => {
   } | null>(null);
   const [subscriptionTier, setSubscriptionTier] = useState<PricingTier | null>(null);
   const [smsSent, setSmsSent] = useState<number | null>(null);
+  const [smsSentTotal, setSmsSentTotal] = useState<number | null>(null);
   const [loadingUsage, setLoadingUsage] = useState(true);
+  
+  // Get current month count from analytics (more accurate than counter)
+  const currentMonthCount = analytics?.monthlyStats[0]?.count || 0;
   const [expandedItems, setExpandedItems] = useState<Record<string, string[]>>({});
   const [expandedMonths, setExpandedMonths] = useState<string[]>([]);
   const [sendingCustomerId, setSendingCustomerId] = useState<string | null>(null);
@@ -133,6 +137,7 @@ export const Analytics = () => {
       ]);
 
       setSmsSent(account.sms_sent_this_month || 0);
+      setSmsSentTotal(account.sms_sent_total || null);
       setSubscriptionTier(subscription?.subscriptionTier || null);
     } catch (error) {
       // Failed to load usage data - continue without it
@@ -551,66 +556,122 @@ export const Analytics = () => {
 
           {/* SMS Usage Display */}
           {(smsSent !== null || loadingUsage) && subscriptionTier && (
-            <div className="p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
+            <div className="p-3 lg:p-4 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
               {loadingUsage ? (
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <Text size="sm" className="text-gray-400">
-                      SMS Usage:
-                    </Text>
-                    <Skeleton height={20} width={80} />
-                    <Text size="xs" className="text-gray-500">
-                      this month
-                    </Text>
+                <>
+                  {/* Mobile: Keep original layout */}
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 lg:hidden">
+                    <div className="flex items-center gap-2">
+                      <Text size="sm" className="text-gray-400">
+                        SMS Usage:
+                      </Text>
+                      <Skeleton height={20} width={80} />
+                      <Text size="xs" className="text-gray-500">
+                        this month
+                      </Text>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Skeleton height={8} width={128} radius="xl" />
+                      <Skeleton height={16} width={60} />
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Skeleton height={8} width={128} radius="xl" />
-                    <Skeleton height={16} width={60} />
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <Text size="sm" className="text-gray-400">
-                      SMS Usage:
+                  {/* Desktop: SMS Setup style */}
+                  <div className="hidden lg:block">
+                    <Text size="sm" className="text-gray-400 mb-3 font-medium">
+                      SMS Usage
                     </Text>
-                    <Text size="sm" className="font-semibold text-white">
-                      {smsSent} / {getSmsLimitFromTier(subscriptionTier)}
-                    </Text>
-                    <Text size="xs" className="text-gray-500">
-                      this month
-                    </Text>
-                  </div>
-                  {(() => {
-                    const limit = getSmsLimitFromTier(subscriptionTier);
-                    const percentage = limit > 0 ? (smsSent! / limit) * 100 : 0;
-                    const isWarning = percentage >= 80;
-                    const isDanger = percentage >= 100;
-
-                    return (
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 sm:w-32 h-2 bg-[#2a2a2a] rounded-full overflow-hidden">
-                          <div
-                            className={`h-full transition-all ${
-                              isDanger ? 'bg-red-500' : isWarning ? 'bg-yellow-500' : 'bg-teal-500'
-                            }`}
-                            style={{ width: `${Math.min(percentage, 100)}%` }}
-                          />
+                    <div className="flex flex-col gap-4">
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <Skeleton height={16} width={80} />
+                          <Skeleton height={16} width={60} />
                         </div>
-                        {isDanger && (
-                          <Text size="xs" className="text-red-400 font-medium">
-                            Limit reached
-                          </Text>
-                        )}
-                        {isWarning && !isDanger && (
-                          <Text size="xs" className="text-yellow-400 font-medium">
-                            Approaching limit
-                          </Text>
-                        )}
+                        <Skeleton height={8} radius="xl" />
                       </div>
-                    );
-                  })()}
-                </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Mobile: Keep original layout */}
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 lg:hidden">
+                    <div className="flex items-center gap-2">
+                      <Text size="sm" className="text-gray-400">
+                        SMS Usage:
+                      </Text>
+                      <Text size="sm" className="font-semibold text-white">
+                        {analytics ? currentMonthCount : smsSent || 0} / {getSmsLimitFromTier(subscriptionTier)}
+                      </Text>
+                      <Text size="xs" className="text-gray-500">
+                        this month
+                      </Text>
+                    </div>
+                    {(() => {
+                      const limit = getSmsLimitFromTier(subscriptionTier);
+                      const currentCount = analytics ? currentMonthCount : smsSent || 0;
+                      const percentage = limit > 0 ? (currentCount / limit) * 100 : 0;
+                      const isWarning = percentage >= 80;
+                      const isDanger = percentage >= 100;
+
+                      return (
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 sm:w-32 h-2 bg-[#2a2a2a] rounded-full overflow-hidden">
+                            <div
+                              className={`h-full transition-all ${
+                                isDanger ? 'bg-red-500' : isWarning ? 'bg-yellow-500' : 'bg-teal-500'
+                              }`}
+                              style={{ width: `${Math.min(percentage, 100)}%` }}
+                            />
+                          </div>
+                          {isDanger && (
+                            <Text size="xs" className="text-red-400 font-medium">
+                              Limit reached
+                            </Text>
+                          )}
+                          {isWarning && !isDanger && (
+                            <Text size="xs" className="text-yellow-400 font-medium">
+                              Approaching limit
+                            </Text>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                  {/* Desktop: SMS Setup style */}
+                  <div className="hidden lg:block">
+                    <Text size="sm" className="text-gray-400 mb-3 font-medium">
+                      SMS Usage
+                    </Text>
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <Text size="sm" className="text-gray-400">
+                          This Month
+                        </Text>
+                        <Text size="sm" className="font-semibold text-white">
+                          {analytics ? currentMonthCount : smsSent || 0} / {getSmsLimitFromTier(subscriptionTier)}
+                        </Text>
+                      </div>
+                      {(() => {
+                        const limit = getSmsLimitFromTier(subscriptionTier);
+                        const currentCount = analytics ? currentMonthCount : smsSent || 0;
+                        const percentage = limit > 0 ? (currentCount / limit) * 100 : 0;
+                        const isWarning = percentage >= 80;
+                        const isDanger = percentage >= 100;
+
+                        return (
+                          <div className="h-2 bg-[#2a2a2a] rounded-full overflow-hidden">
+                            <div
+                              className={`h-full transition-all ${
+                                isDanger ? 'bg-red-500' : isWarning ? 'bg-yellow-500' : 'bg-teal-500'
+                              }`}
+                              style={{ width: `${Math.min(percentage, 100)}%` }}
+                            />
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           )}
@@ -625,7 +686,7 @@ export const Analytics = () => {
                     Total Messages
                   </Text>
                   <Text size="xl" className="text-white font-bold">
-                    {analytics.totalMessages.toLocaleString()}
+                    {smsSentTotal !== null ? smsSentTotal.toLocaleString() : analytics.totalMessages.toLocaleString()}
                   </Text>
                 </div>
               </div>

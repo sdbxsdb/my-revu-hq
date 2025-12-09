@@ -839,6 +839,42 @@ export const CustomerList = () => {
     return `${day}${getOrdinalSuffix(day)} ${month} ${year}`;
   };
 
+  const formatDateTime = (dateString?: string) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const monthNames = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    const month = monthNames[date.getMonth()];
+    const year = date.getFullYear();
+
+    // Add ordinal suffix (st, nd, rd, th)
+    const getOrdinalSuffix = (n: number) => {
+      const s = ['th', 'st', 'nd', 'rd'];
+      const v = n % 100;
+      return s[(v - 20) % 10] || s[v] || s[0];
+    };
+
+    const time = date.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    return `${day}${getOrdinalSuffix(day)} ${month} ${year} ${time}`;
+  };
+
   return (
     <PageContainer>
       <Stack gap="lg" className="lg:flex-1">
@@ -1360,7 +1396,21 @@ export const CustomerList = () => {
                           )}
                         </div>
                       </Table.Td>
-                      <Table.Td className="text-gray-400">{formatDate(customer.sent_at)}</Table.Td>
+                      <Table.Td className="text-gray-400">
+                        {customer.messages && customer.messages.length > 0 ? (
+                          <div className="flex flex-col gap-0.5">
+                            {customer.messages
+                              .map((msg) => msg.sent_at)
+                              .filter((date): date is string => !!date)
+                              .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+                              .map((sentAt, idx) => (
+                                <div key={idx}>{formatDateTime(sentAt)}</div>
+                              ))}
+                          </div>
+                        ) : (
+                          formatDateTime(customer.sent_at)
+                        )}
+                      </Table.Td>
                       <Table.Td>
                         <div className="flex flex-col gap-1.5 min-w-[200px]">
                           {(() => {

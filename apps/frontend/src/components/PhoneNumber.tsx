@@ -120,6 +120,7 @@ export const PhoneNumber = forwardRef<HTMLInputElement, PhoneNumberProps>(
           placeholder="Select country"
           searchable
           label={label}
+          required={props.required}
         />
         <TextInput
           ref={ref}
