@@ -1,10 +1,10 @@
-import { Paper, Title, Text, Container, Stack, Divider } from '@mantine/core';
+import { Title, Text, Stack, Divider } from '@mantine/core';
+import { PageContainer } from '@/components/PageContainer';
 
 export const Terms = () => {
   return (
-    <Container size="md" py="xl">
-      <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
-        <Stack gap="lg">
+    <PageContainer size="md">
+      <Stack gap="lg" className="lg:flex-1">
           <Title order={1} className="text-white mb-4">
             Terms and Conditions
           </Title>
@@ -502,8 +502,7 @@ export const Terms = () => {
               </a>
             </Text>
           </section>
-        </Stack>
-      </Paper>
-    </Container>
+      </Stack>
+    </PageContainer>
   );
 };

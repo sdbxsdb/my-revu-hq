@@ -14,7 +14,6 @@ import {
   Alert,
   Text,
   Skeleton,
-  Container,
   Tooltip,
   Checkbox,
 } from '@mantine/core';
@@ -44,6 +43,7 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { getSmsLimitFromTier } from '@/lib/pricing';
+import { PageContainer } from '@/components/PageContainer';
 
 export const CustomerList = () => {
   const { hasPaid, loading: paymentLoading } = usePayment();
@@ -840,8 +840,8 @@ export const CustomerList = () => {
   };
 
   return (
-    <Container size="lg" py="md" className="px-xs sm:px-md">
-      <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
+    <PageContainer>
+      <Stack gap="lg" className="lg:flex-1">
         {/* Account Error Alert */}
         <AccountErrorAlert />
 
@@ -2156,7 +2156,7 @@ export const CustomerList = () => {
             </div>
           </Stack>
         </Modal>
-      </Paper>
-    </Container>
+      </Stack>
+    </PageContainer>
   );
 };

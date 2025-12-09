@@ -68,8 +68,8 @@ export const Layout = ({ children }: LayoutProps) => {
         </div>
 
         {/* Page content */}
-        <div className="p-0 max-w-7xl mx-auto min-h-screen lg:flex lg:flex-col lg:justify-center">
-          <div>
+        <div className="p-0 max-w-7xl mx-auto min-h-screen lg:flex lg:flex-col lg:px-8 lg:py-8">
+          <div className="lg:flex-1 lg:flex lg:flex-col">
             <OfflineAlert />
             {children || <Outlet />}
           </div>

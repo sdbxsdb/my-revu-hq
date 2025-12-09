@@ -1,4 +1,4 @@
-import { Paper, Title, Text, Container, Stack, Divider, ThemeIcon, Button } from '@mantine/core';
+import { Title, Text, Stack, Divider, ThemeIcon, Button } from '@mantine/core';
 import {
   IconLogin,
   IconCurrencyPound,
@@ -8,6 +8,7 @@ import {
 import { useLocationPricing } from '@/hooks/useLocationPricing';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { PageContainer } from '@/components/PageContainer';
 import { ReviewRevenueChart } from '@/components/ReviewRevenueChart';
 import { BusinessImpact } from '@/components/BusinessImpact';
 import {
@@ -25,9 +26,8 @@ export const About = () => {
   const formattedPrice = useLocationPricing();
 
   return (
-    <Container size="lg" py="md" className="px-xs sm:px-md">
-      <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
-        <Stack gap="lg">
+    <PageContainer>
+      <Stack gap="lg" className="lg:flex-1">
           <section className="text-center">
             <Title order={1} className="text-white mb-3 text-2xl sm:text-3xl">
               What is MyRevuHQ?
@@ -272,8 +272,7 @@ export const About = () => {
               </a>
             </Text>
           </section>
-        </Stack>
-      </Paper>
-    </Container>
+      </Stack>
+    </PageContainer>
   );
 };

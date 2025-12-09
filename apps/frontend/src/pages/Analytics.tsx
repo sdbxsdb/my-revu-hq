@@ -3,7 +3,6 @@ import {
   Paper,
   Title,
   Text,
-  Container,
   Stack,
   Skeleton,
   Alert,
@@ -32,6 +31,8 @@ import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { detectCountryFromPhoneNumber } from '@/lib/phone-validation';
 import type { CountryCode } from 'libphonenumber-js';
 import { AccountErrorAlert } from '@/components/AccountErrorAlert';
+import { PageSkeleton } from '@/components/PageSkeleton';
+import { PageContainer } from '@/components/PageContainer';
 import {
   BarChart,
   Bar,
@@ -308,26 +309,15 @@ export const Analytics = () => {
   };
 
   if (loading) {
-    return (
-      <Container size="lg" py="md" className="px-xs sm:px-md">
-        <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
-          <Stack gap="lg">
-            <Skeleton height={40} width="60%" />
-            <Skeleton height={200} />
-            <Skeleton height={400} />
-          </Stack>
-        </Paper>
-      </Container>
-    );
+    return <PageSkeleton rows={2} />;
   }
 
   if (!analytics) {
     const currentTier = subscriptionTier || 'starter';
 
     return (
-      <Container size="lg" py="md" className="px-xs sm:px-md">
-        <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
-          <Stack gap="lg">
+      <PageContainer>
+        <Stack gap="lg" className="lg:flex-1">
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <IconChartBar size={32} className="text-teal-400" />
@@ -534,18 +524,16 @@ export const Analytics = () => {
                 </Paper>
               </div>
             </div>
-          </Stack>
-        </Paper>
-      </Container>
+        </Stack>
+      </PageContainer>
     );
   }
 
   const isBusiness = analytics.tier === 'free' || analytics.tier === 'business';
 
   return (
-    <Container size="lg" py="xl" className="px-xs sm:px-md">
-      <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
-        <Stack gap="lg">
+    <PageContainer>
+      <Stack gap="lg" className="lg:flex-1">
           {/* Account Error Alert */}
           <AccountErrorAlert />
 
@@ -1521,8 +1509,7 @@ export const Analytics = () => {
               </Accordion>
             )}
           </div>
-        </Stack>
-      </Paper>
+      </Stack>
 
       {/* Consent Confirmation Modal */}
       <Modal
@@ -1604,6 +1591,6 @@ export const Analytics = () => {
           </div>
         </Stack>
       </Modal>
-    </Container>
+    </PageContainer>
   );
 };

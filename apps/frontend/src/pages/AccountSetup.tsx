@@ -5,7 +5,6 @@ import {
   Button,
   TextInput,
   Textarea,
-  Paper,
   Title,
   Stack,
   Group,
@@ -14,7 +13,6 @@ import {
   Skeleton,
   Loader,
   Checkbox,
-  Container,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -32,6 +30,8 @@ import { useSetup } from '@/contexts/SetupContext';
 import { getSmsLimitFromTier, type PricingTier } from '@/lib/pricing';
 import { AccountErrorAlert } from '@/components/AccountErrorAlert';
 import { SetupProgressModal } from '@/components/SetupProgressModal';
+import { PageSkeleton } from '@/components/PageSkeleton';
+import { PageContainer } from '@/components/PageContainer';
 
 // Helper function to validate URL
 const isValidUrl = (url: string): boolean => {
@@ -359,8 +359,8 @@ export const AccountSetup = () => {
   };
 
   return (
-    <Container size="lg" py="md" className="px-xs sm:px-md">
-      <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
+    <PageContainer>
+      <Stack gap="lg" className="lg:flex-1">
         <div className="mb-8">
           <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
             SMS Setup
@@ -480,24 +480,7 @@ export const AccountSetup = () => {
         )}
 
         {isLoading ? (
-          <Stack gap="lg">
-            <div>
-              <Skeleton height={16} width={120} mb={8} />
-              <Skeleton height={36} />
-            </div>
-            <div>
-              <Skeleton height={16} width={100} mb={8} />
-              <Skeleton height={36} mb={8} />
-              <Skeleton height={36} />
-            </div>
-            <div>
-              <Skeleton height={16} width={100} mb={8} />
-              <Skeleton height={100} />
-            </div>
-            <div className="flex justify-center">
-              <Loader color="teal" size="sm" />
-            </div>
-          </Stack>
+          <PageSkeleton variant="form" />
         ) : (
           <form onSubmit={form.onSubmit(handleSubmit)}>
             <Stack gap="lg">
@@ -897,7 +880,7 @@ export const AccountSetup = () => {
             nextStepPath="/customers/add"
           />
         )}
-      </Paper>
-    </Container>
+      </Stack>
+    </PageContainer>
   );
 };

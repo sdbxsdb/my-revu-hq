@@ -11,7 +11,6 @@ import {
   Badge,
   Skeleton,
   Modal,
-  Container,
   Loader,
 } from '@mantine/core';
 import { IconCreditCard, IconBuildingBank, IconCheck, IconAlertCircle } from '@tabler/icons-react';
@@ -24,6 +23,8 @@ import { AccountErrorAlert } from '@/components/AccountErrorAlert';
 import { getCurrencyFromCountry, detectCurrency, type Currency } from '@/lib/currency';
 import '@/lib/currency-debug'; // Load debug utility in dev
 import { PRICING_PLANS, type PricingTier, getPlanById } from '@/lib/pricing';
+import { PageContainer } from '@/components/PageContainer';
+import { PageSkeleton } from '@/components/PageSkeleton';
 
 export const Billing = () => {
   const { hasPaid } = usePayment();
@@ -356,9 +357,9 @@ export const Billing = () => {
   };
 
   return (
-    <Container size="lg" py="md" className="px-xs sm:px-md">
-      <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
-        <div className="mb-8">
+    <PageContainer>
+      <Stack gap="lg" className="lg:flex-1">
+        <div className="mb-4 lg:mb-8">
           <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
             Billing & Subscription
           </Title>
@@ -381,11 +382,7 @@ export const Billing = () => {
             </div>
           </div>
         ) : accountLoading || loadingSubscription || loadingPrices || loadingCountry ? (
-          <div className="space-y-6">
-            <Skeleton height={40} width="60%" />
-            <Skeleton height={100} />
-            <Skeleton height={200} />
-          </div>
+          <PageSkeleton variant="form" />
         ) : isPaid || accessStatus === 'past_due' ? (
           /* Active Subscription View */
           <div className="space-y-6">
@@ -1592,7 +1589,7 @@ export const Billing = () => {
               })()}
           </Stack>
         </Modal>
-      </Paper>
-    </Container>
+      </Stack>
+    </PageContainer>
   );
 };

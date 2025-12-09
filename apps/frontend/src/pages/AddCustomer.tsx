@@ -5,13 +5,11 @@ import {
   Button,
   TextInput,
   Textarea,
-  Paper,
   Title,
   Stack,
   Alert,
   Text,
   Tooltip,
-  Container,
   Modal,
   Checkbox,
 } from '@mantine/core';
@@ -26,6 +24,7 @@ import { useAccount } from '@/contexts/AccountContext';
 import { useSetup } from '@/contexts/SetupContext';
 import { AccountErrorAlert } from '@/components/AccountErrorAlert';
 import { SetupProgressModal } from '@/components/SetupProgressModal';
+import { PageContainer } from '@/components/PageContainer';
 import {
   IconAlertCircle,
   IconClock,
@@ -379,8 +378,8 @@ export const AddCustomer = () => {
   };
 
   return (
-    <Container size="lg" py="md" className="px-xs sm:px-md">
-      <Paper shadow="md" className="bg-[#1a1a1a] px-4 pt-6 pb-8 sm:p-8">
+    <PageContainer>
+      <div className="px-4 pt-6 pb-8 sm:p-8">
         <div className="max-w-full">
           <div className="mb-8">
             <Title order={2} className="text-2xl sm:text-3xl font-bold mb-2 text-white">
@@ -621,7 +620,7 @@ export const AddCustomer = () => {
             </Stack>
           </form>
         </div>
-      </Paper>
+      </div>
 
       {/* Schedule SMS Modal */}
       <Modal
@@ -824,6 +823,6 @@ export const AddCustomer = () => {
           </div>
         </Stack>
       </Modal>
-    </Container>
+    </PageContainer>
   );
 };

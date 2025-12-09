@@ -1,6 +1,7 @@
-import { Paper, Title, Text, Container, Stack, Divider, Button, Accordion } from '@mantine/core';
+import { Title, Text, Stack, Divider, Button, Accordion } from '@mantine/core';
 import { IconMail, IconHelpCircle } from '@tabler/icons-react';
 import { useAuth } from '@/hooks/useAuth';
+import { PageContainer } from '@/components/PageContainer';
 
 export const Help = () => {
   const { user } = useAuth();
@@ -233,9 +234,8 @@ export const Help = () => {
   ];
 
   return (
-    <Container size="lg" py="md" className="px-xs sm:px-md">
-      <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
-        <Stack gap="lg">
+    <PageContainer>
+      <Stack gap="lg" className="lg:flex-1">
           <section className="text-center">
             <div className="flex items-center justify-center gap-2 mb-3">
               <IconHelpCircle size={32} className="text-teal-400" />
@@ -330,8 +330,7 @@ export const Help = () => {
               )}
             </Text>
           </section>
-        </Stack>
-      </Paper>
-    </Container>
+      </Stack>
+    </PageContainer>
   );
 };

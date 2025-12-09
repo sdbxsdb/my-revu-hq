@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
-  Paper,
   Title,
   Text,
-  Container,
   Stack,
   Button,
   Badge,
@@ -22,6 +20,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '@/lib/api';
 import { useAccount } from '@/contexts/AccountContext';
+import { PageContainer } from '@/components/PageContainer';
+import { PageSkeleton } from '@/components/PageSkeleton';
 
 interface SetupStep {
   id: string;
@@ -83,13 +83,7 @@ export const SetupWizard = () => {
   };
 
   if (loading) {
-    return (
-      <Container size="lg" py="md" className="px-xs sm:px-md">
-        <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
-          <Text className="text-center text-gray-400">Loading...</Text>
-        </Paper>
-      </Container>
-    );
+    return <PageSkeleton variant="form" />;
   }
 
   if (!stats) return null;
@@ -138,9 +132,8 @@ export const SetupWizard = () => {
   const allComplete = completedCount === steps.length;
 
   return (
-    <Container size="lg" py="md" className="px-xs sm:px-md">
-      <Stack gap="md">
-        <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
+    <PageContainer>
+      <Stack gap="md" className="lg:flex-1">
           <Stack gap="md">
             <div className="text-center">
               <Title order={1} className="text-white mb-2 text-xl sm:text-2xl">
@@ -258,8 +251,7 @@ export const SetupWizard = () => {
               </Button>
             )}
           </Stack>
-        </Paper>
       </Stack>
-    </Container>
+    </PageContainer>
   );
 };

@@ -3,7 +3,6 @@ import {
   Paper,
   Title,
   Text,
-  Container,
   Stack,
   Button,
   Badge,
@@ -27,6 +26,8 @@ import { useNavigate } from 'react-router-dom';
 import { apiClient } from '@/lib/api';
 import { notifications } from '@mantine/notifications';
 import { useAccount } from '@/contexts/AccountContext';
+import { PageContainer } from '@/components/PageContainer';
+import { PageSkeleton } from '@/components/PageSkeleton';
 
 export const Dashboard = () => {
   const navigate = useNavigate();
@@ -90,36 +91,22 @@ export const Dashboard = () => {
   };
 
   if (loading || accountLoading) {
-    return (
-      <Container size="lg" py="md" className="px-xs sm:px-md">
-        <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
-          <Stack gap="lg">
-            <Skeleton height={120} />
-            <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }}>
-              <Skeleton height={150} />
-              <Skeleton height={150} />
-              <Skeleton height={150} />
-            </SimpleGrid>
-          </Stack>
-        </Paper>
-      </Container>
-    );
+    return <PageSkeleton variant="dashboard" />;
   }
 
   return (
-    <Container size="lg" py="md" className="px-xs sm:px-md">
-      <Paper shadow="md" p="md" className="bg-[#1a1a1a]">
-        <Stack gap="lg">
-          <div className="pb-4 border-b border-[#2a2a2a]">
-            <Title order={1} className="text-white mb-2 text-2xl sm:text-3xl">
-              Dashboard
-            </Title>
-            <Text size="sm" className="text-gray-400">
-              Quick access to everything you need
-            </Text>
-          </div>
+    <PageContainer>
+      <Stack gap="lg" className="lg:flex-1">
+        <div className="pb-4 border-b border-[#2a2a2a]">
+          <Title order={1} className="text-white mb-2 text-2xl sm:text-3xl">
+            Dashboard
+          </Title>
+          <Text size="sm" className="text-gray-400">
+            Quick access to everything you need
+          </Text>
+        </div>
 
-          {/* Setup Checklist for users who haven't completed onboarding */}
+        {/* Setup Checklist for users who haven't completed onboarding */}
         {!stats?.onboardingCompleted &&
           stats &&
           (() => {
@@ -362,8 +349,7 @@ export const Dashboard = () => {
             </Button>
           </SimpleGrid>
         </Paper>
-        </Stack>
-      </Paper>
-    </Container>
+      </Stack>
+    </PageContainer>
   );
 };
